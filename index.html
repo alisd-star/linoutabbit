@@ -1,0 +1,1659 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>لِنُثَبِّتَ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400&family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<meta name="theme-color" content="#0F4D3A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Linoutabbit">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>[hidden]{display:none!important}body{margin:0}</style>
+</head>
+<body>
+<style>
+/* Layout: one phone column. Brand bar, day header with rings, week strip, 4 tabs, cards. Bottom sheets for passages, hizb, settings. Gold = brand, green = done, orange = minimum, red = below minimum. */
+:root {
+  --bg: #EDF1EE;
+  --surface: #FFFFFF;
+  --surface-2: #E1E8E3;
+  --fg: #14211B;
+  --muted: #5B6C64;
+  --line: #D1DBD5;
+  --accent: #0F5A43;
+  --on-accent: #FFFFFF;
+  --brand: #04402F;
+  --gold: #A9822B;
+  --good: #1E9E57;
+  --on-good: #FFFFFF;
+  --warn: #D2830F;
+  --danger: #C8372A;
+  --c-rev: #16805B;
+  --c-prof: #0E7C86;
+  --c-wird: #7C55C0;
+  --shadow: 0 1px 2px rgb(20 40 30 / .06), 0 12px 32px -14px rgb(20 40 30 / .28);
+  --backdrop: rgb(10 20 15 / .42);
+  --f-display: "Bricolage Grotesque", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-body: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-ar: "Amiri", "Noto Naskh Arabic", "Geeza Pro", "Times New Roman", serif;
+  --r-card: 18px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1512; --surface: #16201C; --surface-2: #22302A; --fg: #E5EEE9; --muted: #92A39B; --line: #2A3933;
+    --accent: #4CBF8D; --on-accent: #08130E; --brand: #0B4A37; --gold: #E1B656; --good: #45D483; --on-good: #06210F; --warn: #F2AE45; --danger: #F2705C;
+    --c-rev: #4CBF8D; --c-prof: #4CC3CC; --c-wird: #B594EA;
+    --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 14px 34px -14px rgb(0 0 0 / .7);
+    --backdrop: rgb(0 0 0 / .6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1512; --surface: #16201C; --surface-2: #22302A; --fg: #E5EEE9; --muted: #92A39B; --line: #2A3933;
+  --accent: #4CBF8D; --on-accent: #08130E; --brand: #0B4A37; --gold: #E1B656; --good: #45D483; --on-good: #06210F; --warn: #F2AE45; --danger: #F2705C;
+  --c-rev: #4CBF8D; --c-prof: #4CC3CC; --c-wird: #B594EA;
+  --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 14px 34px -14px rgb(0 0 0 / .7);
+  --backdrop: rgb(0 0 0 / .6);
+  color-scheme: dark;
+}
+/* Appearance chosen in the app (overrides the system theme) */
+:root[data-look="light"] { --bg: #EDF1EE; --surface: #FFFFFF; --surface-2: #E1E8E3; --fg: #14211B; --muted: #5B6C64; --line: #D1DBD5;
+  --accent: #0F5A43; --on-accent: #FFFFFF; --brand: #04402F; --gold: #A9822B; --good: #1E9E57; --on-good: #FFFFFF; --warn: #D2830F; --danger: #C8372A;
+  --c-rev: #16805B; --c-prof: #0E7C86; --c-wird: #7C55C0;
+  --shadow: 0 1px 2px rgb(20 40 30 / .06), 0 12px 32px -14px rgb(20 40 30 / .28);
+  --backdrop: rgb(10 20 15 / .42); color-scheme: light; }
+:root[data-look="pure"] { --bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #F2F4F3; --fg: #18201C; --muted: #6B746F; --line: #E3E7E5;
+  --accent: #1D5B46; --on-accent: #FFFFFF; --brand: #04402F; --gold: #9C7A2A; --good: #2A9460; --on-good: #FFFFFF; --warn: #C7861C; --danger: #C0473B;
+  --c-rev: #2B7A5E; --c-prof: #2F7C84; --c-wird: #7A62B0;
+  --shadow: none; --backdrop: rgb(20 24 22 / .32); color-scheme: light; }
+:root[data-look="dark"] { --bg: #0E1512; --surface: #16201C; --surface-2: #22302A; --fg: #E5EEE9; --muted: #92A39B; --line: #2A3933;
+    --accent: #4CBF8D; --on-accent: #08130E; --brand: #0B4A37; --gold: #E1B656; --good: #45D483; --on-good: #06210F; --warn: #F2AE45; --danger: #F2705C;
+    --c-rev: #4CBF8D; --c-prof: #4CC3CC; --c-wird: #B594EA;
+    --shadow: 0 1px 2px rgb(0 0 0 / .3), 0 14px 34px -14px rgb(0 0 0 / .7);
+    --backdrop: rgb(0 0 0 / .6); color-scheme: dark; }
+:root[data-look="pure"] .goal, :root[data-look="pure"] .summary, :root[data-look="pure"] .grid, :root[data-look="pure"] .cal, :root[data-look="pure"] .stat, :root[data-look="pure"] .onb-card { border-color: var(--line); }
+:root[data-look="pure"] .goal.full, :root[data-look="pure"] .goal.low, :root[data-look="pure"] .goal.ok { background: var(--surface); }
+:root[data-look="pure"] .seg, :root[data-look="pure"] .mini-seg { background: var(--surface-2); }
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--f-body); font-size: 15px; line-height: 1.45;
+  -webkit-tap-highlight-color: transparent;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.app { max-width: 520px; margin: 0 auto; padding-block: 12px 60px; display: flex; flex-direction: column; gap: 16px; }
+.ar { font-family: var(--f-ar); direction: rtl; unicode-bidi: isolate; }
+.ar-i { font-family: var(--f-ar); unicode-bidi: isolate; font-size: 1.12em; font-weight: 700; }
+.hint { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+/* Brand */
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand img { width: 36px; height: 36px; border-radius: 9px; flex: none; }
+.brand-t { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
+.brand-q { margin: -4px 0 0; font-size: 11px; color: var(--muted); line-height: 1.5; text-wrap: balance; }
+.hij { margin: 3px 0 0; font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.q-ref { font-size: 10.5px; opacity: .8; white-space: nowrap; }
+.q-fr { white-space: nowrap; }
+.brand-q .ar { font-size: 13px; }
+.wm { display: inline-flex; align-items: center; gap: 12px; line-height: 1; }
+.wm-ar { font-family: "Noto Naskh Arabic", var(--f-ar); font-weight: 400; font-size: 25px; color: var(--fg); direction: rtl; unicode-bidi: isolate; line-height: 1.1; }
+.wm-sep { width: 1.5px; height: 20px; border-radius: 2px; background: var(--muted); opacity: .6; flex: none; }
+.wm-la { font-family: var(--f-display); font-weight: 500; font-size: 19px; color: var(--fg); }
+.wm.lg { gap: 16px; }
+.wm.lg .wm-ar { font-size: 40px; }
+.wm.lg .wm-la { font-size: 27px; }
+.wm.lg .wm-sep { height: 28px; }
+.icon-btn { width: 36px; height: 36px; flex: none; border-radius: 11px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; }
+.icon-btn svg { width: 18px; height: 18px; }
+
+/* Header */
+.top { display: flex; flex-direction: column; gap: 14px; }
+.top-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.top-row > div:first-child { min-width: 0; }
+.eyebrow { margin: 0 0 2px; font-size: 12.5px; color: var(--muted); letter-spacing: .02em; }
+.eyebrow b { color: var(--accent); font-weight: 600; }
+h1 { margin: 0; font-family: var(--f-display); font-weight: 800; font-size: 26px; line-height: 1.1; letter-spacing: -.02em; text-wrap: balance; }
+.top-row h1 { white-space: nowrap; font-size: 25px; overflow: hidden; }
+.top-row > div:first-child { flex: 1; }
+@media (max-width: 420px) { h1 { font-size: 23px; } }
+.rings { display: flex; align-items: center; gap: 6px; flex: none; }
+.ring { position: relative; width: 56px; height: 56px; flex: none; }
+.ring svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring span { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--f-display); font-weight: 650; font-size: 14px; font-variant-numeric: tabular-nums; }
+.ring.full span { color: var(--good); }
+.ring.ok span { color: var(--warn); }
+.ring.low span { color: var(--danger); }
+.tah-chip { position: relative; width: 56px; height: 56px; padding: 0; border: 0; background: none; flex: none; border-radius: 50%; }
+.tah-chip svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); }
+.tah-disc { position: absolute; inset: 7px; border-radius: 50%; background: var(--brand); color: #F6F1E4; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.tah-disc b { font-family: var(--f-display); font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.tah-disc small { font-family: var(--f-ar); font-size: 10px; font-weight: 700; margin-top: 2px; color: #E1C27A; }
+.tah-disc svg { width: 20px; height: 20px; transform: none; }
+.tah-chip.soon .tah-disc { background: var(--warn); color: var(--surface); }
+.tah-chip.soon .tah-disc small { color: var(--surface); }
+.tah-chip.today .tah-disc { background: var(--good); }
+
+.week-nav { display: flex; align-items: center; gap: 6px; }
+.week-nav .lbl { flex: 1; min-width: 0; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.week-nav .lbl strong { color: var(--fg); font-weight: 600; }
+.pill-btn { height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 600; color: var(--accent); }
+.nav-btn { width: 34px; height: 34px; flex: none; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; }
+.nav-btn svg { width: 16px; height: 16px; }
+.strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.day { border: 1px solid transparent; background: none; border-radius: 14px; padding: 6px 0 7px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.day .wd { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--muted); }
+.day .dn { position: relative; width: 36px; height: 36px; }
+.day .dn svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.day .dn b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.day .pdot { width: 4px; height: 4px; border-radius: 50%; background: var(--c-prof); }
+.day .pdot.off { background: transparent; }
+.day .pdot.tahd { background: var(--gold); width: 6px; height: 6px; }
+.day.today .dn b, .day.today .wd { color: var(--accent); font-weight: 700; }
+.day.low:not(.today) .dn b { color: var(--danger); }
+.day.ok:not(.today) .dn b { color: var(--warn); }
+.day.full .dn b { inset: 3px; border-radius: 50%; background: var(--good); color: var(--on-good) !important; }
+.day.pause .dn b { color: var(--muted); }
+.day.future { opacity: .55; }
+.day.sel { background: var(--surface); border-color: var(--line); box-shadow: var(--shadow); }
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); padding: 4px; border-radius: 14px; background: var(--surface-2); }
+.seg button { border: 0; background: none; padding: 9px 0; border-radius: 10px; font-weight: 600; font-size: 14px; color: var(--muted); }
+.seg button[aria-selected="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+
+/* Sections and cards */
+main { display: flex; flex-direction: column; gap: 20px; }
+section { display: flex; flex-direction: column; gap: 10px; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+h2 { margin: 0; font-family: var(--f-display); font-weight: 650; font-size: 18px; letter-spacing: -.01em; }
+.sec-head > span { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+.note { margin: 0; padding: 14px; border: 1px dashed var(--line); border-radius: var(--r-card); color: var(--muted); font-size: 14px; }
+.banner { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); font-size: 13.5px; }
+.banner > div { flex: 1; min-width: 0; }
+.banner b { display: block; font-size: 14px; }
+.banner.warn { border-color: color-mix(in srgb, var(--warn) 50%, var(--line)); background: color-mix(in srgb, var(--warn) 8%, var(--surface)); }
+.banner .btn { min-height: 38px; padding: 0 12px; font-size: 13.5px; flex: none; }
+.banner.bk { flex-direction: column; align-items: stretch; gap: 10px; border-color: var(--accent); line-height: 1.45; }
+.banner.bk small { display: block; margin-top: 4px; color: var(--muted); font-size: 12.5px; }
+.bk-acts { display: flex; align-items: center; gap: 14px; }
+.bk-acts .btn { flex: 1; }
+.goal { --cat: var(--c-rev); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 10px; }
+.goal.full { border-color: color-mix(in srgb, var(--good) 60%, var(--line)); background: color-mix(in srgb, var(--good) 7%, var(--surface)); }
+.goal.low { border-color: color-mix(in srgb, var(--danger) 55%, var(--line)); background: color-mix(in srgb, var(--danger) 4%, var(--surface)); }
+.goal.ok { border-color: color-mix(in srgb, var(--warn) 55%, var(--line)); }
+.goal.rest { background: color-mix(in srgb, var(--surface) 60%, var(--bg)); }
+.goal-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px; border-radius: 999px; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--cat); background: color-mix(in srgb, var(--cat) 13%, transparent); }
+.chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--cat); }
+.tag { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tag.good { color: var(--good); font-weight: 600; }
+.tag.red { color: var(--danger); font-weight: 600; }
+.tag.warn { color: var(--warn); font-weight: 600; }
+.goal h3 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.3; }
+.hz-now { display: flex; flex-direction: column; gap: 2px; }
+.hz-now .ar { font-size: 30px; line-height: 1.45; font-weight: 700; text-align: right; }
+.goal.full .hz-now .ar { color: var(--good); }
+.goal.low .hz-now .ar { color: var(--danger); }
+.hz-now small { font-size: 13px; color: var(--muted); }
+.sub { display: flex; flex-direction: column; gap: 6px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.sub > b { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; }
+.plist { display: flex; flex-wrap: wrap; gap: 6px; }
+.pitem { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; background: var(--surface-2); font-size: 13px; font-weight: 600; }
+.pitem .ar { font-size: 17px; }
+.pitem em { font-style: normal; font-weight: 700; }
+.pts { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.pts li { display: flex; gap: 8px; }
+.pts li .ar { font-size: 15px; flex: none; color: var(--warn); }
+.bar { position: relative; height: 6px; border-radius: 99px; background: var(--surface-2); }
+.bar i { display: block; height: 100%; border-radius: inherit; background: var(--cat); max-width: 100%; transition: width .3s ease; }
+.goal.full .bar i { background: var(--good); }
+.meta { margin: 0; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.meta b { font-family: var(--f-display); font-size: 19px; font-weight: 650; color: var(--fg); }
+.goal-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ctrl { display: flex; gap: 6px; flex: none; }
+.ctrl button { height: 40px; min-width: 40px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 15px; display: grid; place-items: center; }
+.ctrl .inc { background: color-mix(in srgb, var(--cat) 14%, var(--surface)); border-color: color-mix(in srgb, var(--cat) 35%, var(--line)); color: var(--cat); }
+.ctrl .check svg { width: 18px; height: 18px; }
+.ctrl .check[aria-pressed="true"] { background: var(--good); border-color: var(--good); color: var(--on-good); }
+.ctrl button:disabled, .btn:disabled { opacity: .35; cursor: not-allowed; }
+.acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.acts .btn { flex: 1 1 140px; min-width: 0; }
+.btn { min-height: 46px; padding: 0 16px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-align: center; }
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.validate { background: var(--cat); border-color: var(--cat); color: var(--surface); }
+.btn.soft { color: var(--cat); border-color: color-mix(in srgb, var(--cat) 40%, var(--line)); background: color-mix(in srgb, var(--cat) 8%, var(--surface)); }
+.btn.danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--line)); }
+.btn.armed { background: var(--danger); border-color: var(--danger); color: var(--surface); }
+.btn:active:not(:disabled), .ctrl button:active:not(:disabled) { transform: scale(.97); }
+.onb-restore { align-self: center; text-align: center; padding: 8px 12px; }
+.link { border: 0; background: none; padding: 4px 0; color: var(--accent); font-weight: 600; font-size: 13.5px; text-align: left; }
+.win { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--r-card); background: var(--good); color: var(--on-good); animation: pop .45s cubic-bezier(.2,1.4,.4,1); }
+.win svg { width: 30px; height: 30px; flex: none; padding: 5px; border-radius: 50%; background: color-mix(in srgb, var(--on-good) 22%, transparent); }
+.win div { display: flex; flex-direction: column; min-width: 0; }
+.win strong { font-family: var(--f-display); font-size: 18px; font-weight: 800; }
+.win span { font-size: 13.5px; opacity: .9; }
+.qr { display: flex; flex-direction: column; gap: 7px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.qr > span { font-size: 13px; color: var(--muted); }
+.qr b { color: var(--fg); }
+.rate { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; }
+.rate button { height: 40px; min-width: 0; padding: 0; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 14.5px; font-variant-numeric: tabular-nums; color: var(--fg); }
+.rate.sm button { height: 34px; border-radius: 9px; font-size: 13.5px; }
+.rate button.on.l1 { background: var(--danger); border-color: var(--danger); color: var(--surface); }
+.rate button.on.l2 { background: var(--warn); border-color: var(--warn); color: var(--surface); }
+.rate button.on.l3, .rate button.on.l4 { background: var(--good); border-color: var(--good); color: var(--on-good); }
+.l1-t { color: var(--danger); } .l2-t { color: var(--warn); } .l3-t, .l4-t { color: var(--good); }
+
+/* Summary, grid, calendar */
+.summary { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 16px; display: flex; align-items: center; gap: 16px; }
+.summary .ring { width: 72px; height: 72px; }
+.summary .ring span { font-size: 18px; }
+.summary > div:last-child { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.summary h2 { font-size: 20px; }
+.summary p { margin: 0; font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.summary p.red { color: var(--danger); }
+.summary p.small { font-size: 12px; }
+.grid { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 10px 12px; display: flex; flex-direction: column; }
+.grow { --cat: var(--c-rev); display: grid; grid-template-columns: minmax(0, 1fr) repeat(7, 28px); gap: 4px; align-items: center; padding-block: 8px; border-top: 1px solid var(--line); }
+.grow.head { border-top: 0; padding-block: 2px 4px; font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--muted); text-align: center; }
+.gname { min-width: 0; display: flex; flex-direction: column; }
+.gname span { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gname small { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cell { width: 28px; height: 28px; border-radius: 8px; border: 0; padding: 0; background: var(--surface-2); font-size: 11px; font-weight: 600; color: var(--muted); }
+.cell.ok { background: color-mix(in srgb, var(--warn) 30%, var(--surface-2)); color: var(--fg); }
+.cell.full { background: var(--good); color: var(--on-good); }
+.cell.soft { background: color-mix(in srgb, var(--cat) 35%, var(--surface-2)); color: var(--fg); }
+.cell.low { background: color-mix(in srgb, var(--danger) 24%, var(--surface-2)); color: var(--danger); }
+.cell.future { background: transparent; border: 1px dashed var(--line); }
+.cell.na, .cell.pause { background: transparent; color: var(--line); }
+.cell.sel { outline: 2px solid var(--fg); outline-offset: 1px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; padding: 8px 2px 2px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 4px; background: var(--surface-2); }
+.legend i.o { background: color-mix(in srgb, var(--warn) 30%, var(--surface-2)); }
+.legend i.f { background: var(--good); }
+.legend i.l { background: color-mix(in srgb, var(--danger) 24%, var(--surface-2)); }
+.legend i.z1 { background: var(--danger); } .legend i.z2 { background: var(--warn); } .legend i.z3 { background: color-mix(in srgb, var(--good) 35%, var(--surface-2)); } .legend i.z4 { background: var(--good); }
+.legend i.zs { width: 9px; height: 9px; border-radius: 50%; background: var(--warn); }
+.month-nav { display: flex; align-items: center; gap: 8px; }
+.month-nav h2 { flex: 1; min-width: 0; text-align: center; }
+.cal { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 12px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.cal .h { text-align: center; font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--muted); }
+.mc { aspect-ratio: 1; max-width: 100%; border: 0; border-radius: 10px; background: var(--surface-2); font-size: 13px; font-weight: 600; color: var(--muted); padding: 0; }
+.mc.ok { background: color-mix(in srgb, var(--warn) 30%, var(--surface-2)); color: var(--fg); }
+.mc.full { background: var(--good); color: var(--on-good); }
+.mc.low { background: color-mix(in srgb, var(--danger) 24%, var(--surface-2)); color: var(--danger); }
+.mc.future { background: transparent; border: 1px dashed var(--line); }
+.mc.pause { background: transparent; border: 1px dotted var(--muted); }
+.mc.today { box-shadow: inset 0 0 0 2px var(--accent); }
+.mc.sel { outline: 2px solid var(--fg); outline-offset: 1px; }
+.stats4 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.stat { --cat: var(--c-rev); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.stat span { font-size: 12px; color: var(--muted); font-weight: 600; }
+.stat b { font-family: var(--f-display); font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--cat); }
+.stat small { font-size: 12px; color: var(--muted); }
+
+/* Hizb map */
+.mini-seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--surface-2); flex: none; }
+.mini-seg button { border: 0; background: none; padding: 5px 10px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.mini-seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+.prio { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.pchip { flex: none; display: flex; flex-direction: column; align-items: flex-start; padding: 8px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-align: left; }
+.pchip .ar { font-size: 20px; font-weight: 700; line-height: 1.4; }
+.pchip b { font-family: var(--f-display); font-size: 15px; }
+.pchip small { font-size: 11px; color: var(--warn); font-weight: 600; }
+.pchip.l1 { border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); } .pchip.l1 b { color: var(--danger); }
+.pchip.l2 { border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); } .pchip.l2 b { color: var(--warn); }
+.hzgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 8px; }
+.hz { position: relative; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 10px 10px 9px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); text-align: left; }
+.hz-n { font-size: 12px; font-weight: 600; color: var(--muted); }
+.hz-s { font-family: var(--f-display); font-size: 25px; font-weight: 800; line-height: 1.15; font-variant-numeric: tabular-nums; display: flex; align-items: baseline; }
+.hz-s small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 1px; }
+.hz-s i { font-style: normal; font-size: 15px; margin-left: 4px; }
+.hz-s i.up { color: var(--good); } .hz-s i.down { color: var(--danger); }
+.hz-s.hz-empty { font-family: var(--f-body); font-size: 15px; font-weight: 600; color: var(--muted); padding-block: 5px 3px; }
+.hz-meta, .hz-pg { font-size: 11.5px; color: var(--muted); line-height: 1.3; }
+.hz-pg { color: var(--warn); font-weight: 600; }
+.hz.none { border-style: dashed; }
+.hz.l1 { background: color-mix(in srgb, var(--danger) 13%, var(--surface)); border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); } .hz.l1 .hz-s { color: var(--danger); }
+.hz.l2 { background: color-mix(in srgb, var(--warn) 15%, var(--surface)); border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); } .hz.l2 .hz-s { color: var(--warn); }
+.hz.l3 { background: color-mix(in srgb, var(--good) 14%, var(--surface)); border-color: color-mix(in srgb, var(--good) 40%, var(--line)); } .hz.l3 .hz-s { color: var(--good); }
+.hz.l4 { background: var(--good); border-color: var(--good); }
+.hz.l4 .hz-s, .hz.l4 .hz-n, .hz.l4 small, .hz.l4 .hz-meta, .hz.l4 .hz-pg, .hz.l4 .hz-s i { color: var(--on-good); }
+.hz.prog { border: 1.5px dashed var(--c-prof); }
+.hz.off { opacity: .45; background: transparent; border-style: dashed; }
+.hz .stale { position: absolute; top: 9px; right: 9px; width: 9px; height: 9px; border-radius: 50%; background: var(--warn); box-shadow: 0 0 0 2px var(--surface); }
+.hzgrid.all { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 5px; }
+.hzgrid.all .hz { padding: 6px 2px 5px; border-radius: 10px; align-items: center; }
+.hzgrid.all .hz-s { font-size: 15px; }
+.hzgrid.all .hz-s small, .hzgrid.all .hz-meta, .hzgrid.all .hz-pg, .hzgrid.all .hz-s i { display: none; }
+.hzgrid.all .stale { top: 4px; right: 4px; width: 6px; height: 6px; }
+.tah { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 12px; border-radius: 16px; text-align: left; background: color-mix(in srgb, var(--gold) 9%, var(--surface)); border: 1px solid color-mix(in srgb, var(--gold) 35%, var(--line)); }
+.tah .tah-disc { position: static; width: 52px; height: 52px; flex: none; }
+.tah-l { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tah-h { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; font-size: 13px; font-weight: 600; color: var(--muted); }
+.tah-h .ar-t { font-family: var(--f-ar); font-size: 19px; font-weight: 700; line-height: 1.3; color: var(--gold); }
+.tah small { font-size: 12px; color: var(--muted); line-height: 1.35; }
+.tah small.main { color: var(--fg); font-weight: 600; font-size: 12.5px; }
+.tah-bar { height: 4px; border-radius: 9px; background: var(--surface-2); overflow: hidden; margin-block: 2px; }
+.tah-bar i { display: block; height: 100%; background: var(--gold); border-radius: inherit; }
+
+/* Sheets */
+.backdrop { position: fixed; inset: 0; z-index: 30; background: var(--backdrop); display: flex; align-items: flex-end; justify-content: center; animation: fade .18s ease; }
+.sheet {
+  width: 100%; max-width: 560px; max-height: calc(100% - 24px); overflow-y: auto;
+  background: var(--surface); border-radius: 24px 24px 0 0; box-shadow: var(--shadow);
+  padding-top: 10px; padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 16px; animation: rise .24s cubic-bezier(.2,.8,.2,1);
+}
+.grab { width: 40px; height: 5px; border-radius: 9px; background: var(--line); align-self: center; flex: none; }
+.sheet h2 { font-size: 21px; font-weight: 800; }
+.sh-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sh-head > div { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sh-ar { font-family: var(--f-ar); font-size: 32px; font-weight: 700; line-height: 1.3; color: var(--gold); }
+.field { display: flex; flex-direction: column; gap: 7px; border: 0; margin: 0; padding: 0; min-width: 0; }
+.field > span, .field legend, .flabel { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0; }
+.field legend { margin-bottom: 7px; }
+.input { height: 46px; width: 100%; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); padding: 0 12px; font: inherit; font-size: 16px; }
+.input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+textarea.input { height: auto; min-height: 92px; padding: 10px 12px; resize: vertical; line-height: 1.45; }
+.opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.opt { min-height: 40px; padding: 0 13px; border-radius: 11px; border: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--muted); background: var(--surface); }
+.opt[aria-pressed="true"] { border-color: var(--accent); color: var(--fg); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
+.opt .ar { font-size: 17px; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.stepper { display: flex; align-items: center; gap: 6px; }
+.stepper .input, .stepper .val { text-align: center; font-family: var(--f-display); font-weight: 650; font-size: 18px; min-width: 0; flex: 1; }
+.stepper .val { height: 46px; display: grid; place-items: center; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.stepper button { width: 42px; height: 46px; flex: none; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 18px; font-weight: 600; }
+.prev { margin: 0; font-size: 13.5px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; padding: 12px; border-radius: 12px; background: var(--surface-2); }
+.prev .ar { font-size: 20px; color: var(--fg); font-weight: 700; }
+.btn.wide { width: 100%; margin-top: 12px; }
+.kgrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 5px; }
+.kgrid button { min-height: 38px; border-radius: 10px; border: 1px dashed var(--line); background: transparent; color: var(--muted); font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; padding: 0; }
+.kgrid button[aria-pressed="true"] { border: 1px solid var(--accent); color: var(--fg); background: color-mix(in srgb, var(--accent) 16%, var(--surface)); }
+.kgrid button.lk { border: 1px solid var(--line); background: var(--surface-2); color: var(--fg); opacity: .75; }
+.kgrid button.cur { border: 1.5px solid var(--accent); color: var(--accent); background: var(--surface); }
+.kgrid button:disabled { cursor: default; }
+.krange { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13.5px; color: var(--muted); }
+.krange .input { width: 64px; min-height: 40px; padding: 0 8px; text-align: center; }
+.krange .btn { min-height: 40px; padding: 0 12px; font-size: 14px; }
+.klegend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
+.klegend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.klegend .k1 { background: var(--surface-2); border: 1px solid var(--line); }
+.klegend .k2 { border: 1.5px solid var(--accent); }
+.klegend .k3 { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); border: 1px solid var(--accent); }
+.ggroup { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; border: 1px solid var(--line); }
+.ggroup.off { opacity: .55; }
+.ggroup-h { display: flex; align-items: center; gap: 10px; }
+.ggroup-h .ar { font-size: 22px; font-weight: 700; flex: 1; }
+.tick { width: 34px; height: 34px; flex: none; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; }
+.tick[aria-pressed="true"] { background: var(--good); border-color: var(--good); color: var(--on-good); }
+.tick svg { width: 18px; height: 18px; }
+.switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.switch-row:first-of-type { border-top: 0; }
+.switch-row > div { min-width: 0; display: flex; flex-direction: column; }
+.switch-row small { color: var(--muted); font-size: 12.5px; }
+.switch { width: 50px; height: 30px; flex: none; border-radius: 99px; border: 0; background: var(--surface-2); position: relative; padding: 0; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 3px rgb(0 0 0 / .25); transition: left .15s; }
+.switch[aria-checked="true"] { background: var(--good); }
+.switch[aria-checked="true"]::after { left: 23px; }
+.set-list { display: flex; flex-direction: column; gap: 8px; }
+.set-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-align: left; width: 100%; }
+.set-item > div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.set-item small { color: var(--muted); font-size: 12.5px; }
+.set-item svg { width: 16px; height: 16px; color: var(--muted); flex: none; }
+.code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; }
+.hist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.hist li { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+.hist li:first-child { border-top: 0; }
+.hist li span { flex: 1; min-width: 0; color: var(--muted); }
+.hist li b { min-width: 44px; font-variant-numeric: tabular-nums; }
+.hist button { border: 0; background: none; color: var(--muted); font-size: 18px; width: 34px; height: 34px; border-radius: 8px; flex: none; }
+.stats3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.stats3 > div { background: var(--surface-2); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stats3 span { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.stats3 b { font-family: var(--f-display); font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.stats3 small { font-size: 12px; color: var(--muted); }
+
+/* Onboarding */
+.onb { max-width: 520px; margin: 0 auto; padding-block: 18px 40px; display: flex; flex-direction: column; gap: 18px; min-height: 100%; }
+.onb-hero { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; padding-top: 6px; }
+.onb-hero img { width: 76px; height: 76px; border-radius: 18px; box-shadow: var(--shadow); }
+.hero-sep { width: 1.5px; height: 18px; border-radius: 2px; background: var(--muted); opacity: .5; }
+.onb-hero p.hero-q { font-size: 12.5px; color: var(--muted); line-height: 1.6; max-width: 34ch; }
+.hero-q .ar { font-size: 15.5px; font-weight: 700; color: inherit; }
+.hero-ref { white-space: nowrap; font-size: 11.5px; opacity: .85; }
+.quote { margin: 4px 0 0; padding: 12px 16px; border-radius: 16px; background: color-mix(in srgb, var(--gold) 9%, var(--surface)); border: 1px solid color-mix(in srgb, var(--gold) 30%, var(--line)); display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: 340px; }
+.quote blockquote { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.quote blockquote p { margin: 0; }
+.quote .ar { font-size: 23px; font-weight: 700; line-height: 1.6; color: var(--gold); }
+.quote .fr-q { font-family: var(--f-body); font-style: italic; font-size: 14.5px; color: var(--fg); }
+.quote figcaption { font-size: 11.5px; letter-spacing: .04em; color: var(--muted); }
+.onb-hero p { margin: 0; color: var(--muted); font-size: 13.5px; max-width: 36ch; }
+.steps { display: flex; gap: 4px; }
+.steps i { flex: 1; height: 4px; border-radius: 4px; background: var(--surface-2); }
+.steps i.on { background: var(--gold); }
+.steps-l { display: flex; flex-wrap: wrap; gap: 2px 8px; font-size: 12px; color: var(--muted); }
+.steps-l b { color: var(--fg); }
+.onb-card { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 20px 18px; display: flex; flex-direction: column; gap: 16px; }
+.onb-card h2 { font-size: 22px; font-weight: 800; text-wrap: balance; }
+.onb-card > p { margin: -8px 0 0; color: var(--muted); font-size: 14px; }
+.choice { display: flex; flex-direction: column; gap: 8px; }
+.choice button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-align: left; }
+.choice button small { color: var(--muted); font-size: 12.5px; }
+.choice button[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); box-shadow: inset 0 0 0 1px var(--accent); }
+.onb-nav { display: flex; gap: 8px; }
+.onb-nav .btn { flex: 1; }
+.err { margin: 0; font-size: 13px; color: var(--danger); }
+.onb-card > p.grp { margin: 6px 0 -6px; font-weight: 700; font-size: 15.5px; color: var(--fg); padding-top: 12px; border-top: 1px solid var(--line); }
+.onb-card > p.grp:first-of-type { border-top: 0; padding-top: 0; margin-top: 0; }
+.recap { display: flex; flex-direction: column; }
+.recap div { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+.recap div:first-child { border-top: 0; }
+.recap dt { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; color: var(--muted); }
+.recap dd { margin: 0; font-size: 14px; font-weight: 600; }
+.recap .rc { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.rules { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+.rules li { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; }
+.rules li b { display: block; }
+.rules li span.n { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--gold) 18%, var(--surface)); color: var(--gold); font-weight: 800; font-size: 13px; }
+.foot { margin: 0; text-align: center; font-size: 12px; color: var(--muted); }
+
+.toast { position: fixed; z-index: 40; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: max-content; max-width: calc(100% - 32px); background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 12px; font-size: 14px; box-shadow: var(--shadow); }
+#confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+@keyframes fade { from { opacity: 0; } }
+@keyframes rise { from { transform: translateY(40px); opacity: .4; } }
+@keyframes pop { from { transform: scale(.94); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+@media (max-width: 370px) { .grow { grid-template-columns: minmax(0, 1fr) repeat(7, 24px); gap: 3px; } .cell { width: 24px; height: 24px; } .row2 { grid-template-columns: 1fr; } }
+/* vendredi */
+h1.fri { color: var(--gold); }
+.jum-q { margin: 6px 0 0; text-align: left; line-height: 1.7; letter-spacing: 0; }
+.jum-q .ar { font-family: 'Amiri', serif; font-size: 12.5px; color: var(--fg); opacity: .8; }
+.jum-q .q-ref { margin-left: 6px; font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+.day.fri .wd { color: var(--gold); }
+.hadith { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 16px 12px; border-radius: 20px; text-align: center; background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--gold) 13%, var(--surface)) 0%, var(--surface) 70%); border: 1px solid color-mix(in srgb, var(--gold) 38%, var(--line)); }
+.had-l { display: inline-flex; align-items: center; gap: 8px; font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.had-l::before, .had-l::after { content: ''; width: 18px; height: 1px; background: currentColor; opacity: .6; }
+.had-ar { margin: 0; font-family: 'Amiri', serif; font-size: 16.5px; line-height: 1.85; color: var(--fg); text-wrap: balance; }
+.had-fr { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--fg); opacity: .78; font-style: italic; text-wrap: pretty; }
+.had-foot { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 2px; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--gold) 25%, var(--line)); }
+.had-ref { font-size: 11px; color: var(--muted); text-align: left; }
+.had-btn { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 14px; border-radius: 99px; border: 1px solid var(--gold); background: transparent; color: var(--fg); font-size: 13px; font-weight: 600; }
+.had-btn svg { width: 14px; height: 14px; color: var(--gold); }
+.had-mini { display: flex; align-items: center; gap: 8px; width: 100%; padding: 9px 14px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--gold) 38%, var(--line)); background: var(--surface); color: var(--fg); font-size: 13px; text-align: left; }
+.had-mini svg { width: 15px; height: 15px; color: var(--gold); flex: none; }
+.had-mini span { flex: 1; }
+.had-mini b { color: var(--accent); font-weight: 600; }
+.banner.kask { flex-direction: column; align-items: stretch; gap: 10px; border-color: var(--gold); line-height: 1.45; }
+.kask-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.kask-acts .btn { flex: 1 1 40%; }
+/* navigateurs sans color-mix (anciens Samsung Internet, Android WebView) : couleurs pleines ou bordures à la place des teintes */
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+  .goal.full { border-color: var(--good); } .goal.low { border-color: var(--danger); } .goal.ok { border-color: var(--warn); }
+  .banner.warn { border-color: var(--warn); }
+  .cell.ok, .mc.ok, .legend i.o { background: var(--warn); color: #fff; }
+  .cell.low, .mc.low, .legend i.l { background: var(--danger); color: #fff; }
+  .cell.soft { background: var(--cat); color: #fff; opacity: .7; }
+  .legend i.z3 { background: var(--good); opacity: .6; }
+  .hz.l1 { border: 2px solid var(--danger); } .hz.l2 { border: 2px solid var(--warn); } .hz.l3 { border: 2px solid var(--good); }
+  .pchip.l1 { border-color: var(--danger); } .pchip.l2 { border-color: var(--warn); }
+  .ctrl .inc, .btn.soft { border-color: var(--cat); }
+  .btn.danger { border-color: var(--danger); }
+  .opt[aria-pressed="true"], .choice button[aria-pressed="true"], .kgrid button[aria-pressed="true"] { border: 2px solid var(--accent); background: var(--surface-2); }
+  .klegend .k3 { background: var(--surface-2); border: 2px solid var(--accent); }
+  .tah, .quote, .hadith, .had-mini { background: var(--surface); border-color: var(--gold); }
+  .had-foot { border-color: var(--line); }
+  .rules li span.n { background: var(--surface-2); }
+  .win svg { background: rgba(255, 255, 255, .2); }
+}
+</style>
+
+<div id="root"></div>
+<div class="backdrop" id="back" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+const ICON = 'data:image/png;base64,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';
+const $ = s => document.querySelector(s);
+const TAAHADOU = ['2026-11-01', '2027-01-31', '2027-06-20'];
+const WD = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const DOW = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
+const DOW_LONG = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+const DOW_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const STAGES = { k1: '1re khatma', k2: '2e khatma', k3: 'Plus de 2 khatmat', ijaza: 'Ijaza' };
+const UNITS = [[1, 'ثمن', 'un huitième'], [2, 'ربع', 'un quart'], [4, 'نصف', 'un demi-hizb'], [8, 'حزب', 'un hizb']];
+const ICON_CHECK = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 10.5 3.5 3.5 7.5-8"/></svg>';
+const ICON_GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
+const ICON_X = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
+const ICON_CHEV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 3 5 5-5 5"/></svg>';
+const ICON_PREV = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3 5 8l5 5"/></svg>';
+
+/* ---------- dates & formats ---------- */
+const pad = n => String(n).padStart(2, '0');
+const keyOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseKey = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (k, n) => { const d = parseKey(k); d.setDate(d.getDate() + n); return keyOf(d); };
+const todayKey = () => keyOf(new Date());
+const weekStart = k => { const d = parseKey(k); d.setDate(d.getDate() - (d.getDay() + 6) % 7); return keyOf(d); };
+const weekDays = k => { const s = weekStart(k); return Array.from({ length: 7 }, (_, i) => addDays(s, i)); };
+function monthDays(k) { const d = parseKey(k), y = d.getFullYear(), m = d.getMonth(), n = new Date(y, m + 1, 0).getDate(); return Array.from({ length: n }, (_, i) => keyOf(new Date(y, m, i + 1))); }
+function addMonths(k, n) { const d = parseKey(k), day = d.getDate(); const t = new Date(d.getFullYear(), d.getMonth() + n, 1); t.setDate(Math.min(day, new Date(t.getFullYear(), t.getMonth() + 1, 0).getDate())); return keyOf(t); }
+function isoWeek(k) { const d = parseKey(k), t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - day); const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1)); return Math.ceil(((t - y0) / 86400000 + 1) / 7); }
+const daysBetween = (a, b) => Math.round((parseKey(b) - parseKey(a)) / 864e5);
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const fmtLong = new Intl.DateTimeFormat('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+const fmtDM = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
+const fmtMonth = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
+const fmtDay = new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+/* date hégirienne : on lit les nombres (fiables partout) et on met nos propres noms de mois,
+   car certains Android affichent des mois grégoriens et « av. J.-C. » avec la locale fr */
+const HMONTHS = ['mouharram', 'safar', 'rabia al awal', 'rabia ath-thani', 'joumada al oula', 'joumada ath-thania', 'rajab', 'chaabane', 'ramadan', 'chawwal', "dhou al qi'da", 'dhou al-hijja'];
+let fmtHijri = null;
+for (const cal of ['islamic-umalqura', 'islamic']) {
+  try { const f = new Intl.DateTimeFormat('en-u-ca-' + cal + '-nu-latn', { day: 'numeric', month: 'numeric', year: 'numeric' }); if (/^islamic/.test(f.resolvedOptions().calendar)) { fmtHijri = f; break; } } catch (e) {}
+}
+function hijriStr(d) {
+  if (!fmtHijri) return '';
+  try {
+    const p = {}; fmtHijri.formatToParts(d).forEach(x => { if (x.type === 'day' || x.type === 'month' || x.type === 'year') p[x.type] = parseInt(x.value, 10); });
+    if (!(p.day >= 1 && p.day <= 30 && p.month >= 1 && p.month <= 12 && p.year >= 1400 && p.year <= 1700)) return '';
+    return `${p.day} ${HMONTHS[p.month - 1]} ${p.year}`;
+  } catch (e) { return ''; }
+}
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fr = n => (Math.round(n * 10) / 10).toLocaleString('fr-FR');
+const clampInt = (v, a, b) => { const n = parseInt(v, 10); return isFinite(n) ? Math.max(a, Math.min(b, n)) : a; };
+const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+const AR = w => `<span class="ar-i" lang="ar">${w}</span>`;
+const hizbFr = halves => halves % 2 ? (halves === 1 ? '½ hizb' : `${fr(halves / 2)} hizb`) : `${halves / 2} hizb`;
+const fmtLearned = e => { const n = Math.floor(e / 8), t = e % 8; return t ? `${n} hizb et ${t}/8` : `${n} hizb`; };
+
+/* ---------- state ---------- */
+const STORE = 'lnthbt-v1';
+const blank = () => ({ cfg: null, log: {}, hz: {}, moves: [], meta: {} });
+let S = blank(), storeOk = true;
+try {
+  const raw = localStorage.getItem(STORE);
+  if (raw) { const d = JSON.parse(raw); if (d && typeof d === 'object') S = Object.assign(blank(), d); }
+  localStorage.setItem(STORE + ':probe', '1'); localStorage.removeItem(STORE + ':probe');
+} catch (e) { storeOk = false; }
+function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); storeOk = true; } catch (e) { storeOk = false; } }
+const V = { sel: todayKey(), tab: 'jour', onb: null, sheet: null, lastToday: todayKey(), hzAll: false };
+try { const t = localStorage.getItem(STORE + ':tab'); if (['jour', 'semaine', 'mois', 'hizb'].includes(t)) V.tab = t; } catch (e) {}
+if (S.cfg && S.cfg.pass && S.cfg.pass.mode === 'free') { S.cfg.pass.mode = 'month'; S.cfg.pass.perMonth = S.cfg.pass.perMonth || 4; }
+/* C() complète les réglages ajoutés après coup (anciennes données, sauvegardes restaurées) */
+const C = () => { const c = S.cfg; if (c && !c.kahf) c.kahf = { on: false, mode: 'bonus' }; return c; };
+const isFri = k => parseKey(k).getDay() === 5;
+const kahfObj = d => { const c = C(); return c.kahf && c.kahf.on && isFri(d) && d >= (c.kahfFrom || c.created); };
+const backStart = d => { const m = d.slice(0, 8) + '01', w = weekStart(d); return w < m ? w : m; };
+if (S.cfg && !S.cfg.v2) { S.cfg.pivot = S.cfg.pivot || S.cfg.created; S.cfg.created = backStart(S.cfg.created); S.cfg.v2 = true; save(); }
+const perWeekOfMonth = k => (C().pass.perMonth || 4) * 7 / monthDays(k).length;
+
+function setLog(d, patch) {
+  const cur = Object.assign({}, S.log[d] || {}, patch);
+  Object.keys(cur).forEach(k => { if (cur[k] == null || cur[k] === 0) delete cur[k]; });
+  const log = Object.assign({}, S.log);
+  if (Object.keys(cur).length) log[d] = cur; else delete log[d];
+  S.log = log; save();
+}
+
+/* ---------- Coran model ---------- */
+const hizbAt = (dir, i) => dir === 'desc' ? 60 - i : i + 1;
+const isK1 = () => C().stage === 'k1';
+function hSum(from, to) { let s = 0; for (const d in S.log) { if (d >= from && d < to) { const p = S.log[d].pass; if (p && p.h) s += p.h; } } return s; }
+const pivot = () => C().pivot || C().created;
+/* hizb déjà appris hors de la suite (cfg.known) : la suite de hifz les saute, la révision les inclut */
+const order60 = dir => Array.from({ length: 60 }, (_, i) => hizbAt(dir, i));
+const normKnown = arr => Array.from(new Set((arr || []).map(Number).filter(h => h >= 1 && h <= 60))).sort((x, y) => x - y);
+const seqFor = (dir, known) => { const k = new Set(known || []); return order60(dir).filter(h => !k.has(h)); };
+const knownArr = () => isK1() ? (C().known || []) : [];
+let _mz = { log: null, key: '', m: {} };
+function memo(id, f) {
+  const c = C(), key = [c.dir, c.stage, c.base8, c.pivot, c.created, (c.known || []).join(',')].join('|');
+  if (_mz.log !== S.log || _mz.key !== key) _mz = { log: S.log, key, m: {} };
+  return id in _mz.m ? _mz.m[id] : (_mz.m[id] = f());
+}
+const seqList = () => memo('seq', () => isK1() ? seqFor(C().dir, knownArr()) : order60(C().dir));
+function prog8(before) {
+  return memo('p' + (before || ''), () => {
+    const P = pivot(); let e = C().base8 || 0;
+    if (!before) e += hSum(P, '9999-12-31'); else if (before >= P) e += hSum(P, before); else e -= hSum(before, P);
+    return Math.max(0, Math.min(seqList().length * 8, e));
+  });
+}
+const learned8 = before => isK1() ? knownArr().length * 8 + prog8(before) : 480;
+const curHifz = before => { const e = prog8(before), s = seqList(); return e < s.length * 8 ? s[Math.floor(e / 8)] : null; };
+function poolList(before) {
+  return memo('L' + (before || ''), () => {
+    if (!isK1()) return order60(C().dir);
+    const set = new Set(knownArr().concat(seqList().slice(0, Math.floor(prog8(before) / 8))));
+    return order60(C().dir).filter(h => set.has(h));
+  });
+}
+const poolHz = before => poolList(before).length;
+const halfAt = (idx, d) => ({ hz: poolList(d)[Math.floor(idx / 2)], half: idx % 2 + 1 });
+const arHalf = h => `<span class="ar" lang="ar">حزب ${h.hz} · نصف ${h.half}</span>`;
+const frHalf = h => `Hizb ${h.hz}, ${h.half === 1 ? 'première' : 'seconde'} moitié`;
+function portion(e, u) {
+  const sq = seqList(); if (e >= sq.length * 8) return null;
+  const hz = sq[Math.floor(e / 8)], r = e % 8;
+  if (u >= 8 && r === 0) return { ar: `حزب ${hz}`, fr: `Hizb ${hz} en entier`, hz };
+  if (u === 4 && r % 4 === 0) return { ar: `حزب ${hz} · نصف ${r / 4 + 1}`, fr: `Hizb ${hz}, ${r ? 'seconde' : 'première'} moitié`, hz };
+  if (u === 2 && r % 2 === 0) return { ar: `حزب ${hz} · ربع ${r / 2 + 1}`, fr: `Hizb ${hz}, ${r / 2 + 1}${r ? 'e' : 'er'} quart`, hz };
+  return { ar: `حزب ${hz} · ثمن ${r + 1}`, fr: `Hizb ${hz}, à partir du ${r + 1}${r ? 'e' : 'er'} huitième`, hz };
+}
+const revCount = d => (S.log[d] && S.log[d].rev) || 0;
+const prCount = d => (S.log[d] && S.log[d].pass && S.log[d].pass.rn) || 0;
+/* le pointeur suit l'identité du demi-hizb quand la liste change (un hizb appris peut s'insérer au milieu) */
+const hIdx = (L, hz, half) => { const i = L.indexOf(hz); return i < 0 ? -1 : i * 2 + half - 1; };
+function remap(p, from, to) {
+  const n = from.length * 2, m = to.length * 2; if (!m) return null;
+  if (!n) return 0;
+  if (from === to) return ((p % m) + m) % m;
+  for (let j = 0; j < n; j++) { const q = (((p + j) % n) + n) % n, i = hIdx(to, from[q >> 1], q % 2 + 1); if (i >= 0) return i; }
+  return ((p % m) + m) % m;
+}
+function rotPointer(anchor, k, countOf) {
+  if (!anchor) return null;
+  let L = poolList(anchor.day), p = anchor.idx;
+  const days = Object.keys(S.log).filter(d => countOf(d) && (k < anchor.day ? d >= k && d < anchor.day : d >= anchor.day && d < k)).sort();
+  if (k < anchor.day) days.reverse();
+  days.forEach(d => {
+    const L2 = poolList(d); if (!L2.length) return;
+    p = remap(p, L, L2); L = L2; const m = L.length * 2;
+    p = k < anchor.day ? (((p - countOf(d)) % m) + m) % m : (p + countOf(d)) % m;
+  });
+  return remap(p, L, poolList(k));
+}
+const revPtr = k => rotPointer(C().rev.anchor, k, revCount);
+const prPtr = k => rotPointer(C().pass.anchor, k, prCount);
+function anchorFor(rh, rn, d, countToday) {
+  const list = poolList(d), size = list.length * 2;
+  if (!size) return { day: d, idx: 0 };
+  let pos = list.indexOf(+rh); if (pos < 0) pos = 0;
+  const chosen = pos * 2 + (+rn === 2 ? 1 : 0);
+  return { day: d, idx: ((chosen - countToday) % size + size) % size };
+}
+function revTarget(d) {
+  const r = C().rev;
+  if (r.mode === 'tour') return Math.max(1, Math.ceil(poolHz(d) * 2 / Math.max(1, r.tour || 30)));
+  return r.qty || 1;
+}
+const inPause = d => { const p = C().pause; return !!(p && d >= p.from && d <= p.to); };
+const isTahDay = d => TAAHADOU.includes(d);
+const tahOf = d => (S.log[d] && S.log[d].tah) || 0;
+function isPassDay(d) {
+  const p = C().pass; if (!p.on || p.mode !== 'fixed' || isTahDay(d)) return false;
+  const mv = S.moves || [];
+  if (mv.some(m => m.to === d)) return true;
+  if (mv.some(m => m.from === d)) return false;
+  return (p.days || []).includes(parseKey(d).getDay());
+}
+const passOf = d => S.log[d] && S.log[d].pass;
+function suggestGroups(k, nHalves) {
+  const size = poolHz(k) * 2; if (!size || !nHalves) return [];
+  let p = prPtr(k); if (p == null) p = (C().pass.anchor && C().pass.anchor.idx) || 0;
+  const an = C().pass.anchor; if (an && k < an.day) { const lg = passOf(k); p = (((p + ((lg && lg.rn) || 0) - nHalves) % size) + size) % size; }
+  const out = [];
+  for (let i = 0; i < Math.min(nHalves, size); i++) {
+    const h = halfAt((p + i) % size, k), g = out[out.length - 1];
+    if (g && g.hz === h.hz) { g.n++; g.halves.push(h.half); } else out.push({ hz: h.hz, n: 1, halves: [h.half] });
+  }
+  return out;
+}
+const groupAr = g => g.n >= 2 ? `حزب ${g.hz}` : `حزب ${g.hz} · نصف ${g.halves[0]}`;
+
+/* ---------- scoring ---------- */
+function dayObjs(d) {
+  const c = C(), out = [];
+  if (inPause(d)) return out;
+  const before = d < c.created;
+  if (isTahDay(d) && !before) { const v = tahOf(d); if (v !== -1) { out.push({ k: 'tah', val: v === 1 ? 1 : 0, target: 1, min: 1 }); return out; } }
+  if (c.rev.on && poolHz(d) > 0 && (!before || revCount(d))) out.push({ k: 'rev', val: revCount(d), target: revTarget(d), min: 1 });
+  if (c.pass.on && c.pass.mode === 'fixed' && isPassDay(d) && (!before || passOf(d))) out.push({ k: 'pass', val: passOf(d) ? 1 : 0, target: 1, min: 1 });
+  if (c.kahf.mode === 'obj' && kahfObj(d)) out.push({ k: 'kahf', val: S.log[d] && S.log[d].kahf ? 1 : 0, target: 1, min: 1 });
+  return out;
+}
+const objSt = o => o.val >= o.target ? 'full' : o.val >= Math.min(o.min, o.target) ? 'ok' : 'low';
+function dayStatus(d) {
+  if (d > todayKey()) return null;
+  if (inPause(d)) return 'pause';
+  const os = dayObjs(d); if (!os.length) return null;
+  const ss = os.map(objSt);
+  return ss.every(s => s === 'full') ? 'full' : ss.includes('low') ? 'low' : 'ok';
+}
+function dayScore(d) { if (d > todayKey()) return null; const os = dayObjs(d); return os.length ? mean(os.map(o => Math.min(o.val / o.target, 1))) : null; }
+function weekScore(k) {
+  const c = C(), t = todayKey(), days = weekDays(k).filter(d => d <= t && d >= c.created && !inPause(d));
+  if (!days.length) return null;
+  const parts = [];
+  days.filter(isTahDay).forEach(d => { const v = tahOf(d); if (v !== -1) parts.push(v === 1 ? 1 : 0); });
+  if (c.rev.on) { const ds = days.filter(d => poolHz(d) > 0 && !(isTahDay(d) && tahOf(d) !== -1)); if (ds.length) parts.push(mean(ds.map(d => Math.min(revCount(d) / revTarget(d), 1)))); }
+  if (c.pass.on) {
+    if (c.pass.mode === 'fixed') { const sd = days.filter(isPassDay); if (sd.length) parts.push(Math.min(days.filter(passOf).length / sd.length, 1)); }
+    else if (c.pass.mode === 'quota') parts.push(Math.min(weekDays(k).filter(passOf).length / (c.pass.perWeek || 1), 1));
+    else if (c.pass.mode === 'month') parts.push(Math.min(weekDays(k).filter(passOf).length / perWeekOfMonth(k), 1));
+  }
+  return parts.length ? mean(parts) : null;
+}
+function streakRev() {
+  let k = todayKey(), n = 0;
+  if (revCount(k) < revTarget(k)) k = addDays(k, -1);
+  for (let i = 0; i < 3000 && k >= C().created; i++) {
+    if (inPause(k)) { k = addDays(k, -1); continue; }
+    if (revCount(k) >= revTarget(k)) { n++; k = addDays(k, -1); } else break;
+  }
+  return n;
+}
+function carried(k) { let n = 0, d = addDays(k, -1); const lim = k >= pivot() ? pivot() : C().created; while (n < 400 && d >= lim && revCount(d) === 0 && !(isTahDay(d) && tahOf(d) === 1)) { if (!inPause(d)) n++; d = addDays(d, -1); } return n; }
+
+/* ---------- hizb notes ---------- */
+const hzRec = h => S.hz[h] || { e: [], note: '', pts: [] };
+const hzEvals = h => (hzRec(h).e || []).slice().sort((a, b) => a.d < b.d ? -1 : a.d > b.d ? 1 : 0);
+function hzScore(h) { const e = hzEvals(h); if (!e.length) return null; return mean(e.slice(-3).map(x => x.s)); }
+function hzPrevScore(h) { const e = hzEvals(h); if (e.length < 2) return null; return mean(e.slice(-4, -1).map(x => x.s)); }
+const lvl = s => s == null ? 'none' : s < 4.5 ? 'l1' : s < 6.5 ? 'l2' : s < 8.5 ? 'l3' : 'l4';
+const LVL_TXT = { l1: 'À revoir', l2: 'Fragile', l3: 'Bon', l4: 'Solide', none: 'Pas encore noté' };
+const SRC_TXT = { rev: 'révision perso', cheikh: 'passage', manuel: 'note perso' };
+function setHz(h, rec) { S.hz = Object.assign({}, S.hz, { [h]: rec }); save(); }
+function rateHizb(h, s, src, day, toggle) {
+  const rec = hzRec(h), e = (rec.e || []).slice(), i = e.findIndex(x => x.d === day && x.src === src);
+  if (i >= 0 && e[i].s === s && toggle) e.splice(i, 1);
+  else if (i >= 0) e[i] = { d: day, s, src };
+  else e.push({ d: day, s, src });
+  setHz(h, Object.assign({}, rec, { e }));
+}
+function revHistory() {
+  if (!C().rev.anchor) return [];
+  const out = [];
+  Object.keys(S.log).filter(d => revCount(d)).forEach(d => {
+    const size = poolHz(d) * 2, p0 = revPtr(d); if (!size || p0 == null) return;
+    for (let i = 0; i < revCount(d); i++) out.push({ d, hz: halfAt((p0 + i) % size, d).hz });
+  });
+  return out;
+}
+function hzSeen() {
+  const m = {}, add = (hz, d) => { const o = m[hz] || (m[hz] = { n: 0, last: null }); o.n++; if (!o.last || d > o.last) o.last = d; };
+  revHistory().forEach(x => add(x.hz, x.d));
+  Object.keys(S.log).forEach(d => { const p = S.log[d].pass; if (p && p.rh) p.rh.forEach(h => add(h, d)); });
+  return m;
+}
+function cycleDays() { const size = poolHz(addDays(todayKey(), 1)) * 2; return C().rev.on && size ? Math.ceil(size / revTarget(todayKey())) : null; }
+
+/* ---------- taahadou ---------- */
+function tahNext() { const t = todayKey(), next = TAAHADOU.slice().sort().find(d => d >= t); return next ? { next, n: daysBetween(t, next) } : null; }
+const tahGoal = d => { const g = (C().tah && C().tah.goals || {})[d]; return g ? +g : null; };
+function tahPlan(N, n) {
+  const L8 = learned8(), known = poolList().slice(0, N);
+  const scores = known.map(hzScore).filter(x => x != null), remain8 = Math.max(0, N * 8 - L8);
+  return { L: L8, known: known.length, rated: scores.length, avg: scores.length ? mean(scores) : null, remain8, perWeek: n > 0 && remain8 ? remain8 / (n / 7) : 0, prog: Math.min(1, L8 / (N * 8)) };
+}
+
+/* ---------- rendering helpers ---------- */
+const stColor = s => s === 'full' ? 'var(--good)' : s === 'low' ? 'var(--danger)' : s === 'ok' ? 'var(--warn)' : 'var(--accent)';
+function ringSvg(score, size, w, color) {
+  const r = (size - w) / 2, c = 2 * Math.PI * r, p = score == null ? 0 : Math.max(0, Math.min(1, score));
+  return `<svg viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="${w}"/>` +
+    (p > 0 ? `<circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="${(c * p).toFixed(2)} ${c.toFixed(2)}"/>` : '') + `</svg>`;
+}
+const pct = s => s == null ? '—' : Math.round(s * 100) + '%';
+const rateRow = (attrs, sel, small) => `<div class="rate${small ? ' sm' : ''}">${Array.from({ length: 10 }, (_, i) => i + 1).map(s => `<button type="button" class="${sel === s ? 'on ' + lvl(s) : ''}" ${attrs} data-s="${s}" aria-label="Note ${s} sur 10" aria-pressed="${sel === s}">${s}</button>`).join('')}</div>`;
+const wordmark = lg => `<span class="wm${lg ? ' lg' : ''}" role="img" aria-label="لِنُثَبِّتَ, Linoutabbit"><span class="wm-ar" lang="ar" aria-hidden="true">لـنـثـــبّت</span><span class="wm-sep" aria-hidden="true"></span><span class="wm-la" aria-hidden="true">Linoutabbit</span></span>`;
+function applyLook() { const v = S.meta && S.meta.look; if (v && v !== 'auto') document.documentElement.setAttribute('data-look', v); else document.documentElement.removeAttribute('data-look'); }
+let toastT;
+function toast(msg) { const el = $('#toast'); el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, 2600); }
+function celebrate() {
+  try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; } catch (e) {}
+  const old = document.getElementById('confetti'); if (old) old.remove();
+  const cv = document.createElement('canvas'); cv.id = 'confetti'; document.body.appendChild(cv);
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), W = innerWidth, H = innerHeight;
+  cv.width = W * dpr; cv.height = H * dpr; const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+  const cols = ['#1E9E57', '#C9A24A', '#0E7C86', '#D2830F', '#F6F1E4'];
+  const ps = Array.from({ length: 140 }, () => ({ x: W / 2 + (Math.random() - .5) * W * .3, y: H * .3, vx: (Math.random() - .5) * 11, vy: -Math.random() * 12 - 4, s: 5 + Math.random() * 6, r: Math.random() * 6, vr: (Math.random() - .5) * .3, c: cols[Math.floor(Math.random() * cols.length)] }));
+  const t0 = performance.now();
+  (function frame(now) {
+    const el = now - t0; ctx.clearRect(0, 0, W, H);
+    ps.forEach(p => { p.vy += .32; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr; ctx.save(); ctx.globalAlpha = Math.max(0, 1 - el / 1900); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore(); });
+    if (el < 1900) requestAnimationFrame(frame); else cv.remove();
+  })(t0);
+}
+function withCelebrate(d, fn) {
+  const was = dayStatus(d) === 'full'; fn();
+  if (d <= todayKey() && !was && dayStatus(d) === 'full') { celebrate(); toast('Journée réussie, بارك الله فيك !'); }
+}
+
+/* ================= APP RENDER ================= */
+function render() {
+  if (!S.cfg || V.onb) { renderOnb(); return; }
+  const t = todayKey(), k = V.sel, d = parseKey(k);
+  const rel = k === t ? "Aujourd'hui" : k === addDays(t, -1) ? 'Hier' : k === addDays(t, 1) ? 'Demain' : k < t ? 'Jour passé' : 'À venir';
+  const hij = hijriStr(d);
+  const sc = dayScore(k), st = dayStatus(k);
+  const tn = tahNext();
+  let tahHtml = '';
+  if (tn) {
+    const N = tahGoal(tn.next), prog = N ? tahPlan(N, tn.n).prog : null, soon = tn.n > 0 && tn.n <= 14;
+    tahHtml = `<button type="button" class="tah-chip${tn.n === 0 ? ' today' : soon ? ' soon' : ''}" data-act="tah-open" aria-label="تعاهدوا ${tn.n === 0 ? "aujourd'hui" : 'dans ' + tn.n + ' jours'}. Ouvrir l'objectif">${ringSvg(prog, 56, 4, soon ? 'var(--warn)' : 'var(--gold)')}<span class="tah-disc">${tn.n === 0 ? ICON_CHECK : `<b>${tn.n}</b>`}<small lang="ar">تعاهدوا</small></span></button>`;
+  }
+  const days = weekDays(k);
+  const strip = days.map((dk, i) => {
+    const s = dayScore(dk), ds = dayStatus(dk), sess = isPassDay(dk) || !!passOf(dk), tdd = isTahDay(dk);
+    const cls = ['day', dk === k && 'sel', dk === t && 'today', dk > t && 'future', i === 4 && 'fri', ds].filter(Boolean).join(' ');
+    return `<button type="button" class="${cls}" data-act="pick" data-day="${dk}" aria-label="${esc(cap(fmtLong.format(parseKey(dk))))}${s != null ? ', ' + pct(s) : ''}${sess ? ', passage avec le cheikh' : ''}" aria-pressed="${dk === k}"><span class="wd">${WD[i]}</span><span class="dn">${ringSvg(s, 36, 3.5, stColor(ds))}<b>${parseKey(dk).getDate()}</b></span><span class="pdot${tdd ? ' tahd' : sess ? '' : ' off'}"></span></button>`;
+  }).join('');
+  const view = V.tab === 'jour' ? dayView() : V.tab === 'semaine' ? weekView() : V.tab === 'mois' ? monthView() : hizbView();
+  $('#root').innerHTML = `<div class="app">
+    <div class="brand"><img src="${ICON}" alt=""><div class="brand-t">${wordmark(false)}</div><button type="button" class="icon-btn" data-act="settings" aria-label="Réglages">${ICON_GEAR}</button></div>
+    <p class="brand-q"><span class="ar" lang="ar">﴿ لِنُثَبِّتَ بِهِ فُؤَادَكَ ﴾</span> <span class="q-ref">— Al-Furqān, 32 —</span> <span class="q-fr">« Pour raffermir ton cœur »</span></p>
+    <header class="top">
+      <div class="top-row"><div><p class="eyebrow"><b>${esc(rel)}</b></p><h1${isFri(k) ? ' class="fri"' : ''}>${esc(cap(fmtLong.format(d)))}</h1>${hij ? `<p class="hij">${esc(hij)}</p>` : ''}</div>
+        <div class="rings">${tahHtml}<div class="ring ${st || ''}" aria-label="Progression du jour : ${pct(sc)}">${ringSvg(sc, 56, 6, stColor(st))}<span>${st === 'pause' ? '⏸' : pct(sc)}</span></div></div></div>
+      ${isFri(k) ? `<p class="jum-q"><span class="ar" lang="ar" dir="rtl">﴿ يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا نُودِيَ لِلصَّلَاةِ مِن يَوْمِ الْجُمُعَةِ فَاسْعَوْا إِلَىٰ ذِكْرِ اللَّهِ وَذَرُوا الْبَيْعَ ۚ ذَٰلِكُمْ خَيْرٌ لَّكُمْ إِن كُنتُمْ تَعْلَمُونَ ﴾</span><span class="q-ref">— Al-Jumu'a, 9 —</span></p>` : ''}
+      <div class="week-nav"><button type="button" class="nav-btn" data-act="prevWeek" aria-label="Semaine précédente">${ICON_PREV}</button><div class="lbl"><strong>Semaine ${isoWeek(k)}</strong> · ${esc(fmtDM.format(parseKey(days[0])))} – ${esc(fmtDM.format(parseKey(days[6])))}</div>${k !== t ? '<button type="button" class="pill-btn" data-act="today">Aujourd\'hui</button>' : ''}<button type="button" class="nav-btn" data-act="nextWeek" aria-label="Semaine suivante">${ICON_CHEV}</button></div>
+      <div class="strip">${strip}</div>
+      <div class="seg" role="tablist" aria-label="Vue">${[['jour', 'Jour'], ['semaine', 'Semaine'], ['mois', 'Mois'], ['hizb', 'Hizb']].map(([v, l]) => `<button type="button" role="tab" data-act="tab" data-tab="${v}" aria-selected="${V.tab === v}">${l}</button>`).join('')}</div>
+    </header>
+    <main>${view}</main></div>`;
+  fitOne($('.top-row h1'), 17);
+}
+/* une seule ligne : on réduit la police jusqu'à ce que ça tienne */
+function fitOne(el, min) {
+  if (!el) return; el.style.fontSize = '';
+  let fs = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > el.clientWidth + 0.5 && fs > min) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+}
+let _fitT; window.addEventListener('resize', () => { clearTimeout(_fitT); _fitT = setTimeout(() => fitOne($('.top-row h1'), 17), 100); });
+
+function banners(k) {
+  const out = [], t = todayKey(), c = C();
+  if (!storeOk) out.push(`<div class="banner warn"><div><b>Ton navigateur n'enregistre pas les données</b>Navigation privée ou stockage bloqué : ton suivi sera perdu en fermant la page.</div></div>`);
+  if (c.pause && c.pause.to >= t) out.push(`<div class="banner"><div><b>En pause jusqu'au ${esc(fmtDM.format(parseKey(c.pause.to)))}</b>Aucun rouge pendant la pause.</div><button type="button" class="btn" data-act="pause-stop">Reprendre</button></div>`);
+  if (k === t && daysBetween(pivot(), t) < 7 && c.created < pivot()) { let empty = 0; for (let d = c.created; d < pivot(); d = addDays(d, 1)) if (!S.log[d]) empty++; if (empty) out.push(`<div class="banner"><div><b>Complète les jours passés</b>Pour une vision complète, remplis les jours depuis le ${esc(fmtDM.format(parseKey(c.created)))} : touche un jour dans la bande ou dans la vue Mois.</div></div>`); }
+  const nLogs = Object.keys(S.log).length, last = S.meta.lastBackup, later = S.meta.bkLater;
+  if (k === t && nLogs >= 3 && (!last || daysBetween(last, t) >= 7) && (!later || daysBetween(later, t) >= 3)) out.push(`<div class="banner bk"><div><b>Ta sauvegarde de la semaine</b>L'appli est en bêta et nous n'enregistrons aucune de tes données : tout reste sur ton téléphone. Une copie de ta sauvegarde dans WhatsApp, c'est ta garantie de tout retrouver, même en changeant de téléphone ou si le navigateur fait du ménage.${last ? ` <small>Dernière copie il y a ${daysBetween(last, t)} jours.</small>` : ''}</div><div class="bk-acts"><button type="button" class="btn primary" data-act="backup">Copier ma sauvegarde</button><button type="button" class="link" data-act="bk-later">Plus tard</button></div></div>`);
+  return out.join('');
+}
+
+/* ---------- Jour ---------- */
+function dayView() {
+  const k = V.sel, t = todayKey(), future = k > t, c = C();
+  const os = dayObjs(k), doneN = os.filter(o => o.val >= o.target).length;
+  const win = dayStatus(k) === 'full' ? `<div class="win" role="status">${ICON_CHECK}<div><strong>Journée réussie</strong><span>Tous tes objectifs ${k === t ? 'du jour' : 'de ce jour'} sont validés. بارك الله فيك</span></div></div>` : '';
+  const cards = [], tday = isTahDay(k) && k >= c.created, tv = tahOf(k);
+  if (tday) cards.push(tahDayCard(k, future));
+  if (c.rev.on && !(tday && tv === 1)) cards.push(revCard(k, future));
+  if (c.pass.on && !tday) cards.push(passCard(k, future));
+  if (c.wird.on) cards.push(wirdCard(k, future));
+  if (kahfObj(k)) cards.push(kahfCard(k, future));
+  const fri = isFri(k) && k >= c.created;
+  const ask = fri && k === t && !c.kahf.on && !S.meta.kahfAsked ? kahfAsk() : '';
+  return `${fri ? hadithCard(k) : ''}${banners(k)}${win}${ask}<section><div class="sec-head"><h2>Objectifs du jour</h2><span>${os.length ? `${doneN} sur ${os.length} terminés` : ''}</span></div>
+    ${cards.join('') || '<p class="note">Aucun objectif actif. Active-les dans les réglages.</p>'}</section>
+    <p class="foot">Tes données restent sur ce téléphone, dans ce navigateur.</p>`;
+}
+
+function revCard(k, future) {
+  const c = C(), size = poolHz(k) * 2, target = revTarget(k), cnt = revCount(k), p = revPtr(k), paused = inPause(k);
+  const done = cnt >= target, lag = !cnt && !future && !paused ? carried(k) : 0;
+  let st = paused || future ? '' : done ? 'full' : cnt ? 'ok' : 'low';
+  let tag;
+  if (paused) tag = '<span class="tag">En pause</span>';
+  else if (done) { const sk = streakRev(); tag = `<span class="tag good">${sk >= 2 ? `Série de ${sk} jours` : 'Validé'}</span>`; }
+  else if (cnt) tag = `<span class="tag warn">${cnt} / ${target} demi-hizb</span>`;
+  else if (lag) tag = `<span class="tag red">Reporté depuis ${lag} jour${lag > 1 ? 's' : ''}</span>`;
+  else if (!future) tag = '<span class="tag red">À valider</span>';
+  else tag = '<span class="tag">Prévu</span>';
+  const modeTxt = c.rev.mode === 'tour' ? `Tour en ${c.rev.tour} jours · ${hizbFr(target)} par jour` : `${hizbFr(target)} par jour`;
+  let main, actions = '', foot = '', qr = '';
+  if (!size) { main = `<div class="hz-now"><small>Aucun hizb complet appris pour l'instant. La révision commence dès ton premier hizb terminé.</small></div>`; st = ''; }
+  else if (p == null) main = `<div class="hz-now"><small>${cnt ? `${hizbFr(cnt)} révisé ce jour-là` : 'Pas de révision enregistrée ce jour-là'}</small></div>`;
+  else {
+    const bp = k < C().rev.anchor.day, at = i => halfAt((((bp ? p - 1 - i : p + cnt + i) % size) + size) % size, k);
+    const next = at(0), last = cnt ? halfAt((p + cnt - 1) % size, k) : null;
+    if (done) main = `<div class="hz-now">${arHalf(last)}<small>Validé${cnt > 1 ? ` · ${hizbFr(cnt)} aujourd'hui` : ` : ${frHalf(last)}`}</small></div>`;
+    else {
+      const todo = []; for (let i = 0; i < target - cnt; i++) todo.push(at(i));
+      main = `<div class="hz-now">${arHalf(next)}<small>${frHalf(next)}${target - cnt > 1 ? ` · puis ${todo.slice(1).map(h => `${h.hz}·${h.half}`).join(', ')}` : ''}${lag ? ' · reporté, rien n\'est sauté' : ''}</small></div>`;
+    }
+    if (future) actions = '<p class="meta">À réviser ce jour-là si tout est validé avant.</p>';
+    else if (!paused || cnt) actions = `<div class="acts">${cnt ? `<button type="button" class="btn" data-act="rv-undo">Annuler</button>` : ''}<button type="button" class="btn ${done ? 'soft' : 'validate'}" data-act="rv-ok" aria-label="Valider ${esc(frHalf(next))}">${done ? '+ Le suivant' : `${ICON_CHECK} Valider ce ${AR('نصف')}`}</button></div>`;
+    else actions = `<div class="acts"><button type="button" class="btn soft" data-act="rv-ok">${ICON_CHECK} Valider quand même</button></div>`;
+    const pos = bp ? p : (p + cnt) % size;
+    foot = `<div class="bar"><i style="width:${pos / size * 100}%"></i></div><p class="meta">Tour de révision : ${pos} / ${size} demi-hizb · ${modeTxt}</p>`;
+    if (cnt && !future) {
+      const ev = hzEvals(last.hz).find(x => x.d === k && x.src === 'rev');
+      qr = `<div class="qr"><span>Ta note pour le <b>hizb ${last.hz}</b>${ev ? ` · <b class="${lvl(ev.s)}-t">${ev.s}/10</b>` : ' :'}</span>${rateRow(`data-act="rate" data-hz="${last.hz}" data-src="rev"`, ev && ev.s, true)}</div>`;
+    }
+  }
+  return `<article class="goal ${st}" style="--cat:var(--c-rev)"><div class="goal-top"><span class="chip">Révision perso</span>${tag}</div>${main}${foot}${actions}${qr}</article>`;
+}
+
+function tahDayCard(k, future) {
+  const v = tahOf(k), h = (S.log[k] && S.log[k].tahH) || 0, N = tahGoal(k);
+  let tag, st = '', body;
+  if (future) { tag = '<span class="tag">À venir</span>'; body = `<p class="meta">Ce jour-là, tu récites d'un coup tout ce que tu as appris${N ? ` (objectif : ${N} hizb)` : ''}. Pas de passage habituel avec le cheikh.</p>`; }
+  else if (v === 1) { tag = '<span class="tag good">Fait, بارك الله فيك</span>'; st = 'full'; body = `<div class="field"><span>Hizb récités</span><div class="stepper"><button type="button" data-act="tah-h" data-d="-1" aria-label="Un de moins">−</button><div class="val">${h}</div><button type="button" data-act="tah-h" data-d="1" aria-label="Un de plus">+</button></div></div><button type="button" class="link" data-act="tah-undo">Annuler</button>`; }
+  else if (v === -1) { tag = '<span class="tag">Pas fait</span>'; body = `<p class="meta">Pas de passage avec le cheikh ce jour-là : tes objectifs habituels comptent à la place.</p><button type="button" class="link" data-act="tah-did">En fait, je l'ai fait</button>`; }
+  else { tag = '<span class="tag red">À valider</span>'; st = 'low'; body = `<p class="meta">Tu as récité tout ce que tu as appris ?${N ? ` Objectif : ${N} hizb.` : ''}</p><div class="acts"><button type="button" class="btn validate" data-act="tah-did">${ICON_CHECK} Je l'ai fait</button><button type="button" class="btn" data-act="tah-not">Je ne l'ai pas fait</button></div>`; }
+  return `<article class="goal ${st}" style="--cat:var(--gold)"><div class="goal-top"><span class="chip">Jour de ${AR('تعاهدوا')}</span>${tag}</div><div class="hz-now"><span class="ar" lang="ar">تَعَاهَدُوا</span><small>Récitation complète de ce que tu as appris</small></div>${body}</article>`;
+}
+function nextPassDay(from) { for (let i = 0; i <= 14; i++) { const d = addDays(from, i); if (isPassDay(d) && !passOf(d)) return d; } return null; }
+function prepBlock(k) {
+  const c = C(), p = c.pass, u = p.unit || 1, e = k < pivot() ? Math.max(0, prog8(k) - u) : prog8(k), por = portion(e, u);
+  const groups = suggestGroups(k, p.revN || 0);
+  const hzs = [...new Set([por && por.hz, ...groups.map(g => g.hz)].filter(Boolean))];
+  const pts = []; hzs.forEach(h => (hzRec(h).pts || []).slice(-2).forEach(x => pts.push({ h, t: x.t })));
+  let html = '';
+  if (por) html += `<div class="hz-now"><span class="ar" lang="ar">${por.ar}</span><small>${isK1() ? 'À réciter' : 'À repasser'} : ${esc(por.fr)}${p.unit ? '' : ' · quantité au choix'}</small></div>`;
+  else html += `<div class="hz-now"><small>${isK1() ? 'Les 60 hizb sont appris. Félicitations !' : 'Khatma repassée en entier. Félicitations !'}</small></div>`;
+  if (groups.length) html += `<div class="sub"><b>Révision avec le cheikh</b><div class="plist">${groups.map(g => `<span class="pitem"><span class="ar" lang="ar">${groupAr(g)}</span>${hzScore(g.hz) != null ? `<em class="${lvl(hzScore(g.hz))}-t">${fr(hzScore(g.hz))}</em>` : ''}</span>`).join('')}</div></div>`;
+  if (pts.length) html += `<div class="sub"><b>Points à revoir</b><ul class="pts">${pts.map(x => `<li><span class="ar" lang="ar">حزب ${x.h}</span><span>${esc(x.t)}</span></li>`).join('')}</ul></div>`;
+  return html;
+}
+function passCard(k, future) {
+  const c = C(), p = c.pass, lg = passOf(k), t = todayKey(), mode = p.mode, paused = inPause(k);
+  if (mode === 'fixed' && !isPassDay(k) && !lg) {
+    const nd = nextPassDay(k > t ? k : t);
+    if (!nd) return '';
+    const n = daysBetween(k > t ? k : t, nd);
+    return `<article class="goal rest" style="--cat:var(--c-prof)"><div class="goal-top"><span class="chip">Passage avec le cheikh</span><span class="tag">Prochain : ${n === 0 ? "aujourd'hui" : n === 1 ? 'demain' : DOW_LONG[parseKey(nd).getDay()]}</span></div>
+      <h3>À préparer</h3>${prepBlock(nd)}${!future ? `<button type="button" class="link" data-act="pass-open">J'ai eu un passage aujourd'hui quand même</button>` : ''}</article>`;
+  }
+  const wk = weekDays(k).filter(passOf).length;
+  let tag, st = '';
+  if (lg) { tag = '<span class="tag good">Passage fait</span>'; st = 'full'; }
+  else if (paused) tag = '<span class="tag">En pause</span>';
+  else if (mode === 'fixed') { tag = future ? '<span class="tag">Passage prévu</span>' : `<span class="tag red">${k < t ? 'Passage manqué' : 'Passage à faire'}</span>`; st = future ? '' : 'low'; }
+  else if (mode === 'quota') tag = `<span class="tag ${wk >= p.perWeek ? 'good' : ''}">${wk} / ${p.perWeek} cette semaine</span>`;
+  else { const mn = monthDays(k).filter(passOf).length, md = monthDays(k), over = md[md.length - 1] < t; tag = `<span class="tag ${mn >= p.perMonth ? 'good' : over ? 'red' : ''}">${mn} / ${p.perMonth} ce mois</span>`; }
+  let body;
+  if (lg) {
+    const por = lg.h ? portion(prog8(k), lg.h) : null;
+    const items = (lg.rh || []).map(h => { const ev = hzEvals(h).find(x => x.d === k && x.src === 'cheikh'); return `<span class="pitem"><span class="ar" lang="ar">حزب ${h}</span>${ev ? `<em class="${lvl(ev.s)}-t">${ev.s}/10</em>` : ''}</span>`; }).join('');
+    body = `${por ? `<div class="hz-now"><span class="ar" lang="ar">${por.ar}</span><small>${isK1() ? 'Récité' : 'Repassé'} : ${UNITS.find(x => x[0] === lg.h) ? UNITS.find(x => x[0] === lg.h)[2] : lg.h + '/8 de hizb'}</small></div>` : '<div class="hz-now"><small>Pas de nouvelle partie récitée ce jour-là.</small></div>'}
+      ${items ? `<div class="sub"><b>Révisé avec le cheikh</b><div class="plist">${items}</div></div>` : ''}
+      <div class="acts"><button type="button" class="btn" data-act="pass-open">Modifier le passage</button></div>`;
+  } else {
+    body = `<h3>${future ? 'À préparer' : 'Au programme'}</h3>${prepBlock(k)}${future ? '' : `<div class="acts"><button type="button" class="btn validate" data-act="pass-open">${ICON_CHECK} J'ai eu mon passage</button></div>`}
+      ${mode === 'fixed' && k >= t ? `<button type="button" class="link" data-act="move-open">Décaler ce passage cette semaine</button>` : ''}`;
+  }
+  return `<article class="goal ${st}" style="--cat:var(--c-prof)"><div class="goal-top"><span class="chip">Passage avec le cheikh</span>${tag}</div>${body}</article>`;
+}
+
+function wirdCard(k, future) {
+  const w = C().wird, v = (S.log[k] && S.log[k].w) || 0, step = w.unit === 'hizb' ? 0.5 : 1, unit = w.unit === 'hizb' ? 'hizb' : 'pages';
+  const wk = weekDays(k).filter(d => S.log[d] && S.log[d].w).length, done = v >= w.qty;
+  return `<article class="goal ${done ? 'full' : ''}" style="--cat:var(--c-wird)"><div class="goal-top"><span class="chip">Wird</span><span class="tag ${wk >= w.days ? 'good' : ''}">${wk} / ${w.days} jours cette semaine</span></div>
+    <div class="bar"><i style="width:${Math.min(v / w.qty, 1) * 100}%"></i></div>
+    <div class="goal-foot"><p class="meta"><b>${fr(v)}</b> / ${fr(w.qty)} ${unit}${isK1() ? ` · ${w.scope === 'learned' ? 'sur ce que tu as appris' : 'sur tout le Coran'}` : ''}</p><div class="ctrl">
+      <button type="button" data-act="w-dec" aria-label="Retirer ${step}" ${future || !v ? 'disabled' : ''}>−</button>
+      <button type="button" class="inc" data-act="w-inc" aria-label="Ajouter ${step}" ${future ? 'disabled' : ''}>+${step === 0.5 ? '½' : 1}</button>
+      <button type="button" class="check" data-act="w-full" aria-pressed="${done}" aria-label="${done ? 'Remettre à zéro' : 'Marquer comme fait'}" ${future ? 'disabled' : ''}>${ICON_CHECK}</button></div></div>
+    <p class="hint">Lecture libre, sans report ni rouge.</p></article>`;
+}
+
+/* ---------- vendredi : hadith, Al-Kahf ---------- */
+function hadithCard(k) {
+  if (S.meta.hadRead === k && V.hadOpen !== k) return `<button type="button" class="had-mini" data-act="had-open">${ICON_CHECK}<span>Hadith du vendredi lu</span><b>Relire</b></button>`;
+  const read = S.meta.hadRead === k;
+  return `<article class="hadith" aria-label="Rappel du vendredi">
+    <span class="had-l">Rappel du vendredi</span>
+    <p class="had-ar" lang="ar" dir="rtl">قال رسول الله ﷺ : « مَن تَوضَّأَ فأحسنَ الوضوءَ ثمَّ أتَى الجمُعةَ فدَنا وأنصتَ واستمعَ غُفِرَ لَهُ ما بينَهُ وبينَ الجُمعةِ الأُخرَى وزِيادةُ ثلاثةِ أيَّامٍ، ومَن مسَّ الحصَى فقَد لَغا »</p>
+    <p class="had-fr">« Celui qui fait ses ablutions en les accomplissant parfaitement, puis vient à la prière du vendredi, s'approche, se tait et écoute, il lui est pardonné ce qui est entre ce vendredi et le suivant, avec trois jours de plus. Et celui qui touche les cailloux a commis une futilité. »</p>
+    <div class="had-foot"><span class="had-ref">D'après Abou Hourayra · rapporté par Muslim</span>${read ? `<button type="button" class="had-btn" data-act="had-close">Refermer</button>` : `<button type="button" class="had-btn" data-act="had-read">${ICON_CHECK} J'ai lu</button>`}</div>
+  </article>`;
+}
+function kahfAsk() {
+  return `<div class="banner kask"><div><b>Sourate Al-Kahf chaque vendredi ?</b>Ajoute-la à ton suivi du vendredi. Tu peux la compter comme objectif du jour, ou en bonus, sans rouge.</div>
+    <div class="kask-acts"><button type="button" class="btn primary" data-act="kahf-set" data-v="obj">Oui, en objectif</button><button type="button" class="btn" data-act="kahf-set" data-v="bonus">Oui, en bonus</button><button type="button" class="link" data-act="kahf-set" data-v="no">Non merci</button></div></div>`;
+}
+function kahfCard(k, future) {
+  const done = !!(S.log[k] && S.log[k].kahf), obj = C().kahf.mode === 'obj', t = todayKey();
+  const tag = future ? '<span class="tag">À venir</span>' : done ? '<span class="tag good">Lue, بارك الله فيك</span>' : obj && k < t ? '<span class="tag red">Pas lue</span>' : obj ? '<span class="tag red">À lire</span>' : '<span class="tag">Bonus</span>';
+  return `<article class="goal ${done ? 'full' : obj && !future ? 'low' : ''}" style="--cat:var(--gold)"><div class="goal-top"><span class="chip">Vendredi</span>${tag}</div>
+    <div class="hz-now"><span class="ar" lang="ar">سورة الكهف</span><small>Sourate Al-Kahf · ${obj ? 'objectif du vendredi' : 'bonus, sans rouge'}</small></div>
+    <div class="acts"><button type="button" class="btn ${done ? '' : 'validate'}" data-act="kahf-done" ${future ? 'disabled' : ''}>${done ? 'Annuler' : ICON_CHECK + ' Je l\'ai lue'}</button></div></article>`;
+}
+
+/* ---------- Semaine ---------- */
+function weekView() {
+  const k = V.sel, t = todayKey(), days = weekDays(k), c = C(), ws = weekScore(k);
+  const rows = [], lines = [];
+  if (c.rev.on) {
+    const ds = days.filter(d => d <= t && d >= c.created && !inPause(d) && poolHz(d) > 0);
+    const full = ds.filter(d => revCount(d) >= revTarget(d)).length, sum = days.reduce((a, d) => a + revCount(d), 0);
+    lines.push(`<p>Révision : ${full} jour${full > 1 ? 's' : ''} sur ${ds.length} · ${hizbFr(sum)}</p>`);
+    rows.push(`<div class="grow" style="--cat:var(--c-rev)"><div class="gname"><span>Révision perso</span><small>${esc(hizbFr(revTarget(t)))} / jour</small></div>${days.map(d => {
+      const st = d > t ? 'future' : inPause(d) ? 'pause' : d < c.created || !poolHz(d) || (isTahDay(d) && tahOf(d) !== -1 && !revCount(d)) ? 'na' : revCount(d) >= revTarget(d) ? 'full' : revCount(d) ? 'ok' : 'low';
+      return `<button type="button" class="cell ${st}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="Révision, ${esc(fmtLong.format(parseKey(d)))}">${st === 'full' ? '✓' : revCount(d) || (st === 'na' || st === 'pause' ? '·' : '')}</button>`; }).join('')}</div>`);
+  }
+  if (c.pass.on) {
+    const n = days.filter(passOf).length;
+    const target = c.pass.mode === 'fixed' ? days.filter(isPassDay).length : c.pass.mode === 'quota' ? c.pass.perWeek : null;
+    lines.push(`<p>Passages : ${n}${target != null ? ` sur ${target}` : ''}${c.pass.mode === 'month' ? ` · ${monthDays(k).filter(passOf).length} / ${c.pass.perMonth} ce mois` : ''}</p>`);
+    rows.push(`<div class="grow" style="--cat:var(--c-prof)"><div class="gname"><span>Passages</span><small>${c.pass.mode === 'fixed' ? esc(DOW_ORDER.filter(x => c.pass.days.includes(x)).map(x => DOW[x]).join(', ')) : c.pass.mode === 'quota' ? `${c.pass.perWeek} / semaine` : `${c.pass.perMonth} min. / mois`}</small></div>${days.map(d => {
+      const sched = isPassDay(d), done = !!passOf(d);
+      const st = done ? 'full' : d > t ? (sched ? 'future' : 'na') : inPause(d) ? 'pause' : sched ? 'low' : 'na';
+      return `<button type="button" class="cell ${st}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="Passage, ${esc(fmtLong.format(parseKey(d)))}">${done ? '✓' : st === 'na' || st === 'pause' ? '·' : ''}</button>`; }).join('')}</div>`);
+  }
+  if (c.wird.on) {
+    const n = days.filter(d => S.log[d] && S.log[d].w).length;
+    lines.push(`<p>Wird : ${n} jour${n > 1 ? 's' : ''} sur ${c.wird.days}</p>`);
+    rows.push(`<div class="grow" style="--cat:var(--c-wird)"><div class="gname"><span>Wird</span><small>${c.wird.days} jours / semaine</small></div>${days.map(d => {
+      const v = (S.log[d] && S.log[d].w) || 0, st = v >= c.wird.qty ? 'full' : v ? 'soft' : d > t ? 'future' : 'na';
+      return `<button type="button" class="cell ${st}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="Wird, ${esc(fmtLong.format(parseKey(d)))}">${st === 'full' ? '✓' : v ? fr(v) : '·'}</button>`; }).join('')}</div>`);
+  }
+  if (days.some(isTahDay)) {
+    const td = days.find(isTahDay), tv = tahOf(td);
+    lines.unshift(`<p>${AR('تعاهدوا')} : ${td > t ? 'à venir' : tv === 1 ? 'fait' : tv === -1 ? 'pas fait' : 'à valider'}</p>`);
+    rows.unshift(`<div class="grow" style="--cat:var(--gold)"><div class="gname"><span>تعاهدوا</span><small>récitation complète</small></div>${days.map(d => { const tdd = isTahDay(d), v = tahOf(d); const st = !tdd ? 'na' : d > t ? 'future' : v === 1 ? 'full' : v === -1 ? 'na' : 'low'; return `<button type="button" class="cell ${st}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="تعاهدوا, ${esc(fmtLong.format(parseKey(d)))}">${st === 'full' ? '✓' : tdd && v === -1 ? '–' : !tdd ? '·' : ''}</button>`; }).join('')}</div>`);
+  }
+  return `<div class="summary"><div class="ring ${ws >= 1 ? 'full' : ''}">${ringSvg(ws, 72, 7, ws >= 1 ? 'var(--good)' : 'var(--accent)')}<span>${pct(ws)}</span></div>
+    <div><h2>Semaine ${isoWeek(k)}</h2>${lines.join('')}<p class="small">Révision et passages comptent autant. Le wird ne compte pas dans le score.</p></div></div>
+    <section><div class="sec-head"><h2>Jour par jour</h2><span>Touche une case pour ouvrir le jour</span></div>
+    <div class="grid"><div class="grow head"><span></span>${WD.map(x => `<span>${x}</span>`).join('')}</div>${rows.join('')}
+    <div class="legend"><span><i class="l"></i>Sous le minimum</span><span><i class="o"></i>Commencé</span><span><i class="f"></i>Atteint</span></div></div></section>`;
+}
+
+/* ---------- Mois ---------- */
+function monthView() {
+  const k = V.sel, t = todayKey(), days = monthDays(k), c = C(), past = days.filter(d => d <= t && d >= c.created);
+  let good = 0, low = 0;
+  past.forEach(d => { const s = dayStatus(d); if (s === 'low') low++; else if (s === 'full' || s === 'ok') good++; });
+  const offset = (parseKey(days[0]).getDay() + 6) % 7;
+  const cal = `<div class="cal">${WD.map(x => `<span class="h">${x}</span>`).join('')}${'<span></span>'.repeat(offset)}${days.map(d => {
+    const s = d > t ? 'future' : (dayStatus(d) || '');
+    return `<button type="button" class="mc ${s}${d === t ? ' today' : ''}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="${esc(cap(fmtLong.format(parseKey(d))))}">${parseKey(d).getDate()}</button>`; }).join('')}</div>`;
+  const stats = [];
+  if (c.rev.on) { const sum = days.reduce((a, d) => a + revCount(d), 0); stats.push(`<div class="stat" style="--cat:var(--c-rev)"><span>Révision perso</span><b>${hizbFr(sum).replace(' hizb', '')}</b><small>hizb révisés ce mois</small></div>`); }
+  if (c.pass.on) { const n = days.filter(passOf).length; stats.push(`<div class="stat" style="--cat:var(--c-prof)"><span>Passages</span><b>${n}${c.pass.mode === 'month' ? `<small> / ${c.pass.perMonth}</small>` : ''}</b><small>${c.pass.mode === 'month' ? (n >= c.pass.perMonth ? 'objectif du mois atteint' : 'minimum du mois') : 'avec le cheikh'}</small></div>`); }
+  const hif = days.reduce((a, d) => a + ((S.log[d] && S.log[d].pass && S.log[d].pass.h) || 0), 0);
+  stats.push(`<div class="stat" style="--cat:var(--gold)"><span>${isK1() ? 'Hifz' : 'Khatma repassée'}</span><b>${fr(hif / 8)}</b><small>hizb ${isK1() ? 'appris' : 'repassés'} ce mois</small></div>`);
+  if (c.wird.on) { const n = days.filter(d => S.log[d] && S.log[d].w).length; stats.push(`<div class="stat" style="--cat:var(--c-wird)"><span>Wird</span><b>${n}</b><small>jours de lecture</small></div>`); }
+  return `<div class="month-nav"><button type="button" class="nav-btn" data-act="prevMonth" aria-label="Mois précédent">${ICON_PREV}</button><h2>${esc(cap(fmtMonth.format(parseKey(k))))}</h2><button type="button" class="nav-btn" data-act="nextMonth" aria-label="Mois suivant">${ICON_CHEV}</button></div>
+    <div class="summary"><div class="ring">${ringSvg(past.length ? good / past.length : null, 72, 7, 'var(--good)')}<span>${past.length ? good : '—'}</span></div><div><h2>Ton mois</h2><p>${good} jour${good > 1 ? 's' : ''} au-dessus du minimum</p>${low ? `<p class="red">${low} jour${low > 1 ? 's' : ''} en rouge</p>` : ''}</div></div>
+    ${cal}<div class="stats4">${stats.join('')}</div>`;
+}
+
+/* ---------- Hizb ---------- */
+function tahBanner() {
+  const tn = tahNext(); if (!tn) return '';
+  const { next, n } = tn, N = tahGoal(next);
+  let lines;
+  if (N) {
+    const P = tahPlan(N, n), bits = [];
+    if (P.avg != null) bits.push(`moyenne <b class="${lvl(P.avg)}-t">${fr(P.avg)}/10</b>${P.rated < P.known ? ` (${P.rated}/${P.known} notés)` : ''}`);
+    bits.push(P.remain8 ? `reste ${fmtLearned(P.remain8)} à apprendre${n ? `, ≈ ${fr(P.perWeek)} ${AR('ثمن')}/sem` : ''}` : 'tout est appris');
+    lines = `<small class="main">Objectif ${N} hizb · ${fr(Math.min(P.L, N * 8) / 8)} / ${N} prêts</small><span class="tah-bar"><i style="width:${P.prog * 100}%"></i></span><small>${bits.join(' · ')}</small>`;
+  } else lines = `<small class="main">${isK1() ? fmtLearned(learned8()) : '60 hizb'} à réciter d'un coup</small><small>Touche pour fixer ton objectif</small>`;
+  return `<button type="button" class="tah" data-act="tah-open"><span class="tah-disc">${n === 0 ? ICON_CHECK : `<b>${n}</b>`}<small lang="ar">تعاهدوا</small></span><span class="tah-l"><span class="tah-h"><span class="ar-t" lang="ar">تَعَاهَدُوا</span>${n === 0 ? "aujourd'hui" : esc(cap(fmtLong.format(parseKey(next))))}</span>${lines}</span></button>`;
+}
+function hizbView() {
+  const dir = C().dir, L8 = learned8(), learned = poolList(), t = todayKey(), e8 = prog8();
+  const prog = isK1() && e8 % 8 ? curHifz() : null;
+  const seen = hzSeen(), cyc = cycleDays();
+  const rated = learned.filter(h => hzScore(h) != null), avg = rated.length ? mean(rated.map(hzScore)) : null;
+  const weakN = rated.filter(h => hzScore(h) < 6.5).length, unrated = learned.length - rated.length;
+  const stale = h => { const s = seen[h]; return !!(cyc && s && daysBetween(s.last, t) > cyc + 7); };
+  const prio = learned.filter(h => (hzScore(h) != null && hzScore(h) < 6.5) || stale(h)).sort((a, b) => (hzScore(a) ?? 11) - (hzScore(b) ?? 11)).slice(0, 5);
+  const showAll = !isK1() || V.hzAll;
+  const order = showAll ? order60(dir) : order60(dir).filter(h => h === prog || learned.includes(h));
+  const compact = showAll;
+  const tile = h => {
+    const isL = learned.includes(h), isP = h === prog, s = hzScore(h), pv = hzPrevScore(h), sn = seen[h], npts = (hzRec(h).pts || []).length;
+    const cls = ['hz', isL || isP ? lvl(s) : 'off', isP && 'prog'].filter(Boolean).join(' ');
+    const trend = s != null && pv != null && Math.abs(s - pv) >= 0.5 ? (s > pv ? '<i class="up">↑</i>' : '<i class="down">↓</i>') : '';
+    const days = sn ? daysBetween(sn.last, t) : null;
+    const meta = isP ? `En cours · ${e8 % 8}/8` : !isL ? 'Pas encore appris' : sn ? (days === 0 ? "Révisé aujourd'hui" : `Révisé il y a ${days} j`) : 'Pas encore révisé';
+    return `<button type="button" class="${cls}" data-act="hz-open" data-hz="${h}" ${isL || isP ? '' : 'disabled'} aria-label="Hizb ${h}, ${s != null ? fr(s) + ' sur 10' : 'pas encore noté'}">${stale(h) ? '<span class="stale"></span>' : ''}<span class="hz-n">${compact ? h : 'Hizb ' + h}</span>${s != null ? `<span class="hz-s">${fr(s)}<small>/10</small>${trend}</span>` : `<span class="hz-s hz-empty">${compact ? '·' : 'À noter'}</span>`}<span class="hz-meta">${meta}</span>${npts ? `<span class="hz-pg">${npts} point${npts > 1 ? 's' : ''} à revoir</span>` : ''}</button>`;
+  };
+  const ringCol = avg == null ? 'var(--accent)' : avg >= 6.5 ? 'var(--good)' : avg >= 4.5 ? 'var(--warn)' : 'var(--danger)';
+  return `${tahBanner()}<div class="summary"><div class="ring">${ringSvg(avg == null ? null : avg / 10, 72, 7, ringCol)}<span style="color:${ringCol}">${avg == null ? '—' : fr(avg)}</span></div>
+      <div><h2>Carte des hizb</h2><p>${isK1() ? fmtLearned(L8) + ' appris' : '60 hizb'}${avg != null ? ` · moyenne ${fr(avg)}/10` : ''}</p>${weakN ? `<p class="red">${weakN} hizb à renforcer</p>` : ''}${unrated ? `<p class="small">${unrated} pas encore noté${unrated > 1 ? 's' : ''}</p>` : ''}</div></div>
+    ${prio.length ? `<section><div class="sec-head"><h2>À renforcer en priorité</h2></div><div class="prio">${prio.map(h => `<button type="button" class="pchip ${lvl(hzScore(h))}" data-act="hz-open" data-hz="${h}"><span class="ar" lang="ar">حزب ${h}</span><b>${hzScore(h) != null ? fr(hzScore(h)) : '–'}/10</b>${stale(h) ? '<small>Pas révisé depuis longtemps</small>' : ''}</button>`).join('')}</div></section>` : ''}
+    <section><div class="sec-head"><h2>${showAll ? 'Les 60 hizb' : 'Mes hizb'}</h2>${isK1() ? `<div class="mini-seg" role="group" aria-label="Affichage"><button type="button" data-act="hz-all" data-v="0" aria-pressed="${!V.hzAll}">Appris</button><button type="button" data-act="hz-all" data-v="1" aria-pressed="${!!V.hzAll}">Les 60</button></div>` : ''}</div>
+      <div class="hzgrid${showAll ? ' all' : ''}">${order.map(tile).join('')}</div>
+      <div class="legend"><span><i class="z1"></i>à revoir</span><span><i class="z2"></i>fragile</span><span><i class="z3"></i>bon</span><span><i class="z4"></i>solide</span>${cyc ? '<span><i class="zs"></i>pas révisé depuis longtemps</span>' : ''}</div>
+      <p class="hint">La note d'un hizb est la moyenne de ses 3 dernières notes. Touche un hizb pour le noter ou ajouter des points à revoir.</p>
+      ${isK1() ? `<button type="button" class="btn soft wide" data-act="kn-open">+ Ajouter des hizb déjà appris</button>` : ''}</section>`;
+}
+
+/* ================= SHEETS ================= */
+function openSheet(s) { V.sheet = s; renderSheet(); $('#back').hidden = false; }
+function closeSheet() { saveHzNote(); V.sheet = null; $('#back').hidden = true; render(); }
+function renderSheet() {
+  const s = V.sheet; if (!s) return;
+  const el = $('#sheet');
+  const html = s.kind === 'pass' ? passSheet(s) : s.kind === 'move' ? moveSheet(s) : s.kind === 'hz' ? hzSheet(s) : s.kind === 'tah' ? tahSheet(s) : s.kind === 'settings' ? settingsSheet(s) : s.kind === 'backup' ? backupSheet(s) : s.kind === 'pause' ? pauseSheet(s) : s.kind === 'rules' ? rulesSheet() : s.kind === 'known' ? knownSheet(s) : '';
+  el.innerHTML = `<div class="grab"></div>${html}`;
+}
+
+/* passage sheet */
+function openPass(d) {
+  const lg = passOf(d), p = C().pass;
+  const revN = Math.max(p.revN || 0, lg ? lg.rn || 0 : 0);
+  const rates = {}; Object.keys(S.hz).forEach(h => { const ev = hzEvals(h).find(x => x.d === d && x.src === 'cheikh'); if (ev) rates[h] = ev.s; });
+  const groups = suggestGroups(d, revN);
+  let rem = lg ? lg.rn || 0 : revN;
+  const checked = groups.map(g => { const on = rem > 0; rem -= g.n; return on; });
+  openSheet({ kind: 'pass', d, amt: lg ? (lg.h || 0) : (p.unit || 1), revN, checked, rates, errs: {} });
+}
+function passGroups(s) { return suggestGroups(s.d, s.revN); }
+function passSheet(s) {
+  const lg = passOf(s.d), e0 = s.d < pivot() ? Math.max(0, prog8(s.d) + ((lg && lg.h) || 0) - s.amt) : prog8(s.d);
+  const k1 = isK1(), por = portion(e0, Math.max(1, s.amt)), groups = passGroups(s);
+  const hzs = [...new Set([s.amt && por ? por.hz : null, ...groups.filter((g, i) => s.checked[i]).map(g => g.hz)].filter(Boolean))];
+  return `<div class="sh-head"><div><h2>Ton passage</h2><p class="hint">${esc(cap(fmtLong.format(parseKey(s.d))))}</p></div><span class="sh-ar" lang="ar">لِنُثَبِّتَ</span></div>
+    <div class="field"><span>${k1 ? 'Récité (hifz)' : 'Repassé avec le cheikh'}</span>
+      <div class="opts"><button type="button" class="opt" data-act="ps-amt" data-v="0" aria-pressed="${s.amt === 0}">Rien</button>${UNITS.map(([v, a]) => `<button type="button" class="opt" data-act="ps-amt" data-v="${v}" aria-pressed="${s.amt === v}"><span class="ar">${a}</span></button>`).join('')}</div>
+      ${s.amt && por ? `<p class="prev"><span class="ar" lang="ar">${por.ar}</span><span>${esc(por.fr)}</span></p>` : ''}</div>
+    <div class="field"><span>Révision avec le cheikh</span>
+      ${groups.length ? groups.map((g, i) => `<div class="ggroup${s.checked[i] ? '' : ' off'}"><div class="ggroup-h"><button type="button" class="tick" data-act="ps-tick" data-i="${i}" aria-pressed="${!!s.checked[i]}" aria-label="Révisé : hizb ${g.hz}">${ICON_CHECK}</button><span class="ar" lang="ar">${groupAr(g)}</span></div></div>`).join('') : '<p class="hint">Pas de révision prévue à ce passage.</p>'}
+      <button type="button" class="link" data-act="ps-more">+ Un hizb de plus</button></div>
+    ${hzs.length ? `<div class="field"><span>Ta note et les points à revoir</span>${hzs.map(h => `<div class="ggroup"><div class="ggroup-h"><span class="ar" lang="ar">حزب ${h}</span></div>${rateRow(`data-act="ps-rate" data-hz="${h}"`, s.rates[h], true)}<input class="input" id="ps-err-${h}" data-hz="${h}" type="text" maxlength="120" placeholder="Erreur relevée, passage à revoir… (facultatif)" value="${esc(s.errs[h] || '')}" autocomplete="off"></div>`).join('')}</div>` : ''}
+    <div class="acts"><button type="button" class="btn primary" data-act="ps-save">Enregistrer le passage</button><button type="button" class="btn" data-act="close">Annuler</button></div>
+    ${lg ? `<button type="button" class="btn danger" data-act="ps-del">Supprimer ce passage</button>` : ''}`;
+}
+function savePass() {
+  const s = V.sheet, groups = passGroups(s), rh = [], d = s.d;
+  let rn = 0; groups.forEach((g, i) => { if (s.checked[i]) { rn += g.n; if (!rh.includes(g.hz)) rh.push(g.hz); } });
+  withCelebrate(d, () => setLog(d, { pass: { h: s.amt, rn, rh, at: 1 } }));
+  Object.keys(s.rates).forEach(h => { if (s.rates[h]) rateHizb(+h, s.rates[h], 'cheikh', d, false); });
+  Object.keys(s.errs).forEach(h => { const tx = (s.errs[h] || '').trim(); if (tx) { const rec = hzRec(h); setHz(h, Object.assign({}, rec, { pts: (rec.pts || []).concat({ d, t: tx }) })); } });
+  toast('Passage enregistré. بارك الله فيك');
+}
+
+/* move sheet */
+function moveSheet(s) {
+  const days = weekDays(s.d).filter(d => d !== s.d && d >= todayKey() && !isPassDay(d));
+  return `<div class="sh-head"><div><h2>Décaler le passage</h2><p class="hint">Seulement pour cette semaine : tes jours habituels ne changent pas.</p></div></div>
+    <div class="field"><span>Du ${esc(fmtLong.format(parseKey(s.d)))} au…</span><div class="opts">${days.length ? days.map(d => `<button type="button" class="opt" data-act="mv-to" data-day="${d}">${esc(cap(fmtDay.format(parseKey(d))))}</button>`).join('') : '<p class="hint">Plus de jour libre cette semaine.</p>'}</div></div>
+    ${(S.moves || []).some(m => m.from === s.d || m.to === s.d) ? '<button type="button" class="btn" data-act="mv-reset">Annuler le décalage</button>' : ''}
+    <div class="acts"><button type="button" class="btn" data-act="close">Fermer</button></div>`;
+}
+
+/* hizb sheet */
+function saveHzNote() {
+  const ta = document.getElementById('hz-note'); const s = V.sheet;
+  if (!ta || !s || s.kind !== 'hz') return;
+  const rec = hzRec(s.h); if ((rec.note || '') !== ta.value) setHz(s.h, Object.assign({}, rec, { note: ta.value }));
+}
+function hzSheet(s) {
+  const h = s.h, rec = hzRec(h), ev = hzEvals(h), sc = hzScore(h), last = ev.length ? ev[ev.length - 1].s : null, sn = hzSeen()[h], t = todayKey();
+  const mine = ev.find(x => x.d === t && x.src === 'manuel');
+  return `<div class="sh-head"><div><h2>Hizb ${h}</h2><p class="hint">${esc(LVL_TXT[lvl(sc)])}</p></div><span class="sh-ar" lang="ar">حزب ${h}</span></div>
+    <div class="stats3"><div><span>Note</span><b class="${lvl(sc)}-t">${sc != null ? fr(sc) : '–'}</b><small>moy. 3 dernières</small></div><div><span>Dernière</span><b>${last != null ? last + '/10' : '–'}</b></div><div><span>Révisions</span><b>${sn ? sn.n : 0}</b><small>${sn ? (daysBetween(sn.last, t) === 0 ? "aujourd'hui" : `il y a ${daysBetween(sn.last, t)} j`) : 'aucune encore'}</small></div></div>
+    <fieldset class="field"><legend>Ta note aujourd'hui</legend>${rateRow(`data-act="rate" data-hz="${h}" data-src="manuel" data-today="1"`, mine && mine.s, false)}</fieldset>
+    <div class="field"><span>Points à revoir</span>${(rec.pts || []).length ? `<ul class="hist">${rec.pts.map((x, i) => `<li><span>${esc(x.t)} · ${esc(fmtDM.format(parseKey(x.d)))}</span><button type="button" data-act="pt-del" data-i="${i}" aria-label="Retirer">×</button></li>`).join('')}</ul>` : ''}
+      <div class="row2" style="grid-template-columns:minmax(0,1fr) auto"><input class="input" id="pt-in" type="text" maxlength="120" placeholder="Ex. page 34, confusion avec un autre passage" autocomplete="off"><button type="button" class="btn" data-act="pt-add">Ajouter</button></div></div>
+    <label class="field"><span>Remarques</span><textarea class="input" id="hz-note" maxlength="1000" placeholder="Ce qui bloque, ce que le cheikh a dit…">${esc(rec.note || '')}</textarea></label>
+    ${ev.length ? `<div class="field"><span>Historique des notes</span><ul class="hist">${ev.slice().reverse().map(x => `<li><b class="${lvl(x.s)}-t">${x.s}/10</b><span>${esc(cap(fmtDay.format(parseKey(x.d))))} · ${SRC_TXT[x.src] || 'note'}</span><button type="button" data-act="ev-del" data-d="${x.d}" data-src="${esc(x.src)}" aria-label="Supprimer cette note">×</button></li>`).join('')}</ul></div>` : ''}
+    <div class="acts"><button type="button" class="btn primary" data-act="close">Fermer</button></div>`;
+}
+
+/* taahadou sheet */
+function tahPreview(N, n) {
+  const P = tahPlan(N, n), out = [`Tu as ${isK1() ? 'appris ' + fmtLearned(P.L) : 'les 60 hizb'}.`];
+  if (P.remain8) out.push(`Il te reste ${fmtLearned(P.remain8)} à apprendre, soit environ ${fr(P.perWeek)} ${AR('ثمن')} par semaine.`);
+  if (P.known) out.push(P.avg != null ? `Moyenne des notes de ces hizb : ${fr(P.avg)}/10 (${P.rated} sur ${P.known} notés).` : 'Aucun de ces hizb n\'est encore noté.');
+  return out.map(l => `<span>${l}</span>`).join('');
+}
+function tahSheet(s) {
+  const tn = tahNext(); if (!tn) return '<p class="hint">Pas de date à venir.</p>';
+  return `<div class="sh-head"><div><h2>Objectif de récitation</h2><p class="hint">${esc(cap(fmtLong.format(parseKey(tn.next))))} · ${tn.n === 0 ? "aujourd'hui" : `dans ${tn.n} jours`}</p></div><span class="sh-ar" lang="ar">تَعَاهَدُوا</span></div>
+    <p class="hint">Trois fois par an, on récite d'un coup tout ce qu'on a appris. Prochaines dates : ${TAAHADOU.filter(d => d >= todayKey()).map(d => esc(fmtDM.format(parseKey(d)))).join(', ')}.</p>
+    <div class="field"><span>Hizb à réciter ce jour-là</span><div class="stepper"><button type="button" data-act="tah-step" data-d="-1" aria-label="Un de moins">−</button><div class="val" id="tah-val">${s.N}</div><button type="button" data-act="tah-step" data-d="1" aria-label="Un de plus">+</button></div></div>
+    <p class="prev" id="tah-prev">${tahPreview(s.N, tn.n)}</p>
+    <div class="acts"><button type="button" class="btn primary" data-act="tah-save">Enregistrer</button><button type="button" class="btn" data-act="close">Annuler</button></div>
+    ${tahGoal(tn.next) ? '<button type="button" class="btn danger" data-act="tah-clear">Retirer l\'objectif</button>' : ''}`;
+}
+
+/* settings */
+function settingsSheet(s) {
+  const c = C(), sw = (key, on, title, sub) => `<div class="switch-row"><div><b>${title}</b><small>${sub}</small></div><button type="button" class="switch" role="switch" aria-checked="${on}" data-act="toggle" data-k="${key}" aria-label="${title}"></button></div>`;
+  return `<div class="sh-head"><div><h2>Réglages</h2><p class="hint">${esc(STAGES[c.stage])} · sens ${c.dir === 'desc' ? '60 → 1' : '1 → 60'}</p></div><img src="${ICON}" alt="" width="44" height="44" style="border-radius:11px"></div>
+    <div class="field"><span>Mes objectifs</span><div>
+      ${sw('rev', c.rev.on, 'Révision perso', 'Par cœur, seul, en rotation')}
+      ${sw('pass', c.pass.on, 'Passages avec le cheikh', c.pass.mode === 'fixed' ? 'Jours fixes' : c.pass.mode === 'quota' ? `${c.pass.perWeek} par semaine` : `${c.pass.perMonth} minimum par mois`)}
+      ${sw('wird', c.wird.on, 'Wird', 'Lecture libre, sans rouge')}
+      ${sw('kahf', c.kahf.on, 'Sourate Al-Kahf', 'Chaque vendredi')}
+      ${c.kahf.on ? `<div class="opts" style="margin:4px 0 8px">${[['obj', 'Objectif du jour'], ['bonus', 'Bonus, sans rouge']].map(([v, l]) => `<button type="button" class="opt" data-act="kahf-mode" data-v="${v}" aria-pressed="${c.kahf.mode === v}">${l}</button>`).join('')}</div>` : ''}
+    </div><p class="hint">Un objectif désactivé disparaît et ne compte plus. Son historique est gardé.</p></div>
+    <div class="field"><span>Apparence</span><div class="opts">${[['auto', 'Automatique'], ['pure', 'Épuré'], ['light', 'Clair'], ['dark', 'Sombre']].map(([v, l]) => `<button type="button" class="opt" data-act="look" data-v="${v}" aria-pressed="${(S.meta.look || 'auto') === v}">${l}</button>`).join('')}</div><p class="hint">Automatique suit le réglage de ton téléphone. Épuré : fond blanc, couleurs discrètes.</p></div>
+    <div class="set-list">
+      <button type="button" class="set-item" data-act="edit-answers"><div><b>Modifier mes réponses</b><small>Étape, sens, où tu en es, passages, quantités, révision, wird</small></div>${ICON_CHEV}</button>
+      <button type="button" class="set-item" data-act="pause"><div><b>${c.pause && c.pause.to >= todayKey() ? 'En pause' : 'Faire une pause'}</b><small>Examens, voyage, Ramadan : aucun rouge pendant la pause</small></div>${ICON_CHEV}</button>
+      <button type="button" class="set-item" data-act="backup"><div><b>Sauvegarde</b><small>${S.meta.lastBackup ? `Dernière le ${esc(fmtDM.format(parseKey(S.meta.lastBackup)))}` : 'Jamais faite'} · copier ou restaurer</small></div>${ICON_CHEV}</button>
+      <button type="button" class="set-item" data-act="rules"><div><b>Les consignes</b><small>Où sont tes données, comment ne pas les perdre</small></div>${ICON_CHEV}</button>
+    </div>
+    <button type="button" class="btn danger" data-act="wipe">${s.armed ? 'Toucher à nouveau pour tout effacer' : 'Tout effacer et recommencer'}</button>
+    <div class="acts"><button type="button" class="btn primary" data-act="close">Fermer</button></div>`;
+}
+function exportCode() { return 'LNTHBT1:' + btoa(unescape(encodeURIComponent(JSON.stringify(S)))); }
+function backupSheet(s) {
+  if (s.restoreOnly) return `<div class="sh-head"><div><h2>Restaurer ma sauvegarde</h2><p class="hint">Colle le code que tu avais copié (il commence par LNTHBT1:), par exemple depuis ton WhatsApp. Tu retrouves tes réglages et ton suivi, sans refaire le questionnaire.</p></div></div>
+    <div class="field"><span>Ton code de sauvegarde</span><textarea class="input code" id="bk-in" rows="4" placeholder="Colle ici un code LNTHBT1:…"></textarea>${s.err ? `<p class="err">${esc(s.err)}</p>` : ''}<button type="button" class="btn primary" data-act="bk-restore">Restaurer</button></div>
+    <div class="acts"><button type="button" class="btn" data-act="close">Annuler</button></div>`;
+  const code = exportCode();
+  return `<div class="sh-head"><div><h2>Sauvegarde</h2><p class="hint">L'appli est en bêta et nous n'enregistrons aucune de tes données : tout reste sur ton téléphone. Copie ce code et garde-le, par exemple dans WhatsApp (en message à toi-même). Il permet de tout retrouver, même sur un autre téléphone.</p></div></div>
+    <div class="field"><span>Ton code de sauvegarde</span><textarea class="input code" id="bk-out" readonly rows="4">${esc(code)}</textarea><button type="button" class="btn primary" data-act="bk-copy">Copier le code</button></div>
+    <div class="field"><span>Restaurer une sauvegarde</span><textarea class="input code" id="bk-in" rows="3" placeholder="Colle ici un code LNTHBT1:…"></textarea>${s.err ? `<p class="err">${esc(s.err)}</p>` : ''}<button type="button" class="btn ${s.armed ? 'armed' : ''}" data-act="bk-restore">${s.armed ? 'Toucher à nouveau pour remplacer mes données' : 'Restaurer'}</button></div>
+    <div class="acts"><button type="button" class="btn" data-act="close">Fermer</button></div>`;
+}
+function pauseSheet(s) {
+  const c = C(), t = todayKey(), on = c.pause && c.pause.to >= t;
+  return `<div class="sh-head"><div><h2>Pause</h2><p class="hint">Pendant la pause, aucun objectif ne passe en rouge et les jours ne comptent pas dans les scores. Tu peux quand même valider ce que tu fais.</p></div></div>
+    ${on ? `<p class="prev"><span>En pause du ${esc(fmtDM.format(parseKey(c.pause.from)))} au ${esc(fmtDM.format(parseKey(c.pause.to)))}.</span></p><button type="button" class="btn primary" data-act="pause-stop">Reprendre aujourd'hui</button>`
+      : `<label class="field"><span>Jusqu'au (inclus)</span><input class="input" id="pause-to" type="date" min="${t}" value="${addDays(t, 6)}"></label><button type="button" class="btn primary" data-act="pause-start">Mettre en pause</button>`}
+    <div class="acts"><button type="button" class="btn" data-act="close">Fermer</button></div>`;
+}
+const RULES = [
+  ['Tes données restent sur ce téléphone', 'Dans ce navigateur, nulle part ailleurs. Personne d\'autre ne les voit.'],
+  ['Ajoute l\'appli à ton écran d\'accueil', 'Plus pratique, et sur iPhone ça évite que tes données s\'effacent si tu ne l\'ouvres pas pendant une semaine.'],
+  ['N\'efface pas les données de ton navigateur', 'Sinon ton suivi repart de zéro.'],
+  ['Copie ta sauvegarde de temps en temps', 'Réglages → Sauvegarde, puis colle le code dans WhatsApp. Il te permet de tout retrouver si tu changes de téléphone.'],
+  ['Ouvre toujours l\'appli avec le même lien', 'Et dans le même navigateur : un autre navigateur ne voit pas tes données.']
+];
+const rulesList = () => `<ul class="rules">${RULES.map(([b, s], i) => `<li><span class="n">${i + 1}</span><div><b>${b}</b><span class="hint">${s}</span></div></li>`).join('')}</ul>`;
+function rulesSheet() { return `<div class="sh-head"><div><h2>Les consignes</h2></div></div>${rulesList()}<div class="acts"><button type="button" class="btn primary" data-act="close">J'ai compris</button></div>`; }
+
+
+/* ---------- grille « hizb déjà appris » (questionnaire + onglet Hizb) ---------- */
+function knownGrid(dir, known, cur) {
+  const ord = order60(dir), cp = cur == null ? 60 : ord.indexOf(cur), ks = new Set(known);
+  const cells = ord.map((h, i) => i < cp ? `<button type="button" class="lk" disabled aria-label="Hizb ${h}, appris">${h}</button>`
+    : i === cp ? `<button type="button" class="cur" disabled aria-label="Hizb ${h}, en cours">${h}</button>`
+    : `<button type="button" data-act="kn-tog" data-hz="${h}" aria-pressed="${ks.has(h)}" aria-label="Hizb ${h}">${h}</button>`).join('');
+  return `<div class="kgrid" role="group" aria-label="Hizb déjà appris">${cells}</div>
+    <div class="klegend"><span><i class="k1"></i>appris (avant ton hizb en cours)</span><span><i class="k2"></i>en cours</span><span><i class="k3"></i>coché</span></div>
+    <div class="krange"><span>Cocher du hizb</span><input class="input" id="kn-a" type="number" inputmode="numeric" min="1" max="60" aria-label="Du hizb"><span>au</span><input class="input" id="kn-b" type="number" inputmode="numeric" min="1" max="60" aria-label="Au hizb"><button type="button" class="btn" data-act="kn-range">Cocher</button>${known.length ? '<button type="button" class="link" data-act="kn-clear">Tout décocher</button>' : ''}</div>`;
+}
+/* hizb cochables = après le hizb en cours dans le sens choisi */
+const knownTotal = (dir, known, cur) => { if (cur == null) return 60; const o = order60(dir), cp = o.indexOf(cur); return cp + known.filter(h => o.indexOf(h) > cp).length; };
+const knownPrev = L => `<span>${L} hizb appris au total. Ils entrent dans ta révision et ta carte.</span>`;
+function knownCtx() {
+  if (V.sheet && V.sheet.kind === 'known') { const s = V.sheet; return { get: () => s.known, set: v => { s.known = v; }, dir: C().dir, cur: s.cur, redraw: renderSheet }; }
+  if (V.onb) { const a = V.onb.a; return { get: () => a.known, set: v => { a.known = v; }, dir: a.dir, cur: aCur(a), redraw: renderOnb }; }
+  return null;
+}
+function knownSheet(s) {
+  const L = knownTotal(C().dir, s.known, s.cur);
+  return `<div class="sh-head"><div><h2>Hizb déjà appris</h2><p class="hint">Ceux appris en dehors de ta suite actuelle. Par exemple du 60 au 30 avant de reprendre depuis le 1.</p></div></div>
+    ${s.cur == null ? '<p class="prev"><span>Tous les hizb sont déjà comptés comme appris.</span></p>' : `${knownGrid(C().dir, s.known, s.cur)}
+    <p class="prev" id="kn-prev">${knownPrev(L)}</p>`}
+    <div class="acts"><button type="button" class="btn" data-act="close">Annuler</button>${s.cur == null ? '' : '<button type="button" class="btn primary" data-act="kn-save">Enregistrer</button>'}</div>`;
+}
+function saveKnown() {
+  const s = V.sheet, c = C(), t = todayKey();
+  const nx = (ptr, cnt) => { const p = ptr(t), size = poolHz(t) * 2; return p != null && size ? halfAt((p + cnt(t)) % size, t) : null; };
+  const nr = nx(revPtr, revCount), np = nx(prPtr, prCount);
+  const e = prog8(), cur = curHifz(), r = e % 8, oldIdx = Math.floor(e / 8);
+  const known = normKnown(s.known).filter(h => h !== cur);
+  c.known = known;
+  if (cur != null) { const ni = seqList().indexOf(cur); if (ni >= 0 && ni !== oldIdx) c.base8 = (c.base8 || 0) + (ni - oldIdx) * 8; }
+  const pl = poolList(t);
+  if (pl.length) {
+    c.rev.anchor = nr ? anchorFor(nr.hz, nr.half, t, revCount(t)) : anchorFor(pl[0], 1, t, revCount(t));
+    c.pass.anchor = np ? anchorFor(np.hz, np.half, t, prCount(t)) : anchorFor(pl[0], 1, t, prCount(t));
+  }
+  save(); V.sheet = null; $('#back').hidden = true; render(); toast('Hizb enregistrés');
+}
+
+/* ================= ONBOARDING ================= */
+const STEPS_ALL = [['etape', 'Étape'], ['sens', 'Sens'], ['ou', 'Où tu en es'], ['passages', 'Passages'], ['quantites', 'Quantités'], ['revision', 'Révision et wird'], ['tah', 'تعاهدوا'], ['recap', 'Récap'], ['consignes', 'Consignes']];
+const steps = () => STEPS_ALL.filter(x => x[0] !== 'tah' || tahNext());
+const defTahN = a => a.stage === 'k1' ? Math.max(1, Math.floor(aL8(a) / 8)) : 60;
+function tahOnbPreview(a, n) {
+  const N = a.tahN, L = aL8(a), remain = Math.max(0, N * 8 - L), out = [];
+  out.push(a.stage === 'k1' ? `Tu as appris ${fmtLearned(L)}.` : 'Tu as les 60 hizb.');
+  out.push(remain ? `Il te reste ${fmtLearned(remain)} à apprendre d'ici là, soit environ ${fr(n > 0 ? remain / (n / 7) : remain)} ${AR('ثمن')} par semaine.` : 'Tout est déjà appris : il reste à bien réviser.');
+  return out.map(l => `<span>${l}</span>`).join('');
+}
+function defaultAnswers() {
+  return { stage: 'k1', dir: 'desc', n: '0', t: '0', known: [], cur: '', passMode: 'fixed', days: [], perWeek: 2, perMonth: 4, unit: 1, revN: 2, prh: '', prn: 1, revOn: true, revMode: 'qty', revQty: 1, revTour: 30, rh: '', rn: 1, wirdOn: false, wUnit: 'pages', wQty: 4, wDays: 5, wScope: 'all', kahf: 'off', tahJoin: '', tahN: 0 };
+}
+function answersFromCfg() {
+  const c = C(), t = todayKey(), e = prog8(), a = defaultAnswers();
+  { const ch = isK1() ? curHifz() : null; a.known = (c.known || []).slice(); a.cur = isK1() ? (ch == null ? 'done' : String(ch)) : ''; }
+  Object.assign(a, { stage: c.stage, dir: c.dir, n: String(Math.floor(e / 8)), t: String(e % 8), passMode: c.pass.mode, days: (c.pass.days || []).slice(), perWeek: c.pass.perWeek || 2, perMonth: c.pass.perMonth || 4, unit: c.pass.unit, revN: c.pass.revN || 0,
+    revOn: c.rev.on, revMode: c.rev.mode, revQty: c.rev.qty || 1, revTour: c.rev.tour || 30, wirdOn: c.wird.on, wUnit: c.wird.unit, wQty: c.wird.qty, wDays: c.wird.days, wScope: c.wird.scope || 'all', kahf: c.kahf && c.kahf.on ? c.kahf.mode : 'off' });
+  { const tn = tahNext(), g = tn && c.tah && c.tah.goals ? c.tah.goals[tn.next] : null; a.tahJoin = (c.tah && c.tah.join) || (g ? 'yes' : ''); a.tahN = g || defTahN(a); }
+  const size = poolHz(t) * 2;
+  const rp = revPtr(t); if (rp != null && size) { const h = halfAt((rp + revCount(t)) % size, t); a.rh = String(h.hz); a.rn = h.half; }
+  const pp = prPtr(t); if (pp != null && size) { const h = halfAt((pp + prCount(t)) % size, t); a.prh = String(h.hz); a.prn = h.half; }
+  return a;
+}
+const revHalfDay = (a, pool) => a.revMode === 'qty' ? a.revQty === 1 : pool.length ? Math.ceil(pool.length * 2 / a.revTour) === 1 : false;
+function tourHint(a, pool) { if (!pool.length) return 'La quantité sera calculée dès ton premier hizb appris.'; const h = Math.max(1, Math.ceil(pool.length * 2 / Math.max(1, a.revTour))); return `Soit ${hizbFr(h)} par jour pour tes ${pool.length} hizb. La quantité suit ce que tu apprends.`; }
+const aSeq = a => a.stage === 'k1' ? seqFor(a.dir, a.known) : order60(a.dir);
+function aCur(a) { if (a.cur === 'done') return null; const s = aSeq(a); return s.includes(+a.cur) ? +a.cur : (s.length ? s[0] : null); }
+function aE8(a) {
+  if (a.stage !== 'k1') return Math.min(480, clampInt(a.n, 0, 60) * 8 + clampInt(a.t, 0, 7));
+  const s = aSeq(a), c = aCur(a); return c == null ? s.length * 8 : s.indexOf(c) * 8 + clampInt(a.t, 0, 7);
+}
+const aL8 = a => a.stage === 'k1' ? (a.known || []).length * 8 + aE8(a) : 480;
+const aPool = a => { if (a.stage !== 'k1') return order60(a.dir); const set = new Set((a.known || []).concat(aSeq(a).slice(0, Math.floor(aE8(a) / 8)))); return order60(a.dir).filter(h => set.has(h)); };
+function aPortionAr(a) { const s = aSeq(a), e = aE8(a); if (e >= s.length * 8) return null; return `حزب ${s[Math.floor(e / 8)]} · ثمن ${e % 8 + 1}`; }
+function onbPreview(a) {
+  const pa = aPortionAr(a), k1 = a.stage === 'k1';
+  return (k1 ? `<span>${fmtLearned(aL8(a))} appris au total</span>` : '') + (pa ? `<span>${k1 ? 'Prochain à apprendre' : 'Prochain à repasser'} : <span class="ar" lang="ar">${pa}</span></span>` : `<span>${k1 ? 'Les 60 hizb sont appris.' : 'Khatma repassée en entier.'}</span>`);
+}
+const hzSelect = (id, list, val) => `<select class="input" id="${id}">${list.length ? list.map(x => `<option value="${x}" ${+val === x ? 'selected' : ''}>Hizb ${x}</option>`).join('') : '<option value="">Aucun hizb complet</option>'}</select>`;
+const halfOpts = (key, val) => `<div class="opts"><button type="button" class="opt" data-act="onb-set" data-k="${key}" data-v="1" aria-pressed="${+val !== 2}"><span class="ar">نصف 1</span></button><button type="button" class="opt" data-act="onb-set" data-k="${key}" data-v="2" aria-pressed="${+val === 2}"><span class="ar">نصف 2</span></button></div>`;
+const stepperHtml = (key, val, label) => `<div class="stepper"><button type="button" data-act="onb-step" data-k="${key}" data-d="-1" aria-label="Moins">−</button><div class="val">${label || val}</div><button type="button" data-act="onb-step" data-k="${key}" data-d="1" aria-label="Plus">+</button></div>`;
+const optBtn = (key, v, label, cur) => `<button type="button" class="opt" data-act="onb-set" data-k="${key}" data-v="${v}" aria-pressed="${String(cur) === String(v)}">${label}</button>`;
+const choiceBtn = (key, v, title, sub, cur) => `<button type="button" data-act="onb-set" data-k="${key}" data-v="${v}" aria-pressed="${String(cur) === String(v)}"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</button>`;
+function recapRows(a) {
+  const pool = aPool(a), k1 = a.stage === 'k1';
+  const unitTxt = a.unit ? UNITS.find(x => x[0] === a.unit)[2] : 'variable, au choix à chaque passage';
+  return [
+    ['etape', 'Étape', STAGES[a.stage]],
+    ['sens', 'Sens', a.dir === 'desc' ? 'Hizb 60 → 1' : 'Hizb 1 → 60'],
+    ['ou', k1 ? 'Hizb appris' : 'Hizb repassés', k1 ? `${fmtLearned(aL8(a))}${aCur(a) != null ? ` · en cours : hizb ${aCur(a)}` : ''}` : fmtLearned(aE8(a))],
+    ['passages', 'Passages', a.passMode === 'fixed' ? DOW_ORDER.filter(x => a.days.includes(x)).map(x => cap(DOW[x])).join(', ') || 'aucun jour' : a.passMode === 'quota' ? `${a.perWeek} par semaine, jours libres` : `Au moins ${a.perMonth} par mois`],
+    ['quantites', 'À chaque passage', `${k1 ? 'Hifz' : 'Repasser'} : ${unitTxt} · révision : ${a.revN ? hizbFr(a.revN) : 'aucune'}`],
+    ['revision', 'Révision perso', a.revOn ? (a.revMode === 'tour' ? `Tour en ${a.revTour} jours` : `${hizbFr(a.revQty)} par jour`) + (pool.length ? `, reprise au hizb ${a.rh || pool[0]}` : '') : 'Non'],
+    ['revision', 'Wird', a.wirdOn ? `${fr(a.wQty)} ${a.wUnit === 'hizb' ? 'hizb' : 'pages'}, ${a.wDays} jours par semaine${a.stage === 'k1' ? `, ${a.wScope === 'learned' ? 'sur ce que tu as appris' : 'sur tout le Coran'}` : ''}` : 'Non'],
+    ['revision', 'Al-Kahf le vendredi', a.kahf === 'obj' ? 'Oui, en objectif' : a.kahf === 'bonus' ? 'Oui, en bonus' : 'Non']
+  ].concat(tahNext() ? [['tah', 'Prochain تعاهدوا', a.tahJoin === 'yes' ? `Oui, objectif ${a.tahN} hizb` : a.tahJoin === 'no' ? 'Non' : a.tahJoin === 'maybe' ? 'Pas encore décidé' : '—']] : []).concat([
+  ]);
+}
+function renderOnb() {
+  if (!V.onb) V.onb = { step: 0, a: defaultAnswers(), edit: false, err: '' };
+  const STEPS = steps();
+  const o = V.onb, a = o.a, [key] = STEPS[o.step], k1 = a.stage === 'k1';
+  let body = '';
+  if (key === 'etape') body = `<h2>Tu en es à quelle étape ?</h2><p>Ça décide de ce que suivent tes passages et ta carte des hizb.</p><div class="choice">
+    ${choiceBtn('stage', 'k1', '1re khatma', 'Tu apprends de nouvelles parties (hifz) et tu révises ce que tu sais.', a.stage)}
+    ${choiceBtn('stage', 'k2', '2e khatma', 'Les 60 hizb sont acquis : tu les repasses avec le cheikh pour consolider.', a.stage)}
+    ${choiceBtn('stage', 'k3', 'Plus de 2 khatmat', 'Même principe : les 60 hizb repassés et révisés.', a.stage)}
+    ${choiceBtn('stage', 'ijaza', 'Ijaza', 'Obtenue ou en préparation avec le cheikh.', a.stage)}</div>`;
+  else if (key === 'sens') body = `<h2>Dans quel sens tu avances ?</h2><div class="choice">${choiceBtn('dir', 'desc', 'Hizb 60 → 1', 'Depuis la fin du mushaf, le plus courant chez nous.', a.dir)}${choiceBtn('dir', 'asc', 'Hizb 1 → 60', 'Depuis Al-Fatiha.', a.dir)}</div>`;
+  else if (key === 'ou' && k1) {
+    const sq = aSeq(a), cur = aCur(a);
+    body = `<h2>Où tu en es ?</h2><p>Le hizb que tu apprends en ce moment. Ceux d'avant, dans ton sens (${a.dir === 'desc' ? '60 → 1' : '1 → 60'}), comptent comme appris.</p>
+    <div class="row2"><label class="field"><span>Hizb en cours</span><select class="input" id="onb-cur">${sq.map(h => `<option value="${h}" ${cur === h ? 'selected' : ''}>Hizb ${h}</option>`).join('')}<option value="done" ${cur == null ? 'selected' : ''}>Tout est appris</option></select></label>${cur != null ? `<label class="field"><span>${AR('ثمن')} déjà appris</span><input class="input" id="onb-t" type="number" inputmode="numeric" min="0" max="7" value="${esc(a.t)}"></label>` : ''}</div>
+    ${cur != null ? `<p class="grp">D'autres hizb déjà appris ?</p><p>Par exemple, tu as appris du 60 au 30 avant de reprendre depuis le 1 : coche-les. Ils entrent dans ta révision et ta carte, et ton hifz les saute.</p>${knownGrid(a.dir, a.known, cur)}` : ''}
+    <p class="prev" id="onb-prev">${onbPreview(a)}</p>`;
+  }
+  else if (key === 'ou') body = `<h2>Où tu en es ?</h2><p>Dans cette khatma, combien de hizb tu as déjà repassés avec le cheikh.</p>
+    <div class="row2"><label class="field"><span>Hizb repassés</span><input class="input" id="onb-n" type="number" inputmode="numeric" min="0" max="60" value="${esc(a.n)}"></label><label class="field"><span>+ ${AR('ثمن')} du suivant</span><input class="input" id="onb-t" type="number" inputmode="numeric" min="0" max="7" value="${esc(a.t)}"></label></div>
+    <p class="prev" id="onb-prev">${onbPreview(a)}</p>`;
+  else if (key === 'passages') body = `<h2>Tes passages avec le cheikh</h2><div class="choice">
+    ${choiceBtn('passMode', 'fixed', 'Des jours fixes', 'Les mêmes jours chaque semaine. Tes jours changent souvent ? Choisis quand même tes jours habituels : tu pourras décaler un passage pour une semaine.', a.passMode)}
+    ${choiceBtn('passMode', 'quota', 'Un nombre par semaine', 'Pas de jours précis, quand tu peux.', a.passMode)}
+    ${choiceBtn('passMode', 'month', 'Un nombre minimum par mois', 'Pour des passages irréguliers : tu gardes un objectif sur le mois.', a.passMode)}</div>
+    ${a.passMode === 'fixed' ? `<div class="field"><span>Tes jours</span><div class="opts">${DOW_ORDER.map(d => `<button type="button" class="opt" data-act="onb-day" data-v="${d}" aria-pressed="${a.days.includes(d)}">${cap(DOW[d])}</button>`).join('')}</div></div>` : ''}
+    ${a.passMode === 'quota' ? `<div class="field"><span>Passages par semaine</span>${stepperHtml('perWeek', a.perWeek)}</div>` : ''}
+    ${a.passMode === 'month' ? `<div class="field"><span>Minimum de passages par mois</span>${stepperHtml('perMonth', a.perMonth)}</div>` : ''}`;
+  else if (key === 'quantites') {
+    const pool = aPool(a);
+    body = `<h2>À chaque passage avec le cheikh</h2><p class="grp">${k1 ? 'Nouveau (hifz)' : 'Khatma à repasser'}</p><div class="field"><span>Combien à chaque passage ?</span><div class="opts">${UNITS.map(([v, ar]) => optBtn('unit', v, `<span class="ar">${ar}</span>`, a.unit)).join('')}${optBtn('unit', 0, 'Ça varie', a.unit)}</div></div>
+    <p class="grp">Révision avec le cheikh</p><div class="field"><span>Combien à chaque passage ?</span><div class="opts">${[[0, 'Aucune'], [1, '½ hizb'], [2, '1 hizb'], [4, '2 hizb'], [6, '3 hizb'], [8, '4 hizb'], [10, '5 hizb']].map(([v, l]) => optBtn('revN', v, l, a.revN)).join('')}</div>
+      <p class="hint">Avant chaque passage, l'appli te montre les prochains hizb de ta rotation à préparer. Après, tu coches ceux vraiment passés et tu les notes.</p></div>
+    ${a.revN && pool.length ? `<div class="${a.revN === 1 ? 'row2' : ''}"><label class="field"><span>Tu reprends à partir de quel hizb ?</span>${hzSelect('onb-prh', pool, a.prh)}</label>${a.revN === 1 ? `<div class="field"><span>Moitié</span>${halfOpts('prn', a.prn)}</div>` : ''}</div>` : ''}`;
+  } else if (key === 'revision') {
+    const pool = aPool(a);
+    body = `<h2>Révision perso et wird</h2><p>La <b>révision perso</b> se fait par cœur, seul, sur ce que tu sais déjà. Le <b>wird</b>, c'est de la lecture libre, à part.</p>
+    <div class="field"><span>Tu fais une révision perso ?</span><div class="opts">${optBtn('revOn', 'true', 'Oui', a.revOn)}${optBtn('revOn', 'false', 'Non', a.revOn)}</div></div>
+    ${a.revOn ? `<div class="field"><span>Comment ?</span><div class="opts">${optBtn('revMode', 'qty', 'Une quantité par jour', a.revMode)}${optBtn('revMode', 'tour', 'Faire le tour en X jours', a.revMode)}</div></div>
+      ${a.revMode === 'qty' ? `<div class="field"><span>Par jour</span><div class="opts">${[[1, '½ hizb'], [2, '1 hizb'], [4, '2 hizb'], [6, '3 hizb'], [10, '5 hizb']].map(([v, l]) => optBtn('revQty', v, l, a.revQty)).join('')}</div></div>`
+        : `<div class="field"><span>Un tour complet en (jours)</span><div class="stepper"><button type="button" data-act="onb-step" data-k="revTour" data-d="-1" aria-label="Moins">−</button><input class="input" id="onb-revTour" type="number" inputmode="numeric" min="1" max="365" value="${a.revTour}" aria-label="Nombre de jours pour un tour complet"><button type="button" data-act="onb-step" data-k="revTour" data-d="1" aria-label="Plus">+</button></div><p class="hint" id="tour-hint">${tourHint(a, pool)}</p></div>`}
+      ${pool.length ? `<div class="${revHalfDay(a, pool) ? 'row2' : ''}"><label class="field"><span>Tu reprends à partir de quel hizb ?</span>${hzSelect('onb-rh', pool, a.rh)}</label>${revHalfDay(a, pool) ? `<div class="field"><span>Moitié</span>${halfOpts('rn', a.rn)}</div>` : ''}</div>` : ''}` : ''}
+    <div class="field"><span>Tu as un wird ?</span><div class="opts">${optBtn('wirdOn', 'true', 'Oui', a.wirdOn)}${optBtn('wirdOn', 'false', 'Non', a.wirdOn)}</div></div>
+    ${a.wirdOn ? `${a.stage === 'k1' ? `<div class="field"><span>Sur quoi ?</span><div class="opts">${optBtn('wScope', 'learned', 'Ce que j\'ai appris', a.wScope)}${optBtn('wScope', 'all', 'Tout le Coran', a.wScope)}</div></div>` : ''}<div class="field"><span>Compté en</span><div class="opts">${optBtn('wUnit', 'pages', 'Pages', a.wUnit)}${optBtn('wUnit', 'hizb', 'Hizb', a.wUnit)}</div></div>
+      <div class="row2"><div class="field"><span>Par jour</span>${stepperHtml('wQty', a.wQty, fr(a.wQty))}</div><div class="field"><span>Jours / semaine</span>${stepperHtml('wDays', a.wDays)}</div></div>` : ''}
+    <div class="field"><span>Sourate Al-Kahf chaque vendredi ?</span><div class="opts">${optBtn('kahf', 'obj', 'Oui, en objectif', a.kahf)}${optBtn('kahf', 'bonus', 'Oui, en bonus', a.kahf)}${optBtn('kahf', 'off', 'Non', a.kahf)}</div><p class="hint">En objectif, elle compte dans ta journée du vendredi. En bonus, elle s'affiche sans jamais passer en rouge.</p></div>`;
+  } else if (key === 'tah') {
+    const tn = tahNext();
+    body = `<h2>Le prochain ${AR('تَعَاهَدُوا')}</h2><p>${esc(cap(fmtLong.format(parseKey(tn.next))))}, dans ${tn.n} jours. Ce jour-là, on récite d'un coup tout ce qu'on a appris.</p>
+    <div class="field"><span>Tu penses le faire ?</span><div class="opts">${optBtn('tahJoin', 'yes', 'Oui', a.tahJoin)}${optBtn('tahJoin', 'maybe', 'Je ne sais pas encore', a.tahJoin)}${optBtn('tahJoin', 'no', 'Non', a.tahJoin)}</div></div>
+    ${a.tahJoin === 'yes' ? `<div class="field"><span>Ton objectif : combien de hizb ?</span><div class="stepper"><button type="button" data-act="onb-step" data-k="tahN" data-d="-1" aria-label="Un de moins">−</button><input class="input" id="onb-tahN" type="number" inputmode="numeric" min="1" max="60" value="${a.tahN}" aria-label="Nombre de hizb à réciter"><button type="button" data-act="onb-step" data-k="tahN" data-d="1" aria-label="Un de plus">+</button></div><p class="prev" id="tah-onb-prev">${tahOnbPreview(a, tn.n)}</p></div>` : ''}`;
+  } else if (key === 'recap') body = `<h2>Récapitulatif</h2><p>Vérifie tes réponses. Touche une ligne pour la corriger.</p><dl class="recap">${recapRows(a).map(([s, l, v]) => `<div><div class="rc"><dt>${l}</dt><dd>${esc(v)}</dd></div><button type="button" class="link" data-act="onb-go" data-s="${s}">Modifier</button></div>`).join('')}</dl>`;
+  else body = `<h2>Avant de commencer</h2>${rulesList()}`;
+  const last = key === 'consignes' || (o.edit && key === 'recap');
+  $('#root').innerHTML = `<div class="onb">
+    ${o.step === 0 && !o.edit ? `<div class="onb-hero"><img src="${ICON}" alt="">${wordmark(true)}<p class="hero-q"><span class="ar" lang="ar">﴿ لِنُثَبِّتَ بِهِ فُؤَادَكَ ﴾</span><br><span class="hero-ref">— Al-Furqān, 32 —</span> « Pour raffermir ton cœur »</p><p>Quelques questions pour adapter l'appli à toi.</p><button type="button" class="link onb-restore" data-act="bk-start">Tu as déjà utilisé l'appli ? J'ai déjà une sauvegarde</button></div>` : ''}
+    <div><div class="steps">${STEPS.map((s, i) => `<i class="${i <= o.step ? 'on' : ''}"></i>`).join('')}</div><div class="steps-l" style="margin-top:6px">${STEPS.map((s, i) => i === o.step ? `<b>${s[1]}</b>` : `<span>${s[1]}</span>`).join('<span>·</span>')}</div></div>
+    <div class="onb-card">${body}${o.err ? `<p class="err">${esc(o.err)}</p>` : ''}</div>
+    <div class="onb-nav">${o.step > 0 ? '<button type="button" class="btn" data-act="onb-back">Retour</button>' : o.edit ? '<button type="button" class="btn" data-act="onb-cancel">Annuler</button>' : ''}<button type="button" class="btn primary" data-act="onb-next">${last ? (o.edit ? 'Enregistrer' : 'C\'est parti, بسم الله') : key === 'recap' ? 'Tout est bon' : 'Suivant'}</button></div>
+  </div>`;
+}
+function onbValidate() {
+  const o = V.onb, a = o.a, key = steps()[o.step][0];
+  if (key === 'ou' && a.stage !== 'k1') { const n = clampInt(a.n, 0, 60), t = clampInt(a.t, 0, 7); if (n === 60 && t > 0) return 'Avec 60 hizb, il n\'y a plus de ثمن en cours.'; }
+  if (key === 'passages' && a.passMode === 'fixed' && !a.days.length) return 'Coche au moins un jour de passage.';
+  if (key === 'tah' && !a.tahJoin) return 'Choisis une réponse.';
+  return '';
+}
+function applyOnb() {
+  { const a0 = V.onb.a, pl = aPool(a0); if (a0.revN !== 1) a0.prn = 1; if (!revHalfDay(a0, pl)) a0.rn = 1; }
+  const a = V.onb.a, t = todayKey(), fresh = !S.cfg, old = S.cfg || {};
+  const pool = aPool(a);
+  const cfg = {
+    stage: a.stage, dir: a.dir, created: fresh ? backStart(t) : old.created, pivot: t, v2: true, base8: 0, known: a.stage === 'k1' ? normKnown(a.known).filter(h => h !== aCur(a)) : normKnown(old.known),
+    pass: { on: old.pass ? old.pass.on : true, mode: a.passMode, days: a.days.slice(), perWeek: a.perWeek, perMonth: a.perMonth, unit: a.unit, revN: a.revN, anchor: null },
+    rev: { on: a.revOn, mode: a.revMode, qty: a.revQty, tour: a.revTour, anchor: null },
+    wird: { on: a.wirdOn, unit: a.wUnit, qty: a.wQty, days: a.wDays, scope: a.stage === 'k1' ? a.wScope : 'all' },
+    kahf: { on: a.kahf !== 'off', mode: a.kahf === 'off' ? ((old.kahf && old.kahf.mode) || 'bonus') : a.kahf }, kahfFrom: old.kahfFrom || (a.kahf !== 'off' ? weekStart(t) : undefined),
+    pause: old.pause || null, tah: { goals: Object.assign({}, (old.tah && old.tah.goals) || {}), join: a.tahJoin || '' }
+  };
+  { const tn = tahNext(); if (tn) { if (a.tahJoin === 'yes') cfg.tah.goals[tn.next] = clampInt(a.tahN, 1, 60); else delete cfg.tah.goals[tn.next]; } }
+  S.cfg = cfg; S.meta = Object.assign({}, S.meta, { kahfAsked: true });
+  cfg.base8 = aE8(a) - hSum(t, '9999-12-31');
+  cfg.rev.anchor = anchorFor(a.rh || pool[0], a.rn, t, revCount(t));
+  cfg.pass.anchor = anchorFor(a.prh || pool[0], a.prn, t, prCount(t));
+  S.meta = Object.assign({}, S.meta, { rulesSeen: true });
+  save();
+  const was = V.onb.edit; V.onb = null; V.sel = t;
+  render(); toast(was ? 'Réponses enregistrées' : 'بسم الله, c\'est parti !');
+}
+
+/* ================= EVENTS ================= */
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const act = b.dataset.act, t = todayKey(), k = V.sel, s = V.sheet;
+  switch (act) {
+    /* onboarding */
+    case 'onb-set': {
+      const a = V.onb.a, key = b.dataset.k; let v = b.dataset.v;
+      if (v === 'true' || v === 'false') v = v === 'true'; else if (/^\d+$/.test(v) && !['stage', 'dir', 'passMode', 'revMode', 'wUnit', 'wScope', 'kahf'].includes(key)) v = +v;
+      a[key] = v;
+      if (key === 'stage' && v !== 'k1' && !V.onb.edit) { a.n = '0'; a.t = '0'; }
+      if (key === 'wUnit') a.wQty = v === 'hizb' ? 1 : 4;
+      if (key === 'tahJoin' && v === 'yes' && !a.tahN) a.tahN = defTahN(a);
+      V.onb.err = ''; renderOnb(); break;
+    }
+    case 'onb-day': { const a = V.onb.a, d = +b.dataset.v; a.days = a.days.includes(d) ? a.days.filter(x => x !== d) : a.days.concat(d); V.onb.err = ''; renderOnb(); break; }
+    case 'onb-step': {
+      const a = V.onb.a, key = b.dataset.k, d = +b.dataset.d;
+      if (key === 'perWeek') a.perWeek = Math.max(1, Math.min(7, a.perWeek + d));
+      if (key === 'perMonth') a.perMonth = Math.max(1, Math.min(31, a.perMonth + d));
+      if (key === 'wDays') a.wDays = Math.max(1, Math.min(7, a.wDays + d));
+      if (key === 'revTour') a.revTour = Math.max(1, Math.min(365, a.revTour + d));
+      if (key === 'tahN') { a.tahN = Math.max(1, Math.min(60, a.tahN + d)); const tn = tahNext(), i = $('#onb-tahN'), pv = $('#tah-onb-prev'); if (i) i.value = a.tahN; if (pv && tn) pv.innerHTML = tahOnbPreview(a, tn.n); break; }
+      if (key === 'wQty') a.wQty = Math.max(a.wUnit === 'hizb' ? 0.5 : 1, Math.min(60, a.wQty + d * (a.wUnit === 'hizb' ? 0.5 : 1)));
+      renderOnb(); break;
+    }
+    case 'onb-next': {
+      const err = onbValidate(); if (err) { V.onb.err = err; renderOnb(); break; }
+      const key = steps()[V.onb.step][0];
+      if (key === 'consignes' || (V.onb.edit && key === 'recap')) { applyOnb(); break; }
+      V.onb.step++; V.onb.err = ''; renderOnb(); window.scrollTo(0, 0); break;
+    }
+    case 'onb-back': V.onb.step = Math.max(0, V.onb.step - 1); V.onb.err = ''; renderOnb(); window.scrollTo(0, 0); break;
+    case 'onb-go': V.onb.step = steps().findIndex(x => x[0] === b.dataset.s); renderOnb(); window.scrollTo(0, 0); break;
+    case 'onb-cancel': V.onb = null; render(); break;
+    /* navigation */
+    case 'pick': V.sel = b.dataset.day; render(); break;
+    case 'goday': V.sel = b.dataset.day; V.tab = 'jour'; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); break;
+    case 'tab': V.tab = b.dataset.tab; try { localStorage.setItem(STORE + ':tab', V.tab); } catch (err) {} render(); break;
+    case 'prevWeek': V.sel = addDays(k, -7); render(); break;
+    case 'nextWeek': V.sel = addDays(k, 7); render(); break;
+    case 'prevMonth': V.sel = addMonths(k, -1); render(); break;
+    case 'nextMonth': V.sel = addMonths(k, 1); render(); break;
+    case 'today': V.sel = t; render(); break;
+    case 'close': closeSheet(); break;
+    /* revision */
+    case 'rv-ok': if (poolHz(k)) { withCelebrate(k, () => setLog(k, { rev: revCount(k) + 1 })); render(); toast('Demi-hizb validé. بارك الله فيك'); } break;
+    case 'rv-undo': setLog(k, { rev: revCount(k) - 1 }); render(); break;
+    case 'rate': {
+      const day = b.dataset.today ? t : k;
+      rateHizb(+b.dataset.hz, +b.dataset.s, b.dataset.src, day, true);
+      if (s && s.kind === 'hz') { saveHzNote(); renderSheet(); } render(); break;
+    }
+    /* wird */
+    case 'w-inc': case 'w-dec': case 'w-full': {
+      const w = C().wird, v = (S.log[k] && S.log[k].w) || 0, step = w.unit === 'hizb' ? 0.5 : 1;
+      const nv = act === 'w-full' ? (v >= w.qty ? 0 : w.qty) : Math.max(0, v + (act === 'w-inc' ? step : -step));
+      setLog(k, { w: nv }); render(); break;
+    }
+    /* passage */
+    case 'pass-open': openPass(k); break;
+    case 'tah-did': withCelebrate(k, () => setLog(k, { tah: 1, tahH: (S.log[k] && S.log[k].tahH) || tahGoal(k) || Math.max(1, Math.floor(learned8(k) / 8)) })); render(); break;
+    case 'tah-not': setLog(k, { tah: -1, tahH: null }); render(); break;
+    case 'tah-undo': setLog(k, { tah: null, tahH: null }); render(); break;
+    case 'tah-h': setLog(k, { tahH: Math.max(1, Math.min(60, ((S.log[k] && S.log[k].tahH) || 1) + +b.dataset.d)) }); render(); break;
+    case 'ps-amt': s.amt = +b.dataset.v; renderSheet(); break;
+    case 'ps-tick': s.checked[+b.dataset.i] = !s.checked[+b.dataset.i]; renderSheet(); break;
+    case 'ps-more': s.revN += 2; s.checked = passGroups(s).map((g, i) => s.checked[i] != null ? s.checked[i] : true); renderSheet(); break;
+    case 'ps-rate': { const h = b.dataset.hz, v = +b.dataset.s; s.rates[h] = s.rates[h] === v ? 0 : v; renderSheet(); break; }
+    case 'ps-save': savePass(); closeSheet(); break;
+    case 'ps-del': {
+      if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = 'Toucher à nouveau pour supprimer'; break; }
+      setLog(s.d, { pass: null }); closeSheet(); toast('Passage supprimé'); break;
+    }
+    case 'move-open': openSheet({ kind: 'move', d: k }); break;
+    case 'mv-to': { const mv = (S.moves || []).filter(m => m.from !== s.d && m.to !== s.d); mv.push({ from: s.d, to: b.dataset.day }); S.moves = mv; save(); closeSheet(); toast('Passage décalé pour cette semaine'); break; }
+    case 'mv-reset': S.moves = (S.moves || []).filter(m => m.from !== s.d && m.to !== s.d); save(); closeSheet(); toast('Décalage annulé'); break;
+    /* hizb */
+    case 'hz-open': openSheet({ kind: 'hz', h: +b.dataset.hz }); break;
+    case 'hz-all': V.hzAll = b.dataset.v === '1'; render(); break;
+    case 'pt-add': {
+      const inp = $('#pt-in'), v = inp ? inp.value.trim() : ''; if (!v) { if (inp) inp.focus(); break; }
+      saveHzNote(); const rec = hzRec(s.h); setHz(s.h, Object.assign({}, rec, { pts: (rec.pts || []).concat({ d: t, t: v }) }));
+      renderSheet(); render(); setTimeout(() => { const i = $('#pt-in'); if (i) i.focus(); }, 0); break;
+    }
+    case 'pt-del': { saveHzNote(); const rec = hzRec(s.h), pts = (rec.pts || []).slice(); pts.splice(+b.dataset.i, 1); setHz(s.h, Object.assign({}, rec, { pts })); renderSheet(); render(); break; }
+    case 'ev-del': { saveHzNote(); const rec = hzRec(s.h); setHz(s.h, Object.assign({}, rec, { e: (rec.e || []).filter(x => !(x.d === b.dataset.d && x.src === b.dataset.src)) })); renderSheet(); render(); break; }
+    /* taahadou */
+    case 'tah-open': { const tn = tahNext(); if (tn) openSheet({ kind: 'tah', N: tahGoal(tn.next) || Math.max(1, Math.ceil(learned8() / 8)) }); break; }
+    case 'tah-step': { s.N = Math.max(1, Math.min(60, s.N + +b.dataset.d)); const tn = tahNext(); $('#tah-val').textContent = s.N; if (tn) $('#tah-prev').innerHTML = tahPreview(s.N, tn.n); break; }
+    case 'tah-save': case 'tah-clear': {
+      const tn = tahNext(); if (!tn) break;
+      const g = Object.assign({}, C().tah.goals || {}); if (act === 'tah-save') g[tn.next] = s.N; else delete g[tn.next];
+      C().tah = { goals: g }; save(); closeSheet(); toast(act === 'tah-save' ? 'Objectif enregistré' : 'Objectif retiré'); break;
+    }
+    /* settings */
+    case 'settings': openSheet({ kind: 'settings' }); break;
+    case 'toggle': { const key = b.dataset.k; C()[key].on = !C()[key].on; if (key === 'kahf' && C().kahf.on) { C().kahfFrom = C().kahfFrom || weekStart(t); S.meta = Object.assign({}, S.meta, { kahfAsked: true }); } save(); renderSheet(); render(); break; }
+    case 'edit-answers': V.sheet = null; $('#back').hidden = true; V.onb = { step: steps().findIndex(x => x[0] === 'recap'), a: answersFromCfg(), edit: true, err: '' }; renderOnb(); window.scrollTo(0, 0); break;
+    case 'pause': openSheet({ kind: 'pause' }); break;
+    case 'pause-start': { const v = $('#pause-to').value; if (!v || v < t) { toast('Choisis une date à partir d\'aujourd\'hui.'); break; } C().pause = { from: t, to: v }; save(); closeSheet(); toast('Pause activée'); break; }
+    case 'pause-stop': C().pause = null; save(); if (s) closeSheet(); else render(); toast('Reprise, بسم الله'); break;
+    case 'backup': openSheet({ kind: 'backup' }); break;
+    case 'bk-start': openSheet({ kind: 'backup', restoreOnly: true }); break;
+    case 'bk-later': S.meta = Object.assign({}, S.meta, { bkLater: t }); save(); render(); break;
+    case 'bk-copy': {
+      const ta = $('#bk-out'), code = ta.value;
+      const done = () => { S.meta = Object.assign({}, S.meta, { lastBackup: t }); save(); toast('Code copié. Colle-le dans WhatsApp.'); render(); };
+      const fallback = () => { ta.focus(); ta.select(); try { if (document.execCommand('copy')) { done(); return; } } catch (err) {} toast('Sélectionne le code et copie-le à la main.'); S.meta = Object.assign({}, S.meta, { lastBackup: t }); save(); };
+      try { navigator.clipboard.writeText(code).then(done, fallback); } catch (err) { fallback(); }
+      break;
+    }
+    case 'bk-restore': {
+      const raw = ($('#bk-in').value || '').trim(), m = raw.match(/^LNTHBT1:([A-Za-z0-9+/=]+)$/);
+      if (!m) { s.err = 'Ce code n\'est pas reconnu. Il doit commencer par LNTHBT1:'; s.armed = false; renderSheet(); break; }
+      let d; try { d = JSON.parse(decodeURIComponent(escape(atob(m[1])))); } catch (err) { d = null; }
+      if (!d || !d.cfg) { s.err = 'Ce code est incomplet ou abîmé.'; renderSheet(); break; }
+      if (!s.armed && S.cfg) { s.armed = true; s.err = ''; s.code = raw; renderSheet(); $('#bk-in').value = raw; break; }
+      S = Object.assign(blank(), d); save(); V.onb = null; V.sel = t; closeSheet(); window.scrollTo(0, 0); toast('Sauvegarde restaurée'); break;
+    }
+    case 'rules': openSheet({ kind: 'rules' }); break;
+    case 'had-read': S.meta = Object.assign({}, S.meta, { hadRead: V.sel }); V.hadOpen = null; save(); render(); break;
+    case 'had-open': V.hadOpen = V.sel; render(); break;
+    case 'had-close': V.hadOpen = null; render(); break;
+    case 'kahf-set': {
+      const v = b.dataset.v; S.meta = Object.assign({}, S.meta, { kahfAsked: true });
+      if (v !== 'no') { C().kahf = { on: true, mode: v }; C().kahfFrom = C().kahfFrom || weekStart(t); toast('Al-Kahf ajoutée chaque vendredi'); } else toast('Tu pourras l\'activer dans les réglages');
+      save(); if (s) renderSheet(); render(); break;
+    }
+    case 'kahf-mode': C().kahf.mode = b.dataset.v; save(); renderSheet(); render(); break;
+    case 'kahf-done': { const k = V.sel; setLog(k, { kahf: S.log[k] && S.log[k].kahf ? 0 : 1 }); render(); break; }
+    case 'kn-open': openSheet({ kind: 'known', known: (C().known || []).slice(), cur: curHifz() }); break;
+    case 'kn-save': saveKnown(); break;
+    case 'kn-tog': {
+      const x = knownCtx(); if (!x) break;
+      const h = +b.dataset.hz, cur = x.get(), on = !cur.includes(h);
+      x.set(on ? cur.concat([h]) : cur.filter(v => v !== h));
+      b.setAttribute('aria-pressed', on);
+      const pv = V.onb ? $('#onb-prev') : $('#kn-prev');
+      if (pv) pv.innerHTML = V.onb ? onbPreview(V.onb.a) : knownPrev(knownTotal(x.dir, x.get(), x.cur));
+      break;
+    }
+    case 'kn-range': {
+      const x = knownCtx(); if (!x) break;
+      const ia = $('#kn-a'), ib = $('#kn-b'); if (!ia || !ib || ia.value === '' || ib.value === '') { toast('Indique les deux hizb'); break; }
+      const lo = Math.min(clampInt(ia.value, 1, 60), clampInt(ib.value, 1, 60)), hi = Math.max(clampInt(ia.value, 1, 60), clampInt(ib.value, 1, 60));
+      const o = order60(x.dir), cp = x.cur == null ? 60 : o.indexOf(x.cur);
+      const add = o.filter((h, i) => i > cp && h >= lo && h <= hi);
+      x.set(normKnown(x.get().concat(add))); x.redraw(); break;
+    }
+    case 'kn-clear': { const x = knownCtx(); if (x) { x.set([]); x.redraw(); } break; }
+    case 'look': S.meta = Object.assign({}, S.meta, { look: b.dataset.v }); save(); applyLook(); renderSheet(); render(); break;
+    case 'wipe': {
+      if (!s.armed) { s.armed = true; renderSheet(); break; }
+      S = blank(); save(); V.sheet = null; $('#back').hidden = true; V.onb = null; render(); break;
+    }
+  }
+});
+function onInput(e) {
+  const el = e.target, s = V.sheet;
+  if (V.onb) {
+    const a = V.onb.a;
+    if (el.id === 'onb-n') { a.n = el.value; const p = $('#onb-prev'); if (p) p.innerHTML = onbPreview(a); }
+    else if (el.id === 'onb-cur') { a.cur = el.value; if (a.cur === 'done') a.t = '0'; renderOnb(); }
+    else if (el.id === 'onb-t') { a.t = el.value; const p = $('#onb-prev'); if (p) p.innerHTML = onbPreview(a); }
+    else if (el.id === 'onb-revTour') { a.revTour = clampInt(el.value, 1, 365); const h = $('#tour-hint'); if (h) h.textContent = tourHint(a, aPool(a)); if (e.type === 'change') { el.value = a.revTour; renderOnb(); } }
+    else if (el.id === 'onb-rh') a.rh = el.value;
+    else if (el.id === 'onb-prh') a.prh = el.value;
+    else if (el.id === 'onb-tahN') { a.tahN = clampInt(el.value, 1, 60); const tn = tahNext(), pv = $('#tah-onb-prev'); if (pv && tn) pv.innerHTML = tahOnbPreview(a, tn.n); }
+    return;
+  }
+  if (s && s.kind === 'pass' && el.id && el.id.startsWith('ps-err-')) s.errs[el.dataset.hz] = el.value;
+  if (s && s.kind === 'hz' && el.id === 'hz-note') saveHzNote();
+}
+document.addEventListener('input', onInput);
+document.addEventListener('change', onInput);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && V.sheet) closeSheet();
+  if (e.key === 'Enter' && e.target.id === 'pt-in') { e.preventDefault(); const b = document.querySelector('[data-act="pt-add"]'); if (b) b.click(); }
+});
+$('#back').addEventListener('click', e => { if (e.target.id === 'back') closeSheet(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  const t = todayKey(); if (t !== V.lastToday) { if (V.sel === V.lastToday) V.sel = t; V.lastToday = t; if (!V.sheet) render(); }
+});
+applyLook();
+render();
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+</script>
+</body>
+</html>
