@@ -1151,22 +1151,30 @@ function openPass(d) {
   const groups = suggestGroups(d, revN);
   let rem = lg ? lg.rn || 0 : revN;
   const checked = groups.map(g => { const on = rem > 0; rem -= g.n; return on; });
-  openSheet({ kind: 'pass', d, amt: lg ? (lg.h || 0) : (p.unit || 1), revN, checked, rates, errs: {} });
+  /* un passage = nouveau OU révision : rien n'est choisi d'avance (sauf passage déjà enregistré, ou un seul type possible) */
+  const e0 = prog8(d), canNew = !!portion(e0, 1), canRev = poolHz(d) > 0;
+  let pk = lg ? (lg.h && lg.rn ? 'both' : lg.h ? 'new' : lg.rn ? 'rev' : null) : null;
+  if (!pk && canNew !== canRev) pk = canNew ? 'new' : 'rev';
+  const defAmt = p.unit || 1, defChecked = checked.slice();
+  const amt = lg ? (lg.h || 0) : pk === 'new' ? defAmt : 0;
+  openSheet({ kind: 'pass', d, pk, defAmt, defChecked, canNew, canRev, amt, revN, checked: lg || pk === 'rev' ? checked : checked.map(() => false), rates, errs: {} });
 }
 function passGroups(s) { return suggestGroups(s.d, s.revN); }
 function passSheet(s) {
   const lg = passOf(s.d), e0 = s.d < pivot() ? Math.max(0, prog8(s.d) + ((lg && lg.h) || 0) - s.amt) : prog8(s.d);
   const k1 = isK1(), por = portion(e0, Math.max(1, s.amt)), groups = passGroups(s);
-  const hzs = [...new Set([s.amt && por ? por.hz : null, ...groups.filter((g, i) => s.checked[i]).map(g => g.hz)].filter(Boolean))];
+  /* note seulement pour la révision : un ثمن de hifz ne donne pas une vision de tout le hizb */
+  const hzs = s.pk === 'new' ? [] : [...new Set(groups.filter((g, i) => s.checked[i]).map(g => g.hz))];
   return `<div class="sh-head"><div><h2>Ton passage</h2><p class="hint">${esc(cap(fmtLong.format(parseKey(s.d))))}</p></div><span class="sh-ar" lang="ar">لِنُثَبِّتَ</span></div>
-    <div class="field"><span>${k1 ? 'Récité (hifz)' : 'Repassé avec le cheikh'}</span>
-      <div class="opts"><button type="button" class="opt" data-act="ps-amt" data-v="0" aria-pressed="${s.amt === 0}">Rien</button>${UNITS.map(([v, a]) => `<button type="button" class="opt" data-act="ps-amt" data-v="${v}" aria-pressed="${s.amt === v}"><span class="ar">${a}</span></button>`).join('')}</div>
-      ${s.amt && por ? `<p class="prev"><span class="ar" lang="ar">${por.ar}</span><span>${esc(por.fr)}</span></p>` : ''}</div>
-    <div class="field"><span>Révision avec le cheikh</span>
+    <div class="field"><span>Aujourd'hui avec le cheikh</span><div class="opts pk">${s.canNew ? `<button type="button" class="opt" data-act="ps-kind" data-v="new" aria-pressed="${s.pk === 'new'}">${k1 ? 'Nouveau' : 'Suite de la khatma'}</button>` : ''}${s.canRev ? `<button type="button" class="opt" data-act="ps-kind" data-v="rev" aria-pressed="${s.pk === 'rev'}">Révision</button>` : ''}${s.pk === 'both' ? '<button type="button" class="opt" data-act="ps-kind" data-v="both" aria-pressed="true">Les deux</button>' : ''}</div>${!s.pk ? '<p class="hint">Choisis ce que tu as fait : la suite s\'affiche ensuite.</p>' : ''}</div>
+    ${s.pk === 'new' || s.pk === 'both' ? `<div class="field"><span>${k1 ? 'Récité (hifz)' : 'Repassé avec le cheikh'}</span>
+      <div class="opts">${s.pk === 'both' ? `<button type="button" class="opt" data-act="ps-amt" data-v="0" aria-pressed="${s.amt === 0}">Rien</button>` : ''}${UNITS.map(([v, a]) => `<button type="button" class="opt" data-act="ps-amt" data-v="${v}" aria-pressed="${s.amt === v}"><span class="ar">${a}</span></button>`).join('')}</div>
+      ${s.amt && por ? `<p class="prev"><span class="ar" lang="ar">${por.ar}</span><span>${esc(por.fr)}</span></p>` : ''}</div>` : ''}
+    ${s.pk === 'rev' || s.pk === 'both' ? `<div class="field"><span>Révision avec le cheikh</span>
       ${groups.length ? groups.map((g, i) => `<div class="ggroup${s.checked[i] ? '' : ' off'}"><div class="ggroup-h"><button type="button" class="tick" data-act="ps-tick" data-i="${i}" aria-pressed="${!!s.checked[i]}" aria-label="Révisé : hizb ${g.hz}">${ICON_CHECK}</button><span class="ar" lang="ar">${groupAr(g)}</span></div></div>`).join('') : '<p class="hint">Pas de révision prévue à ce passage.</p>'}
-      <button type="button" class="link" data-act="ps-more">+ Un hizb de plus</button></div>
+      <button type="button" class="link" data-act="ps-more">+ Un hizb de plus</button></div>` : ''}
     ${hzs.length ? `<div class="field"><span>Ta note et les points à revoir</span>${hzs.map(h => `<div class="ggroup"><div class="ggroup-h"><span class="ar" lang="ar">حزب ${h}</span></div>${rateRow(`data-act="ps-rate" data-hz="${h}"`, s.rates[h], true)}<input class="input" id="ps-err-${h}" data-hz="${h}" type="text" maxlength="120" placeholder="Erreur relevée, passage à revoir… (facultatif)" value="${esc(s.errs[h] || '')}" autocomplete="off"></div>`).join('')}</div>` : ''}
-    <div class="acts"><button type="button" class="btn primary" data-act="ps-save">Enregistrer le passage</button><button type="button" class="btn" data-act="close">Annuler</button></div>
+    <div class="acts"><button type="button" class="btn primary" data-act="ps-save" ${s.pk ? '' : 'disabled'}>Enregistrer le passage</button><button type="button" class="btn" data-act="close">Annuler</button></div>
     ${lg ? `<button type="button" class="btn danger" data-act="ps-del">Supprimer ce passage</button>` : ''}`;
 }
 function savePass() {
@@ -1541,11 +1549,18 @@ document.addEventListener('click', e => {
     case 'tah-not': setLog(k, { tah: -1, tahH: null }); render(); break;
     case 'tah-undo': setLog(k, { tah: null, tahH: null }); render(); break;
     case 'tah-h': setLog(k, { tahH: Math.max(1, Math.min(60, ((S.log[k] && S.log[k].tahH) || 1) + +b.dataset.d)) }); render(); break;
+    case 'ps-kind': {
+      const v = b.dataset.v; if (v === 'both') break;
+      s.pk = v;
+      if (v === 'new') { s.amt = s.amt || s.defAmt; s.checked = s.checked.map(() => false); }
+      else { s.amt = 0; if (!s.checked.some(Boolean)) s.checked = passGroups(s).map((g, i) => s.defChecked[i] != null ? s.defChecked[i] : false); }
+      renderSheet(); break;
+    }
     case 'ps-amt': s.amt = +b.dataset.v; renderSheet(); break;
     case 'ps-tick': s.checked[+b.dataset.i] = !s.checked[+b.dataset.i]; renderSheet(); break;
     case 'ps-more': s.revN += 2; s.checked = passGroups(s).map((g, i) => s.checked[i] != null ? s.checked[i] : true); renderSheet(); break;
     case 'ps-rate': { const h = b.dataset.hz, v = +b.dataset.s; s.rates[h] = s.rates[h] === v ? 0 : v; renderSheet(); break; }
-    case 'ps-save': savePass(); closeSheet(); break;
+    case 'ps-save': if (!s.pk) break; savePass(); closeSheet(); break;
     case 'ps-del': {
       if (!b.classList.contains('armed')) { b.classList.add('armed'); b.textContent = 'Toucher à nouveau pour supprimer'; break; }
       setLog(s.d, { pass: null }); closeSheet(); toast('Passage supprimé'); break;
