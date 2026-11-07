@@ -183,6 +183,9 @@ h2 { margin: 0; font-family: var(--f-display); font-weight: 650; font-size: 18px
 .banner .btn { min-height: 38px; padding: 0 12px; font-size: 13.5px; flex: none; }
 .banner.bk { flex-direction: column; align-items: stretch; gap: 10px; border-color: var(--accent); line-height: 1.45; }
 .banner.bk small { display: block; margin-top: 4px; color: var(--muted); font-size: 12.5px; }
+.bk-row { display: flex; gap: 8px; margin-top: 8px; }
+.bk-row .btn { flex: 1; }
+.bk-copy { align-self: center; padding: 6px 12px; }
 .bk-acts { display: flex; align-items: center; gap: 14px; }
 .bk-acts .btn { flex: 1; }
 .goal { --cat: var(--c-rev); background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 14px 14px 12px; display: flex; flex-direction: column; gap: 10px; }
@@ -1242,14 +1245,26 @@ function settingsSheet(s) {
     <div class="acts"><button type="button" class="btn primary" data-act="close">Fermer</button></div>`;
 }
 function exportCode() { return 'LNTHBT1:' + btoa(unescape(encodeURIComponent(JSON.stringify(S)))); }
+/* lecture tolérante : majuscules/minuscules, espaces, retours à la ligne, texte autour, sans le début */
+function decodeBackup(raw) {
+  const tryB64 = b => { try { const d = JSON.parse(decodeURIComponent(escape(atob(b)))); return d && d.cfg ? d : null; } catch (e) { return null; } };
+  const flat = String(raw || '').replace(/\s+/g, '');
+  const cands = [];
+  const m = flat.match(/lnthbt1[:\-]?([A-Za-z0-9+/]+=*)/i); if (m) cands.push(m[1]);
+  cands.push(flat);
+  (String(raw || '').match(/[A-Za-z0-9+/]{24,}=*/g) || []).sort((x, y) => y.length - x.length).forEach(c => cands.push(c));
+  for (const c of cands) { const b = c.replace(/=+$/, ''); for (const pad of ['', '=', '==']) { const d = tryB64(b + pad); if (d) return d; } }
+  return null;
+}
+const SHARE_TXT = 'Ma sauvegarde Linoutabbit (à coller dans « J\'ai déjà une sauvegarde ») :\n';
 function backupSheet(s) {
-  if (s.restoreOnly) return `<div class="sh-head"><div><h2>Restaurer ma sauvegarde</h2><p class="hint">Colle le code que tu avais copié (il commence par LNTHBT1:), par exemple depuis ton WhatsApp. Tu retrouves tes réglages et ton suivi, sans refaire le questionnaire.</p></div></div>
-    <div class="field"><span>Ton code de sauvegarde</span><textarea class="input code" id="bk-in" rows="4" placeholder="Colle ici un code LNTHBT1:…"></textarea>${s.err ? `<p class="err">${esc(s.err)}</p>` : ''}<button type="button" class="btn primary" data-act="bk-restore">Restaurer</button></div>
+  if (s.restoreOnly) return `<div class="sh-head"><div><h2>Restaurer ma sauvegarde</h2><p class="hint">Copie ton code (ou tout le message de sauvegarde), puis touche « Coller mon code », par exemple depuis ton WhatsApp. Tu retrouves tes réglages et ton suivi, sans refaire le questionnaire.</p></div></div>
+    <div class="field"><span>Ton code de sauvegarde</span><textarea class="input code" id="bk-in" rows="4" placeholder="Ton code de sauvegarde…"></textarea>${s.err ? `<p class="err">${esc(s.err)}</p>` : ''}<div class="bk-row"><button type="button" class="btn primary" data-act="bk-paste">Coller mon code</button><button type="button" class="btn" data-act="bk-restore">Restaurer</button></div></div>
     <div class="acts"><button type="button" class="btn" data-act="close">Annuler</button></div>`;
   const code = exportCode();
-  return `<div class="sh-head"><div><h2>Sauvegarde</h2><p class="hint">L'appli est en bêta et nous n'enregistrons aucune de tes données : tout reste sur ton téléphone. Copie ce code et garde-le, par exemple dans WhatsApp (en message à toi-même). Il permet de tout retrouver, même sur un autre téléphone.</p></div></div>
-    <div class="field"><span>Ton code de sauvegarde</span><textarea class="input code" id="bk-out" readonly rows="4">${esc(code)}</textarea><button type="button" class="btn primary" data-act="bk-copy">Copier le code</button></div>
-    <div class="field"><span>Restaurer une sauvegarde</span><textarea class="input code" id="bk-in" rows="3" placeholder="Colle ici un code LNTHBT1:…"></textarea>${s.err ? `<p class="err">${esc(s.err)}</p>` : ''}<button type="button" class="btn ${s.armed ? 'armed' : ''}" data-act="bk-restore">${s.armed ? 'Toucher à nouveau pour remplacer mes données' : 'Restaurer'}</button></div>
+  return `<div class="sh-head"><div><h2>Sauvegarde</h2><p class="hint">L'appli est en bêta et nous n'enregistrons aucune de tes données : tout reste sur ton téléphone. Envoie ce code dans WhatsApp, en message à toi-même, et garde-le. Il permet de tout retrouver, même sur un autre téléphone.</p></div></div>
+    <div class="field"><span>Ton code de sauvegarde</span><textarea class="input code" id="bk-out" readonly rows="4">${esc(code)}</textarea><button type="button" class="btn primary" data-act="bk-share">Envoyer dans WhatsApp</button><button type="button" class="link bk-copy" data-act="bk-copy">ou copier le code</button></div>
+    <div class="field"><span>Restaurer une sauvegarde</span><textarea class="input code" id="bk-in" rows="3" placeholder="Ton code de sauvegarde…"></textarea>${s.err ? `<p class="err">${esc(s.err)}</p>` : ''}<div class="bk-row"><button type="button" class="btn soft" data-act="bk-paste">Coller mon code</button><button type="button" class="btn ${s.armed ? 'armed' : ''}" data-act="bk-restore">${s.armed ? 'Toucher à nouveau pour remplacer' : 'Restaurer'}</button></div></div>
     <div class="acts"><button type="button" class="btn" data-act="close">Fermer</button></div>`;
 }
 function pauseSheet(s) {
@@ -1566,6 +1581,20 @@ document.addEventListener('click', e => {
     case 'backup': openSheet({ kind: 'backup' }); break;
     case 'bk-start': openSheet({ kind: 'backup', restoreOnly: true }); break;
     case 'bk-later': S.meta = Object.assign({}, S.meta, { bkLater: t }); save(); render(); break;
+    case 'bk-paste': {
+      const ta = $('#bk-in'); if (!ta) break;
+      const fail = () => { ta.focus(); toast('Touche le champ, puis « Coller »'); };
+      try { navigator.clipboard.readText().then(txt => { if (!txt) { fail(); return; } ta.value = txt; s.err = ''; $('[data-act="bk-restore"]').click(); }, fail); } catch (err) { fail(); }
+      break;
+    }
+    case 'bk-share': {
+      const code = exportCode(), txt = SHARE_TXT + code;
+      const done = () => { S.meta = Object.assign({}, S.meta, { lastBackup: t }); save(); render(); };
+      const wa = () => { const a = document.createElement('a'); a.href = 'https://wa.me/?text=' + encodeURIComponent(txt); a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); done(); };
+      if (navigator.share) navigator.share({ text: txt }).then(() => { done(); toast('Sauvegarde envoyée'); }, err => { if (err && err.name === 'AbortError') return; wa(); });
+      else wa();
+      break;
+    }
     case 'bk-copy': {
       const ta = $('#bk-out'), code = ta.value;
       const done = () => { S.meta = Object.assign({}, S.meta, { lastBackup: t }); save(); toast('Code copié. Colle-le dans WhatsApp.'); render(); };
@@ -1574,10 +1603,10 @@ document.addEventListener('click', e => {
       break;
     }
     case 'bk-restore': {
-      const raw = ($('#bk-in').value || '').trim(), m = raw.match(/^LNTHBT1:([A-Za-z0-9+/=]+)$/);
-      if (!m) { s.err = 'Ce code n\'est pas reconnu. Il doit commencer par LNTHBT1:'; s.armed = false; renderSheet(); break; }
-      let d; try { d = JSON.parse(decodeURIComponent(escape(atob(m[1])))); } catch (err) { d = null; }
-      if (!d || !d.cfg) { s.err = 'Ce code est incomplet ou abîmé.'; renderSheet(); break; }
+      const raw = ($('#bk-in').value || '').trim();
+      if (!raw) { s.err = 'Colle d\'abord ton code de sauvegarde.'; s.armed = false; renderSheet(); break; }
+      const d = decodeBackup(raw);
+      if (!d) { s.err = 'Ce code n\'est pas reconnu : il est sans doute incomplet. Recopie tout le message de sauvegarde.'; s.armed = false; renderSheet(); $('#bk-in').value = raw; break; }
       if (!s.armed && S.cfg) { s.armed = true; s.err = ''; s.code = raw; renderSheet(); $('#bk-in').value = raw; break; }
       S = Object.assign(blank(), d); save(); V.onb = null; V.sel = t; closeSheet(); window.scrollTo(0, 0); toast('Sauvegarde restaurée'); break;
     }
