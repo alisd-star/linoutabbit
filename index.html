@@ -694,7 +694,12 @@ function revTarget(d) {
   if (r.mode === 'tour') return Math.max(1, Math.ceil(poolHz(d) * 2 / Math.max(1, r.tour || 30)));
   return r.qty || 1;
 }
-const inPause = d => { const p = C().pause; return !!(p && d >= p.from && d <= p.to); };
+/* pause : what = objectifs mis en pause (pass, rev, wird, kahf) ; ancienne pause sans what = tout */
+const PAUSE_KEYS = ['pass', 'rev', 'wird', 'kahf'];
+const pauseOn = d => { const p = C().pause; return !!(p && d >= p.from && d <= p.to); };
+const inPause = (d, k) => pauseOn(d) && (!C().pause.what || C().pause.what.includes(k));
+const activeKeys = () => { const c = C(); return PAUSE_KEYS.filter(k => k === 'pass' ? c.pass.on : k === 'rev' ? c.rev.on : k === 'wird' ? c.wird.on : c.kahf.on); };
+const pausedAll = d => pauseOn(d) && activeKeys().every(k => inPause(d, k));
 const isTahDay = d => TAAHADOU.includes(d);
 const tahOf = d => (S.log[d] && S.log[d].tah) || 0;
 function isPassDay(d) {
@@ -721,33 +726,34 @@ const groupAr = g => g.n >= 2 ? `حزب ${g.hz}` : `حزب ${g.hz} · نصف ${g
 /* ---------- scoring ---------- */
 function dayObjs(d) {
   const c = C(), out = [];
-  if (inPause(d)) return out;
+  if (pausedAll(d)) return out;
   const before = d < c.created;
   if (isTahDay(d) && !before) { const v = tahOf(d); if (v !== -1) { out.push({ k: 'tah', val: v === 1 ? 1 : 0, target: 1, min: 1 }); return out; } }
-  if (c.rev.on && poolHz(d) > 0 && (!before || revCount(d))) out.push({ k: 'rev', val: revCount(d), target: revTarget(d), min: 1 });
-  if (c.pass.on && c.pass.mode === 'fixed' && isPassDay(d) && (!before || passOf(d))) out.push({ k: 'pass', val: passOf(d) ? 1 : 0, target: 1, min: 1 });
-  if (c.kahf.mode === 'obj' && kahfObj(d)) out.push({ k: 'kahf', val: S.log[d] && S.log[d].kahf ? 1 : 0, target: 1, min: 1 });
+  if (c.rev.on && !inPause(d, 'rev') && poolHz(d) > 0 && (!before || revCount(d))) out.push({ k: 'rev', val: revCount(d), target: revTarget(d), min: 1 });
+  if (c.pass.on && !inPause(d, 'pass') && c.pass.mode === 'fixed' && isPassDay(d) && (!before || passOf(d))) out.push({ k: 'pass', val: passOf(d) ? 1 : 0, target: 1, min: 1 });
+  if (c.kahf.mode === 'obj' && !inPause(d, 'kahf') && kahfObj(d)) out.push({ k: 'kahf', val: S.log[d] && S.log[d].kahf ? 1 : 0, target: 1, min: 1 });
   return out;
 }
 const objSt = o => o.val >= o.target ? 'full' : o.val >= Math.min(o.min, o.target) ? 'ok' : 'low';
 function dayStatus(d) {
   if (d > todayKey()) return null;
-  if (inPause(d)) return 'pause';
-  const os = dayObjs(d); if (!os.length) return null;
+  if (pausedAll(d)) return 'pause';
+  const os = dayObjs(d); if (!os.length) return pauseOn(d) ? 'pause' : null;
   const ss = os.map(objSt);
   return ss.every(s => s === 'full') ? 'full' : ss.includes('low') ? 'low' : 'ok';
 }
 function dayScore(d) { if (d > todayKey()) return null; const os = dayObjs(d); return os.length ? mean(os.map(o => Math.min(o.val / o.target, 1))) : null; }
 function weekScore(k) {
-  const c = C(), t = todayKey(), days = weekDays(k).filter(d => d <= t && d >= c.created && !inPause(d));
+  const c = C(), t = todayKey(), days = weekDays(k).filter(d => d <= t && d >= c.created && !pausedAll(d));
   if (!days.length) return null;
   const parts = [];
   days.filter(isTahDay).forEach(d => { const v = tahOf(d); if (v !== -1) parts.push(v === 1 ? 1 : 0); });
-  if (c.rev.on) { const ds = days.filter(d => poolHz(d) > 0 && !(isTahDay(d) && tahOf(d) !== -1)); if (ds.length) parts.push(mean(ds.map(d => Math.min(revCount(d) / revTarget(d), 1)))); }
+  if (c.rev.on) { const ds = days.filter(d => !inPause(d, 'rev') && poolHz(d) > 0 && !(isTahDay(d) && tahOf(d) !== -1)); if (ds.length) parts.push(mean(ds.map(d => Math.min(revCount(d) / revTarget(d), 1)))); }
   if (c.pass.on) {
-    if (c.pass.mode === 'fixed') { const sd = days.filter(isPassDay); if (sd.length) parts.push(Math.min(days.filter(passOf).length / sd.length, 1)); }
-    else if (c.pass.mode === 'quota') parts.push(Math.min(weekDays(k).filter(passOf).length / (c.pass.perWeek || 1), 1));
-    else if (c.pass.mode === 'month') parts.push(Math.min(weekDays(k).filter(passOf).length / perWeekOfMonth(k), 1));
+    const open = weekDays(k).filter(d => !inPause(d, 'pass')).length;
+    if (c.pass.mode === 'fixed') { const sd = days.filter(d => isPassDay(d) && !inPause(d, 'pass')); if (sd.length) parts.push(Math.min(days.filter(d => passOf(d) && !inPause(d, 'pass')).length / sd.length, 1)); }
+    else if (open && c.pass.mode === 'quota') parts.push(Math.min(weekDays(k).filter(passOf).length / Math.max(1, Math.round((c.pass.perWeek || 1) * open / 7)), 1));
+    else if (open && c.pass.mode === 'month') parts.push(Math.min(weekDays(k).filter(passOf).length / Math.max(1, Math.round(perWeekOfMonth(k) * open / 7)), 1));
   }
   return parts.length ? mean(parts) : null;
 }
@@ -755,12 +761,12 @@ function streakRev() {
   let k = todayKey(), n = 0;
   if (revCount(k) < revTarget(k)) k = addDays(k, -1);
   for (let i = 0; i < 3000 && k >= C().created; i++) {
-    if (inPause(k)) { k = addDays(k, -1); continue; }
+    if (inPause(k, 'rev')) { k = addDays(k, -1); continue; }
     if (revCount(k) >= revTarget(k)) { n++; k = addDays(k, -1); } else break;
   }
   return n;
 }
-function carried(k) { let n = 0, d = addDays(k, -1); const lim = k >= pivot() ? pivot() : C().created; while (n < 400 && d >= lim && revCount(d) === 0 && !(isTahDay(d) && tahOf(d) === 1)) { if (!inPause(d)) n++; d = addDays(d, -1); } return n; }
+function carried(k) { let n = 0, d = addDays(k, -1); const lim = k >= pivot() ? pivot() : C().created; while (n < 400 && d >= lim && revCount(d) === 0 && !(isTahDay(d) && tahOf(d) === 1)) { if (!inPause(d, 'rev')) n++; d = addDays(d, -1); } return n; }
 
 /* ---------- hizb notes ---------- */
 const hzRec = h => S.hz[h] || { e: [], note: '', pts: [] };
@@ -882,7 +888,7 @@ let _fitT; window.addEventListener('resize', () => { clearTimeout(_fitT); _fitT 
 function banners(k) {
   const out = [], t = todayKey(), c = C();
   if (!storeOk) out.push(`<div class="banner warn"><div><b>Ton navigateur n'enregistre pas les données</b>Navigation privée ou stockage bloqué : ton suivi sera perdu en fermant la page.</div></div>`);
-  if (c.pause && c.pause.to >= t) out.push(`<div class="banner"><div><b>En pause jusqu'au ${esc(fmtDM.format(parseKey(c.pause.to)))}</b>Aucun rouge pendant la pause.</div><button type="button" class="btn" data-act="pause-stop">Reprendre</button></div>`);
+  if (c.pause && c.pause.to >= t) out.push(`<div class="banner"><div><b>En pause jusqu'au ${esc(fmtDM.format(parseKey(c.pause.to)))}</b>${pauseWhatTxt(c.pause) === 'Tout' ? 'Aucun rouge pendant la pause.' : `${esc(pauseWhatTxt(c.pause))} en pause, le reste continue.`}</div><button type="button" class="btn" data-act="pause-stop">Reprendre</button></div>`);
   if (k === t && daysBetween(pivot(), t) < 7 && c.created < pivot()) { let empty = 0; for (let d = c.created; d < pivot(); d = addDays(d, 1)) if (!S.log[d]) empty++; if (empty) out.push(`<div class="banner"><div><b>Complète les jours passés</b>Pour une vision complète, remplis les jours depuis le ${esc(fmtDM.format(parseKey(c.created)))} : touche un jour dans la bande ou dans la vue Mois.</div></div>`); }
   const nLogs = Object.keys(S.log).length, last = S.meta.lastBackup, later = S.meta.bkLater;
   if (k === t && nLogs >= 3 && (!last || daysBetween(last, t) >= 7) && (!later || daysBetween(later, t) >= 3)) out.push(`<div class="banner bk"><div><b>Ta sauvegarde de la semaine</b>L'appli est en bêta et nous n'enregistrons aucune de tes données : tout reste sur ton téléphone. Une copie de ta sauvegarde dans WhatsApp, c'est ta garantie de tout retrouver, même en changeant de téléphone ou si le navigateur fait du ménage.${last ? ` <small>Dernière copie il y a ${daysBetween(last, t)} jours.</small>` : ''}</div><div class="bk-acts"><button type="button" class="btn primary" data-act="backup">Copier ma sauvegarde</button><button type="button" class="link" data-act="bk-later">Plus tard</button></div></div>`);
@@ -908,7 +914,7 @@ function dayView() {
 }
 
 function revCard(k, future) {
-  const c = C(), size = poolHz(k) * 2, target = revTarget(k), cnt = revCount(k), p = revPtr(k), paused = inPause(k);
+  const c = C(), size = poolHz(k) * 2, target = revTarget(k), cnt = revCount(k), p = revPtr(k), paused = inPause(k, 'rev');
   const done = cnt >= target, lag = !cnt && !future && !paused ? carried(k) : 0;
   let st = paused || future ? '' : done ? 'full' : cnt ? 'ok' : 'low';
   let tag;
@@ -966,7 +972,7 @@ function prepBlock(k) {
   return html;
 }
 function passCard(k, future) {
-  const c = C(), p = c.pass, lg = passOf(k), t = todayKey(), mode = p.mode, paused = inPause(k);
+  const c = C(), p = c.pass, lg = passOf(k), t = todayKey(), mode = p.mode, paused = inPause(k, 'pass');
   if (mode === 'fixed' && !isPassDay(k) && !lg) {
     const nd = nextPassDay(k > t ? k : t);
     if (!nd) return '';
@@ -998,7 +1004,7 @@ function passCard(k, future) {
 function wirdCard(k, future) {
   const w = C().wird, v = (S.log[k] && S.log[k].w) || 0, step = w.unit === 'hizb' ? 0.5 : 1, unit = w.unit === 'hizb' ? 'hizb' : 'pages';
   const wk = weekDays(k).filter(d => S.log[d] && S.log[d].w).length, done = v >= w.qty;
-  return `<article class="goal ${done ? 'full' : ''}" style="--cat:var(--c-wird)"><div class="goal-top"><span class="chip">Wird</span><span class="tag ${wk >= w.days ? 'good' : ''}">${wk} / ${w.days} jours cette semaine</span></div>
+  return `<article class="goal ${done ? 'full' : ''}" style="--cat:var(--c-wird)"><div class="goal-top"><span class="chip">Wird</span>${inPause(k, 'wird') ? '<span class="tag">En pause</span>' : `<span class="tag ${wk >= w.days ? 'good' : ''}">${wk} / ${w.days} jours cette semaine</span>`}</div>
     <div class="bar"><i style="width:${Math.min(v / w.qty, 1) * 100}%"></i></div>
     <div class="goal-foot"><p class="meta"><b>${fr(v)}</b> / ${fr(w.qty)} ${unit}${isK1() ? ` · ${w.scope === 'learned' ? 'sur ce que tu as appris' : 'sur tout le Coran'}` : ''}</p><div class="ctrl">
       <button type="button" data-act="w-dec" aria-label="Retirer ${step}" ${future || !v ? 'disabled' : ''}>−</button>
@@ -1035,11 +1041,11 @@ function weekView() {
   const k = V.sel, t = todayKey(), days = weekDays(k), c = C(), ws = weekScore(k);
   const rows = [], lines = [];
   if (c.rev.on) {
-    const ds = days.filter(d => d <= t && d >= c.created && !inPause(d) && poolHz(d) > 0);
+    const ds = days.filter(d => d <= t && d >= c.created && !inPause(d, 'rev') && poolHz(d) > 0);
     const full = ds.filter(d => revCount(d) >= revTarget(d)).length, sum = days.reduce((a, d) => a + revCount(d), 0);
     lines.push(`<p>Révision : ${full} jour${full > 1 ? 's' : ''} sur ${ds.length} · ${hizbFr(sum)}</p>`);
     rows.push(`<div class="grow" style="--cat:var(--c-rev)"><div class="gname"><span>Révision perso</span><small>${esc(hizbFr(revTarget(t)))} / jour</small></div>${days.map(d => {
-      const st = d > t ? 'future' : inPause(d) ? 'pause' : d < c.created || !poolHz(d) || (isTahDay(d) && tahOf(d) !== -1 && !revCount(d)) ? 'na' : revCount(d) >= revTarget(d) ? 'full' : revCount(d) ? 'ok' : 'low';
+      const st = d > t ? 'future' : inPause(d, 'rev') ? 'pause' : d < c.created || !poolHz(d) || (isTahDay(d) && tahOf(d) !== -1 && !revCount(d)) ? 'na' : revCount(d) >= revTarget(d) ? 'full' : revCount(d) ? 'ok' : 'low';
       return `<button type="button" class="cell ${st}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="Révision, ${esc(fmtLong.format(parseKey(d)))}">${st === 'full' ? '✓' : revCount(d) || (st === 'na' || st === 'pause' ? '·' : '')}</button>`; }).join('')}</div>`);
   }
   if (c.pass.on) {
@@ -1048,7 +1054,7 @@ function weekView() {
     lines.push(`<p>Passages : ${n}${target != null ? ` sur ${target}` : ''}${c.pass.mode === 'month' ? ` · ${monthDays(k).filter(passOf).length} / ${c.pass.perMonth} ce mois` : ''}</p>`);
     rows.push(`<div class="grow" style="--cat:var(--c-prof)"><div class="gname"><span>Passages</span><small>${c.pass.mode === 'fixed' ? esc(DOW_ORDER.filter(x => c.pass.days.includes(x)).map(x => DOW[x]).join(', ')) : c.pass.mode === 'quota' ? `${c.pass.perWeek} / semaine` : `${c.pass.perMonth} min. / mois`}</small></div>${days.map(d => {
       const sched = isPassDay(d), done = !!passOf(d);
-      const st = done ? 'full' : d > t ? (sched ? 'future' : 'na') : inPause(d) ? 'pause' : sched ? 'low' : 'na';
+      const st = done ? 'full' : d > t ? (sched ? 'future' : 'na') : inPause(d, 'pass') ? 'pause' : sched ? 'low' : 'na';
       return `<button type="button" class="cell ${st}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="Passage, ${esc(fmtLong.format(parseKey(d)))}">${done ? '✓' : st === 'na' || st === 'pause' ? '·' : ''}</button>`; }).join('')}</div>`);
   }
   if (c.wird.on) {
@@ -1245,7 +1251,7 @@ function settingsSheet(s) {
     <div class="field"><span>Apparence</span><div class="opts">${[['auto', 'Automatique'], ['pure', 'Épuré'], ['light', 'Clair'], ['dark', 'Sombre']].map(([v, l]) => `<button type="button" class="opt" data-act="look" data-v="${v}" aria-pressed="${(S.meta.look || 'auto') === v}">${l}</button>`).join('')}</div><p class="hint">Automatique suit le réglage de ton téléphone. Épuré : fond blanc, couleurs discrètes.</p></div>
     <div class="set-list">
       <button type="button" class="set-item" data-act="edit-answers"><div><b>Modifier mes réponses</b><small>Étape, sens, où tu en es, passages, quantités, révision, wird</small></div>${ICON_CHEV}</button>
-      <button type="button" class="set-item" data-act="pause"><div><b>${c.pause && c.pause.to >= todayKey() ? 'En pause' : 'Faire une pause'}</b><small>Examens, voyage, Ramadan : aucun rouge pendant la pause</small></div>${ICON_CHEV}</button>
+      <button type="button" class="set-item" data-act="pause"><div><b>${c.pause && c.pause.to >= todayKey() ? 'En pause' : 'Faire une pause'}</b><small>${c.pause && c.pause.to >= todayKey() ? esc(pauseWhatTxt(c.pause)) + ' jusqu\'au ' + esc(fmtDM.format(parseKey(c.pause.to))) : 'Examens, voyage, Ramadan : tout ou une partie'}</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="backup"><div><b>Sauvegarde</b><small>${S.meta.lastBackup ? `Dernière le ${esc(fmtDM.format(parseKey(S.meta.lastBackup)))}` : 'Jamais faite'} · copier ou restaurer</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="rules"><div><b>Les consignes</b><small>Où sont tes données, comment ne pas les perdre</small></div>${ICON_CHEV}</button>
     </div>
@@ -1275,11 +1281,15 @@ function backupSheet(s) {
     <div class="field"><span>Restaurer une sauvegarde</span><textarea class="input code" id="bk-in" rows="3" placeholder="Ton code de sauvegarde…"></textarea>${s.err ? `<p class="err">${esc(s.err)}</p>` : ''}<div class="bk-row"><button type="button" class="btn soft" data-act="bk-paste">Coller mon code</button><button type="button" class="btn ${s.armed ? 'armed' : ''}" data-act="bk-restore">${s.armed ? 'Toucher à nouveau pour remplacer' : 'Restaurer'}</button></div></div>
     <div class="acts"><button type="button" class="btn" data-act="close">Fermer</button></div>`;
 }
+const PAUSE_LBL = { pass: 'Hifz avec le cheikh', rev: 'Révision perso', wird: 'Wird', kahf: 'Al-Kahf' };
+const pauseWhatTxt = p => { const w = (p.what || activeKeys()).filter(k => activeKeys().includes(k)); return w.length === activeKeys().length ? 'Tout' : w.map(k => PAUSE_LBL[k]).join(', '); };
 function pauseSheet(s) {
-  const c = C(), t = todayKey(), on = c.pause && c.pause.to >= t;
-  return `<div class="sh-head"><div><h2>Pause</h2><p class="hint">Pendant la pause, aucun objectif ne passe en rouge et les jours ne comptent pas dans les scores. Tu peux quand même valider ce que tu fais.</p></div></div>
-    ${on ? `<p class="prev"><span>En pause du ${esc(fmtDM.format(parseKey(c.pause.from)))} au ${esc(fmtDM.format(parseKey(c.pause.to)))}.</span></p><button type="button" class="btn primary" data-act="pause-stop">Reprendre aujourd'hui</button>`
-      : `<label class="field"><span>Jusqu'au (inclus)</span><input class="input" id="pause-to" type="date" min="${t}" value="${addDays(t, 6)}"></label><button type="button" class="btn primary" data-act="pause-start">Mettre en pause</button>`}
+  const c = C(), t = todayKey(), on = c.pause && c.pause.to >= t, keys = activeKeys();
+  if (!s.what) s.what = keys.slice();
+  return `<div class="sh-head"><div><h2>Pause</h2><p class="hint">Ce que tu mets en pause ne passe jamais en rouge et ne compte pas dans les scores. Le reste continue normalement. Tu peux quand même valider ce que tu fais.</p></div></div>
+    ${on ? `<p class="prev"><span>En pause du ${esc(fmtDM.format(parseKey(c.pause.from)))} au ${esc(fmtDM.format(parseKey(c.pause.to)))}</span><span>${esc(pauseWhatTxt(c.pause))}</span></p><button type="button" class="btn primary" data-act="pause-stop">Reprendre aujourd'hui</button>`
+      : `<div class="field"><span>Ce que tu mets en pause</span><div class="opts">${keys.map(k => `<button type="button" class="opt" data-act="pause-what" data-v="${k}" aria-pressed="${s.what.includes(k)}">${PAUSE_LBL[k]}</button>`).join('')}</div></div>
+      <label class="field"><span>Jusqu'au (inclus)</span><input class="input" id="pause-to" type="date" min="${t}" value="${s.to || addDays(t, 6)}"></label><button type="button" class="btn primary" data-act="pause-start" ${s.what.length ? '' : 'disabled'}>Mettre en pause</button>`}
     <div class="acts"><button type="button" class="btn" data-act="close">Fermer</button></div>`;
 }
 const RULES = [
@@ -1591,7 +1601,8 @@ document.addEventListener('click', e => {
     case 'toggle': { const key = b.dataset.k; C()[key].on = !C()[key].on; if (key === 'kahf' && C().kahf.on) { C().kahfFrom = C().kahfFrom || weekStart(t); S.meta = Object.assign({}, S.meta, { kahfAsked: true }); } save(); renderSheet(); render(); break; }
     case 'edit-answers': V.sheet = null; $('#back').hidden = true; V.onb = { step: steps().findIndex(x => x[0] === 'recap'), a: answersFromCfg(), edit: true, err: '' }; renderOnb(); window.scrollTo(0, 0); break;
     case 'pause': openSheet({ kind: 'pause' }); break;
-    case 'pause-start': { const v = $('#pause-to').value; if (!v || v < t) { toast('Choisis une date à partir d\'aujourd\'hui.'); break; } C().pause = { from: t, to: v }; save(); closeSheet(); toast('Pause activée'); break; }
+    case 'pause-what': { const v = b.dataset.v, i = $('#pause-to'); if (i) s.to = i.value; s.what = s.what.includes(v) ? s.what.filter(x => x !== v) : s.what.concat([v]); renderSheet(); break; }
+    case 'pause-start': { const v = $('#pause-to').value; if (!v || v < t) { toast('Choisis une date à partir d\'aujourd\'hui.'); break; } if (!s.what.length) break; C().pause = { from: t, to: v, what: s.what.length === activeKeys().length ? null : s.what.slice() }; save(); closeSheet(); toast('Pause activée'); break; }
     case 'pause-stop': C().pause = null; save(); if (s) closeSheet(); else render(); toast('Reprise, بسم الله'); break;
     case 'backup': openSheet({ kind: 'backup' }); break;
     case 'bk-start': openSheet({ kind: 'backup', restoreOnly: true }); break;
