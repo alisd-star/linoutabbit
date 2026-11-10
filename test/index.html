@@ -654,9 +654,11 @@ const order60 = dir => Array.from({ length: 60 }, (_, i) => hizbAt(dir, i));
 const normKnown = arr => Array.from(new Set((arr || []).map(Number).filter(h => h >= 1 && h <= 60))).sort((x, y) => x - y);
 const seqFor = (dir, known) => { const k = new Set(known || []); return order60(dir).filter(h => !k.has(h)); };
 const knownArr = () => isK1() ? (C().known || []) : [];
+/* sens de la révision (perso et avec le cheikh) : par défaut celui du hifz */
+const revDir = () => C().rdir || C().dir;
 let _mz = { log: null, key: '', m: {} };
 function memo(id, f) {
-  const c = C(), key = [c.dir, c.stage, c.base8, c.pivot, c.created, (c.known || []).join(','), c.vm ? c.vm.riw + JSON.stringify(c.vm.base) : ''].join('|');
+  const c = C(), key = [c.dir, c.rdir, c.stage, c.base8, c.pivot, c.created, (c.known || []).join(','), c.vm ? c.vm.riw + JSON.stringify(c.vm.base) : ''].join('|');
   if (_mz.log !== S.log || _mz.key !== key) _mz = { log: S.log, key, m: {} };
   return id in _mz.m ? _mz.m[id] : (_mz.m[id] = f());
 }
@@ -672,10 +674,10 @@ const learned8 = before => vmOn() ? (isK1() ? Math.round(vmCov(before).reduce((m
 const curHifz = before => { const e = prog8(before), s = seqList(); return e < s.length * 8 ? s[Math.floor(e / 8)] : null; };
 function poolList(before) {
   return memo('L' + (before || ''), () => {
-    if (vmOn()) { const cv = vmCov(before); return order60(C().dir).filter(h => cv[h - 1] >= FULL); }
-    if (!isK1()) return order60(C().dir);
+    if (vmOn()) { const cv = vmCov(before); return order60(revDir()).filter(h => cv[h - 1] >= FULL); }
+    if (!isK1()) return order60(revDir());
     const set = new Set(knownArr().concat(seqList().slice(0, Math.floor(prog8(before) / 8))));
-    return order60(C().dir).filter(h => set.has(h));
+    return order60(revDir()).filter(h => set.has(h));
   });
 }
 const poolHz = before => poolList(before).length;
@@ -838,7 +840,7 @@ function cycleDays() { const size = poolHz(addDays(todayKey(), 1)) * 2; return C
 function tahNext() { const t = todayKey(), next = TAAHADOU.slice().sort().find(d => d >= t); return next ? { next, n: daysBetween(t, next) } : null; }
 const tahGoal = d => { const g = (C().tah && C().tah.goals || {})[d]; return g ? +g : null; };
 function tahPlan(N, n) {
-  const L8 = learned8(), known = poolList().slice(0, N);
+  const L8 = learned8(), pl = poolList(), known = order60(C().dir).filter(h => pl.includes(h)).slice(0, N);
   const scores = known.map(hzScore).filter(x => x != null), remain8 = Math.max(0, N * 8 - L8);
   return { L: L8, known: known.length, rated: scores.length, avg: scores.length ? mean(scores) : null, remain8, perWeek: n > 0 && remain8 ? remain8 / (n / 7) : 0, prog: Math.min(1, L8 / (N * 8)) };
 }
@@ -1236,10 +1238,12 @@ function vmNext() {
   if (c.length === 1) return { g: c[0].g };
   return { choose: c, pre: (v.habit === 'first' ? c[0] : c[c.length - 1]).g };
 }
-/* rotation de révision : blocs du plus haut au plus bas, chaque bloc dans l'ordre du mushaf */
+/* rotation de révision (sens 60 → 1) : blocs du plus haut au plus bas, chaque bloc dans l'ordre du mushaf */
 function chunkSpan(R, h) { let a = null, b = null; for (let s = 1; s <= 114; s++) if (R.chunk[s] === h) { if (a == null) a = gidOf(R, s, 1); b = suraEnd(R, s); } return a == null ? null : [a, b]; }
 function vmRevAfter(L, g) {
   const R = RW(); if (!L.length) return null;
+  /* révision dans l'ordre du mushaf (1 → 60) : on avance verset par verset, puis on reprend au début */
+  if (revDir() === 'asc') return nextIn(L, g != null ? g + 1 : 1) || L[0][0];
   if (g != null) { const ch = R.chunk[saOf(R, g)[0]], sp = chunkSpan(R, ch), n = nextIn(L, g + 1); if (n && n <= sp[1]) return n; }
   let h = g != null ? R.chunk[saOf(R, g)[0]] - 1 : 60;
   for (let i = 0; i < 62; i++, h--) { if (h < 1) h = 60; const sp = chunkSpan(R, h); if (!sp) continue; const n = nextIn(L, sp[0]); if (n && n <= sp[1]) return n; }
@@ -1396,7 +1400,8 @@ function vmOnbScreen(a, mig) {
     <div class="field"><span>${isK1Stage(a) ? 'Tu reprends le nouveau à' : 'Tu reprends la khatma à'}</span><div class="row-sv lbl" aria-hidden="true"><small>Sourate</small><small>Verset</small></div><div class="row-sv"><select class="input" id="onb-vs">${suraOpts(s)}</select><input class="input vnum" id="onb-vv" type="number" inputmode="numeric" min="1" max="${R.counts[s - 1]}" value="${esc(String(a.vv))}"></div><p class="hint">La sourate, puis le verset où tu reprends.${clampInt(a.vv, 1, 999) === 1 ? '' : ' Le début de la sourate compte comme appris.'}</p></div>
     ${isK1Stage(a) && mates.length ? `<div class="field"><span>Dans le hizb ${ch}, déjà appris aussi</span><div class="opts">${mates.map(x => `<button type="button" class="opt" data-act="vm-mate" data-s="${x}" aria-pressed="${(a.vchunk || []).includes(x)}"><span class="ar">${SNAME[x - 1]}</span></button>`).join('')}</div></div>` : ''}
     ${isK1Stage(a) ? `<p class="grp">D'autres hizb déjà appris ?</p><p>Tout ce qui vient après dans le mushaf compte déjà comme appris. Coche ici les hizb appris ailleurs, en entier.</p><div class="kgrid">${cells}</div>` : ''}
-    <p class="prev" id="onb-prev">${vmOnbPreview(a)}</p>`;
+    <p class="prev" id="onb-prev">${vmOnbPreview(a)}</p>
+    ${mig && needRev(a) ? rdirBlock(a) : ''}`;
 }
 const isK1Stage = a => a.stage === 'k1';
 /* réponses → configuration */
@@ -1421,7 +1426,7 @@ function vmAnswersFill(a) {
     a.vmig = { h: ch, r: e % 8, pool: poolList().slice(), done: ch == null };
     const pp = prPtr(todayKey()), size = poolHz(todayKey()) * 2;
     if (pp != null && size) { const hh = halfAt((pp + prCount(todayKey())) % size, todayKey()); a.vmig.rev = hh; }
-    a.vriw = ''; a.vs = 114; a.vv = 1; a.vchunk = []; a.known = a.vmig.pool.slice();
+    a.vriw = ''; a.vs = 114; a.vv = 1; a.vchunk = []; a.known = a.vmig.pool.slice(); a.rdir = 'asc';
   }
 }
 function vmMigApply(a) {
@@ -1674,12 +1679,12 @@ function tahOnbPreview(a, n) {
   return out.map(l => `<span>${l}</span>`).join('');
 }
 function defaultAnswers() {
-  return { goals: [], vriw: '', vs: 114, vv: 1, vchunk: [], vrev: null, stage: 'k1', dir: 'desc', n: '0', t: '0', known: [], cur: '', passMode: 'fixed', days: [], perWeek: 2, perMonth: 4, unit: 1, revN: 2, prh: '', prn: 1, revOn: true, revMode: 'qty', revQty: 1, revTour: 30, rh: '', rn: 1, wirdOn: false, wUnit: 'pages', wQty: 4, wDays: 5, wScope: 'all', kahf: 'off', tahJoin: '', tahN: 0 };
+  return { goals: [], vriw: '', vs: 114, vv: 1, vchunk: [], vrev: null, stage: 'k1', dir: 'desc', rdir: 'asc', n: '0', t: '0', known: [], cur: '', passMode: 'fixed', days: [], perWeek: 2, perMonth: 4, unit: 1, revN: 2, prh: '', prn: 1, revOn: true, revMode: 'qty', revQty: 1, revTour: 30, rh: '', rn: 1, wirdOn: false, wUnit: 'pages', wQty: 4, wDays: 5, wScope: 'all', kahf: 'off', tahJoin: '', tahN: 0 };
 }
 function answersFromCfg() {
   const c = C(), t = todayKey(), e = prog8(), a = defaultAnswers();
   { const ch = isK1() ? curHifz() : null; a.known = (c.known || []).slice(); a.cur = isK1() ? (ch == null ? 'done' : String(ch)) : ''; }
-  Object.assign(a, { stage: c.stage, dir: c.dir, n: String(Math.floor(e / 8)), t: String(e % 8), passMode: c.pass.mode, days: (c.pass.days || []).slice(), perWeek: c.pass.perWeek || 2, perMonth: c.pass.perMonth || 4, unit: c.pass.unit, revN: c.pass.revN || 0,
+  Object.assign(a, { stage: c.stage, dir: c.dir, rdir: c.rdir || c.dir, n: String(Math.floor(e / 8)), t: String(e % 8), passMode: c.pass.mode, days: (c.pass.days || []).slice(), perWeek: c.pass.perWeek || 2, perMonth: c.pass.perMonth || 4, unit: c.pass.unit, revN: c.pass.revN || 0,
     revOn: c.rev.on, revMode: c.rev.mode, revQty: c.rev.qty || 1, revTour: c.rev.tour || 30, wirdOn: c.wird.on, wUnit: c.wird.unit, wQty: c.wird.qty, wDays: c.wird.days, wScope: c.wird.scope || 'all', kahf: c.kahf && c.kahf.on ? c.kahf.mode : 'off' });
   { const tn = tahNext(), g = tn && c.tah && c.tah.goals ? c.tah.goals[tn.next] : null; a.tahJoin = (c.tah && c.tah.join) || (g ? 'yes' : ''); a.tahN = g || defTahN(a); }
   const size = poolHz(t) * 2;
@@ -1699,7 +1704,8 @@ function aE8(a) {
   const s = aSeq(a), c = aCur(a); return c == null ? s.length * 8 : s.indexOf(c) * 8 + clampInt(a.t, 0, 7);
 }
 const aL8 = a => aVM(a) ? (a.stage === 'k1' ? Math.round(aCov(a).reduce((m, c) => m + c, 0) * 8) : 480) : a.stage === 'k1' ? (a.known || []).length * 8 + aE8(a) : 480;
-const aPool = a => { if (aVM(a)) { const cv = aCov(a); return order60('desc').filter(h => cv[h - 1] >= FULL); } if (a.stage !== 'k1') return order60(a.dir); const set = new Set((a.known || []).concat(aSeq(a).slice(0, Math.floor(aE8(a) / 8)))); return order60(a.dir).filter(h => set.has(h)); };
+const aRdir = a => a.rdir || a.dir;
+const aPool = a => { if (aVM(a)) { const cv = aCov(a); return order60(aRdir(a)).filter(h => cv[h - 1] >= FULL); } if (a.stage !== 'k1') return order60(aRdir(a)); const set = new Set((a.known || []).concat(aSeq(a).slice(0, Math.floor(aE8(a) / 8)))); return order60(aRdir(a)).filter(h => set.has(h)); };
 function aPortionAr(a) { const s = aSeq(a), e = aE8(a); if (e >= s.length * 8) return null; return `حزب ${s[Math.floor(e / 8)]} · ثمن ${e % 8 + 1}`; }
 function onbPreview(a) {
   const pa = aPortionAr(a), k1 = a.stage === 'k1';
@@ -1710,13 +1716,16 @@ const halfOpts = (key, val) => `<div class="opts"><button type="button" class="o
 const stepperHtml = (key, val, label) => `<div class="stepper"><button type="button" data-act="onb-step" data-k="${key}" data-d="-1" aria-label="Moins">−</button><div class="val">${label || val}</div><button type="button" data-act="onb-step" data-k="${key}" data-d="1" aria-label="Plus">+</button></div>`;
 const optBtn = (key, v, label, cur) => `<button type="button" class="opt" data-act="onb-set" data-k="${key}" data-v="${v}" aria-pressed="${String(cur) === String(v)}">${label}</button>`;
 const choiceBtn = (key, v, title, sub, cur) => `<button type="button" data-act="onb-set" data-k="${key}" data-v="${v}" aria-pressed="${String(cur) === String(v)}"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</button>`;
+const needRev = a => G(a, 'cr') || G(a, 'rev');
+const rdirBlock = a => `<p class="grp">Sens de ta révision</p><div class="opts">${optBtn('rdir', 'asc', 'Hizb 1 → 60', aRdir(a))}${optBtn('rdir', 'desc', 'Hizb 60 → 1', aRdir(a))}</div><p class="hint">Pour toute ta révision, perso et avec le cheikh. Souvent 1&nbsp;→&nbsp;60, même quand ${a.stage === 'k1' ? 'le hifz' : 'la khatma'} va de 60&nbsp;→&nbsp;1.</p>`;
+const dirTxt = d => d === 'desc' ? 'Hizb 60 → 1' : 'Hizb 1 → 60';
 function recapRows(a) {
   const goalsRow = a.goals ? [['buts', 'Objectifs', a.goals.map(g => GOALS.find(x => x[0] === g)[1]).join(', ')]] : [];
   const pool = aPool(a), k1 = a.stage === 'k1';
   const unitTxt = a.unit ? UNITS.find(x => x[0] === a.unit)[2] : 'variable, au choix à chaque passage';
   return [...goalsRow,
     ['etape', 'Étape', STAGES[a.stage]],
-    ['sens', 'Sens', a.dir === 'desc' ? 'Hizb 60 → 1' : 'Hizb 1 → 60'],
+    ['sens', 'Sens', needRev(a) ? `${a.stage === 'k1' ? 'Hifz' : 'Khatma'} ${dirTxt(a.dir).slice(5)} · révision ${dirTxt(aRdir(a)).slice(5)}` : dirTxt(a.dir)],
     aVM(a) ? ['ou', 'Tu reprends à', `${SNAME[clampInt(a.vs, 1, 114) - 1]}, verset ${a.vv} · ${a.vriw === 'warsh' ? 'Warsh' : a.vriw === 'hafs' ? 'Hafs' : 'riwaya à choisir'}${k1 ? ' · ' + fmtLearned(aL8(a)) + ' appris' : ''}`] : ['ou', k1 ? 'Hizb appris' : 'Hizb repassés', k1 ? `${fmtLearned(aL8(a))}${aCur(a) != null ? ` · en cours : hizb ${aCur(a)}` : ''}` : fmtLearned(aE8(a))],
     ['passages', 'Passages', a.passMode === 'fixed' ? DOW_ORDER.filter(x => a.days.includes(x)).map(x => cap(DOW[x])).join(', ') || 'aucun jour' : a.passMode === 'quota' ? `${a.perWeek} par semaine, jours libres` : `Au moins ${a.perMonth} par mois`],
     aVM(a) ? null : ['quantites', 'À chaque passage', `${k1 ? 'Hifz' : 'Repasser'} : ${unitTxt} · révision : ${a.revN ? hizbFr(a.revN) : 'aucune'}`],
@@ -1737,7 +1746,7 @@ function renderOnb() {
     ${choiceBtn('stage', 'k2', '2e khatma', 'Les 60 hizb sont acquis : tu les repasses avec le cheikh pour consolider.', a.stage)}
     ${choiceBtn('stage', 'k3', 'Plus de 2 khatmat', 'Même principe : les 60 hizb repassés et révisés.', a.stage)}
     ${choiceBtn('stage', 'ijaza', 'Ijaza', 'Obtenue ou en préparation avec le cheikh.', a.stage)}</div>`;
-  else if (key === 'sens') body = `<h2>Dans quel sens tu avances ?</h2><div class="choice">${choiceBtn('dir', 'desc', 'Hizb 60 → 1', 'Depuis la fin du mushaf, le plus courant chez nous.', a.dir)}${choiceBtn('dir', 'asc', 'Hizb 1 → 60', 'Depuis Al-Fatiha.', a.dir)}</div>`;
+  else if (key === 'sens') body = `<h2>Dans quel sens tu avances ?</h2>${needRev(a) ? `<p class="grp">${a.stage === 'k1' ? 'Hifz (le nouveau)' : 'Repassage de la khatma'}</p>` : ''}<div class="choice">${choiceBtn('dir', 'desc', 'Hizb 60 → 1', 'Depuis la fin du mushaf, le plus courant chez nous.', a.dir)}${choiceBtn('dir', 'asc', 'Hizb 1 → 60', 'Depuis Al-Fatiha.', a.dir)}</div>${needRev(a) ? rdirBlock(a) : ''}`;
   else if (key === 'ou' && aVM(a)) body = vmOnbScreen(a, o.mig);
   else if (key === 'ou' && k1) {
     const sq = aSeq(a), cur = aCur(a);
@@ -1804,7 +1813,7 @@ function applyOnb() {
   const a = V.onb.a, t = todayKey(), fresh = !S.cfg, old = S.cfg || {};
   const pool = aPool(a);
   const cfg = {
-    stage: a.stage, dir: a.dir, created: fresh ? backStart(t) : old.created, pivot: t, v2: true, base8: 0, known: a.stage === 'k1' ? normKnown(a.known).filter(h => h !== aCur(a)) : normKnown(old.known),
+    stage: a.stage, dir: a.dir, rdir: needLearn(a) ? aRdir(a) : old.rdir, created: fresh ? backStart(t) : old.created, pivot: t, v2: true, base8: 0, known: a.stage === 'k1' ? normKnown(a.known).filter(h => h !== aCur(a)) : normKnown(old.known),
     pass: { on: a.goals ? needCheikh(a) && a.goals.some(x => x === 'cn' || x === 'cr') : old.pass ? old.pass.on : true, kinds: a.goals ? ['cn', 'cr'].filter(x => a.goals.includes(x)).map(x => x === 'cn' ? 'new' : 'rev') : undefined, mode: a.passMode, days: a.days.slice(), perWeek: a.perWeek, perMonth: a.perMonth, unit: a.unit, revN: a.revN, anchor: null },
     rev: { on: a.revOn, mode: a.revMode, qty: a.revQty, tour: a.revTour, anchor: null },
     wird: { on: a.wirdOn, unit: a.wUnit, qty: a.wQty, days: a.wDays, scope: a.stage === 'k1' ? a.wScope : 'all' },
@@ -1834,7 +1843,7 @@ document.addEventListener('click', e => {
     case 'onb-set': {
       const a = V.onb.a, key = b.dataset.k; let v = b.dataset.v;
       if (key === 'vriw') { a.vriw = v; V.onb.err = ''; if (a.vmig && !a.vEdited) vmMigApply(a); renderOnb(); break; }
-      if (v === 'true' || v === 'false') v = v === 'true'; else if (/^\d+$/.test(v) && !['stage', 'dir', 'passMode', 'revMode', 'wUnit', 'wScope', 'kahf'].includes(key)) v = +v;
+      if (v === 'true' || v === 'false') v = v === 'true'; else if (/^\d+$/.test(v) && !['stage', 'dir', 'rdir', 'passMode', 'revMode', 'wUnit', 'wScope', 'kahf'].includes(key)) v = +v;
       a[key] = v;
       if (key === 'stage' && v !== 'k1' && !V.onb.edit) { a.n = '0'; a.t = '0'; }
       if (key === 'wUnit') a.wQty = v === 'hizb' ? 1 : 4;
