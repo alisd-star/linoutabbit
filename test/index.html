@@ -1679,7 +1679,7 @@ function tahOnbPreview(a, n) {
   return out.map(l => `<span>${l}</span>`).join('');
 }
 function defaultAnswers() {
-  return { goals: [], vriw: '', vs: 114, vv: 1, vchunk: [], vrev: null, stage: 'k1', dir: 'desc', rdir: 'asc', n: '0', t: '0', known: [], cur: '', passMode: 'fixed', days: [], perWeek: 2, perMonth: 4, unit: 1, revN: 2, prh: '', prn: 1, revOn: true, revMode: 'qty', revQty: 1, revTour: 30, rh: '', rn: 1, wirdOn: false, wUnit: 'pages', wQty: 4, wDays: 5, wScope: 'all', kahf: 'off', tahJoin: '', tahN: 0 };
+  return { goals: [], vriw: '', vs: 114, vv: 1, vchunk: [], vrev: null, stage: 'k1', dir: '', rdir: 'asc', n: '0', t: '0', known: [], cur: '', passMode: 'fixed', days: [], perWeek: 2, perMonth: 4, unit: 1, revN: 2, prh: '', prn: 1, revOn: true, revMode: 'qty', revQty: 1, revTour: 30, rh: '', rn: 1, wirdOn: false, wUnit: 'pages', wQty: 4, wDays: 5, wScope: 'all', kahf: 'off', tahJoin: '', tahN: 0 };
 }
 function answersFromCfg() {
   const c = C(), t = todayKey(), e = prog8(), a = defaultAnswers();
@@ -1717,7 +1717,9 @@ const stepperHtml = (key, val, label) => `<div class="stepper"><button type="but
 const optBtn = (key, v, label, cur) => `<button type="button" class="opt" data-act="onb-set" data-k="${key}" data-v="${v}" aria-pressed="${String(cur) === String(v)}">${label}</button>`;
 const choiceBtn = (key, v, title, sub, cur) => `<button type="button" data-act="onb-set" data-k="${key}" data-v="${v}" aria-pressed="${String(cur) === String(v)}"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</button>`;
 const needRev = a => G(a, 'cr') || G(a, 'rev');
-const rdirBlock = a => `<p class="grp">Sens de ta révision</p><div class="opts">${optBtn('rdir', 'asc', 'Hizb 1 → 60', aRdir(a))}${optBtn('rdir', 'desc', 'Hizb 60 → 1', aRdir(a))}</div><p class="hint">Pour toute ta révision, perso et avec le cheikh. Souvent 1&nbsp;→&nbsp;60, même quand ${a.stage === 'k1' ? 'le hifz' : 'la khatma'} va de 60&nbsp;→&nbsp;1.</p>`;
+const dirCards = (key, cur) => `<div class="choice">${choiceBtn(key, 'asc', 'Hizb 1 → 60', 'Vers An-Nas', cur)}${choiceBtn(key, 'desc', 'Hizb 60 → 1', 'Vers Al-Fatiha', cur)}</div>`;
+/* sens de la révision : dans une carte à part */
+const rdirBlock = a => `</div><div class="onb-card"><p class="grp">Sens de ta révision</p>${dirCards('rdir', aRdir(a))}`;
 const dirTxt = d => d === 'desc' ? 'Hizb 60 → 1' : 'Hizb 1 → 60';
 function recapRows(a) {
   const goalsRow = a.goals ? [['buts', 'Objectifs', a.goals.map(g => GOALS.find(x => x[0] === g)[1]).join(', ')]] : [];
@@ -1746,7 +1748,7 @@ function renderOnb() {
     ${choiceBtn('stage', 'k2', '2e khatma', 'Les 60 hizb sont acquis : tu les repasses avec le cheikh pour consolider.', a.stage)}
     ${choiceBtn('stage', 'k3', 'Plus de 2 khatmat', 'Même principe : les 60 hizb repassés et révisés.', a.stage)}
     ${choiceBtn('stage', 'ijaza', 'Ijaza', 'Obtenue ou en préparation avec le cheikh.', a.stage)}</div>`;
-  else if (key === 'sens') body = `<h2>Dans quel sens tu avances ?</h2>${needRev(a) ? `<p class="grp">${a.stage === 'k1' ? 'Hifz (le nouveau)' : 'Repassage de la khatma'}</p>` : ''}<div class="choice">${choiceBtn('dir', 'desc', 'Hizb 60 → 1', 'Depuis la fin du mushaf, le plus courant chez nous.', a.dir)}${choiceBtn('dir', 'asc', 'Hizb 1 → 60', 'Depuis Al-Fatiha.', a.dir)}</div>${needRev(a) ? rdirBlock(a) : ''}`;
+  else if (key === 'sens') body = `<h2>Dans quel sens tu avances ?</h2>${needRev(a) ? `<p class="grp">${a.stage === 'k1' ? 'Hifz (le nouveau)' : 'Repassage de la khatma'}</p>` : ''}${dirCards('dir', a.dir)}${needRev(a) ? rdirBlock(a) : ''}`;
   else if (key === 'ou' && aVM(a)) body = vmOnbScreen(a, o.mig);
   else if (key === 'ou' && k1) {
     const sq = aSeq(a), cur = aCur(a);
@@ -1802,6 +1804,7 @@ function renderOnb() {
 function onbValidate() {
   const o = V.onb, a = o.a, key = steps()[o.step][0];
   if (key === 'buts' && !a.goals.length) return 'Choisis au moins un objectif.';
+  if (key === 'sens' && !a.dir) return needRev(a) ? `Choisis le sens ${a.stage === 'k1' ? 'de ton hifz' : 'du repassage'}.` : 'Choisis ton sens.';
   if (key === 'ou' && aVM(a)) { if (!a.vriw) return 'Choisis ta riwaya : Hafs ou Warsh.'; const R = QR(a.vriw), v = parseInt(a.vv, 10); if (!(v >= 1 && v <= R.counts[clampInt(a.vs, 1, 114) - 1])) return `La sourate ${SNAME[clampInt(a.vs, 1, 114) - 1]} a ${R.counts[clampInt(a.vs, 1, 114) - 1]} versets.`; return ''; }
   if (key === 'ou' && a.stage !== 'k1') { const n = clampInt(a.n, 0, 60), t = clampInt(a.t, 0, 7); if (n === 60 && t > 0) return 'Avec 60 hizb, il n\'y a plus de ثمن en cours.'; }
   if (key === 'passages' && a.passMode === 'fixed' && !a.days.length) return 'Coche au moins un jour de passage.';
@@ -1813,7 +1816,7 @@ function applyOnb() {
   const a = V.onb.a, t = todayKey(), fresh = !S.cfg, old = S.cfg || {};
   const pool = aPool(a);
   const cfg = {
-    stage: a.stage, dir: a.dir, rdir: needLearn(a) ? aRdir(a) : old.rdir, created: fresh ? backStart(t) : old.created, pivot: t, v2: true, base8: 0, known: a.stage === 'k1' ? normKnown(a.known).filter(h => h !== aCur(a)) : normKnown(old.known),
+    stage: a.stage, dir: a.dir || 'desc', rdir: needLearn(a) ? aRdir(a) : old.rdir, created: fresh ? backStart(t) : old.created, pivot: t, v2: true, base8: 0, known: a.stage === 'k1' ? normKnown(a.known).filter(h => h !== aCur(a)) : normKnown(old.known),
     pass: { on: a.goals ? needCheikh(a) && a.goals.some(x => x === 'cn' || x === 'cr') : old.pass ? old.pass.on : true, kinds: a.goals ? ['cn', 'cr'].filter(x => a.goals.includes(x)).map(x => x === 'cn' ? 'new' : 'rev') : undefined, mode: a.passMode, days: a.days.slice(), perWeek: a.perWeek, perMonth: a.perMonth, unit: a.unit, revN: a.revN, anchor: null },
     rev: { on: a.revOn, mode: a.revMode, qty: a.revQty, tour: a.revTour, anchor: null },
     wird: { on: a.wirdOn, unit: a.wUnit, qty: a.wQty, days: a.wDays, scope: a.stage === 'k1' ? a.wScope : 'all' },
