@@ -1729,7 +1729,7 @@ function renderOnb() {
   const STEPS = steps();
   const o = V.onb, a = o.a, [key] = STEPS[o.step], k1 = a.stage === 'k1';
   let body = '';
-  if (key === 'buts') body = `<h2>Que veux-tu suivre avec l'appli ?</h2><p>Coche tout ce que tu fais en ce moment. Tu pourras changer plus tard.</p><div class="defs">${GOALS.map(([v, l, d]) => `<button type="button" class="def" data-act="onb-goal" data-v="${v}" aria-pressed="${a.goals.includes(v)}"><b>${l}</b><small>${d}</small></button>`).join('')}</div>`;
+  if (key === 'buts') body = `<h2>Ton programme avec le Coran</h2><p>Coche tout ce que tu fais en ce moment. Tu pourras changer plus tard.</p><div class="defs">${GOALS.map(([v, l, d]) => `<button type="button" class="def" data-act="onb-goal" data-v="${v}" aria-pressed="${a.goals.includes(v)}"><b>${l}</b><small>${d}</small></button>`).join('')}</div>`;
   else if (key === 'etape') body = `<h2>Tu en es à quelle étape ?</h2><p>Ça décide de ce que suivent tes passages et ta carte des hizb.</p><div class="choice">
     ${choiceBtn('stage', 'k1', '1re khatma', 'Tu apprends de nouvelles parties (hifz) et tu révises ce que tu sais.', a.stage)}
     ${choiceBtn('stage', 'k2', '2e khatma', 'Les 60 hizb sont acquis : tu les repasses avec le cheikh pour consolider.', a.stage)}
