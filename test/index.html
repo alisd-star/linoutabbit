@@ -249,6 +249,15 @@ h2 { margin: 0; font-family: var(--f-display); font-weight: 650; font-size: 18px
 .rate { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; }
 .rate button { height: 40px; min-width: 0; padding: 0; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 14.5px; font-variant-numeric: tabular-nums; color: var(--fg); }
 .rate.sm button { height: 34px; border-radius: 9px; font-size: 13.5px; }
+.rx { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 2px 0 6px; }
+.rx > span { font-size: 12.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.rx-link { align-self: flex-start; margin-top: 2px; }
+.rx-weak { display: flex; flex-wrap: wrap; gap: 6px; }
+.rx-w { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font: inherit; }
+.rx-w .ar { font-size: 18px; } .rx-w em { font-style: normal; font-weight: 700; font-size: 13px; }
+.rx-w[aria-pressed="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.rx-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.rx-row .ar { font-size: 20px; }
 .qn { display: grid; grid-template-columns: 62px 1fr; align-items: center; gap: 6px; }
 .qn > span { font-size: 13px; font-weight: 600; color: var(--fg); }
 .rate.xs { gap: 3px; } .rate.xs button { height: 30px; border-radius: 8px; font-size: 12.5px; }
@@ -703,6 +712,10 @@ function portion(e, u) {
   return { ar: `حزب ${hz} · ثمن ${r + 1}`, fr: `Hizb ${hz}, à partir du ${r + 1}${r ? 'e' : 'er'} huitième`, hz };
 }
 const revCount = d => (S.log[d] && S.log[d].rev) || 0;
+/* renforcement : hizb choisis à part ce jour-là { hizb: demis }. Ils comptent dans l'objectif du jour ; la rotation ne bouge pas. */
+const rxOf = d => (S.log[d] && S.log[d].rx) || {};
+const rxHalves = d => Object.values(rxOf(d)).reduce((a, n) => a + n, 0);
+const revDone = d => revCount(d) + rxHalves(d);
 const prCount = d => (S.log[d] && S.log[d].pass && S.log[d].pass.rn) || 0;
 /* le pointeur suit l'identité du demi-hizb quand la liste change (un hizb appris peut s'insérer au milieu) */
 const hIdx = (L, hz, half) => { const i = L.indexOf(hz); return i < 0 ? -1 : i * 2 + half - 1; };
@@ -774,7 +787,7 @@ function dayObjs(d) {
   if (pausedAll(d)) return out;
   const before = d < c.created;
   if (isTahDay(d) && !before) { const v = tahOf(d); if (v !== -1) { out.push({ k: 'tah', val: v === 1 ? 1 : 0, target: 1, min: 1 }); return out; } }
-  if (c.rev.on && !inPause(d, 'rev') && poolHz(d) > 0 && (!before || revCount(d))) out.push({ k: 'rev', val: revCount(d), target: revTarget(d), min: 1 });
+  if (c.rev.on && !inPause(d, 'rev') && poolHz(d) > 0 && (!before || revDone(d))) out.push({ k: 'rev', val: revDone(d), target: revTarget(d), min: 1 });
   if (c.pass.on && !inPause(d, 'pass') && c.pass.mode === 'fixed' && isPassDay(d) && (!before || passOf(d))) out.push({ k: 'pass', val: passOf(d) ? 1 : 0, target: 1, min: 1 });
   if (c.wird.on && !inPause(d, 'wird') && d >= wirdFrom()) out.push({ k: 'wird', val: wirdOf(d), target: c.wird.qty, min: c.wird.unit === 'hizb' ? 0.5 : 1 });
   if (c.kahf.mode === 'obj' && !inPause(d, 'kahf') && kahfObj(d)) out.push({ k: 'kahf', val: S.log[d] && S.log[d].kahf ? 1 : 0, target: 1, min: 1 });
@@ -794,7 +807,7 @@ function weekScore(k) {
   if (!days.length) return null;
   const parts = [];
   days.filter(isTahDay).forEach(d => { const v = tahOf(d); if (v !== -1) parts.push(v === 1 ? 1 : 0); });
-  if (c.rev.on) { const ds = days.filter(d => !inPause(d, 'rev') && poolHz(d) > 0 && !(isTahDay(d) && tahOf(d) !== -1)); if (ds.length) parts.push(mean(ds.map(d => Math.min(revCount(d) / revTarget(d), 1)))); }
+  if (c.rev.on) { const ds = days.filter(d => !inPause(d, 'rev') && poolHz(d) > 0 && !(isTahDay(d) && tahOf(d) !== -1)); if (ds.length) parts.push(mean(ds.map(d => Math.min(revDone(d) / revTarget(d), 1)))); }
   if (c.pass.on) {
     const open = weekDays(k).filter(d => !inPause(d, 'pass')).length;
     if (c.pass.mode === 'fixed') { const sd = days.filter(d => isPassDay(d) && !inPause(d, 'pass')); if (sd.length) parts.push(Math.min(days.filter(d => passOf(d) && !inPause(d, 'pass')).length / sd.length, 1)); }
@@ -806,14 +819,14 @@ function weekScore(k) {
 }
 function streakRev() {
   let k = todayKey(), n = 0;
-  if (revCount(k) < revTarget(k)) k = addDays(k, -1);
+  if (revDone(k) < revTarget(k)) k = addDays(k, -1);
   for (let i = 0; i < 3000 && k >= C().created; i++) {
     if (inPause(k, 'rev')) { k = addDays(k, -1); continue; }
-    if (revCount(k) >= revTarget(k)) { n++; k = addDays(k, -1); } else break;
+    if (revDone(k) >= revTarget(k)) { n++; k = addDays(k, -1); } else break;
   }
   return n;
 }
-function carried(k) { let n = 0, d = addDays(k, -1); const lim = k >= pivot() ? pivot() : C().created; while (n < 400 && d >= lim && revCount(d) === 0 && !(isTahDay(d) && tahOf(d) === 1)) { if (!inPause(d, 'rev')) n++; d = addDays(d, -1); } return n; }
+function carried(k) { let n = 0, d = addDays(k, -1); const lim = k >= pivot() ? pivot() : C().created; while (n < 400 && d >= lim && revDone(d) === 0 && !(isTahDay(d) && tahOf(d) === 1)) { if (!inPause(d, 'rev')) n++; d = addDays(d, -1); } return n; }
 
 /* ---------- hizb notes ---------- */
 const hzRec = h => S.hz[h] || { e: [], note: '', pts: [] };
@@ -838,6 +851,7 @@ function revHistory() {
     const size = poolHz(d) * 2, p0 = revPtr(d); if (!size || p0 == null) return;
     for (let i = 0; i < revCount(d); i++) out.push({ d, hz: halfAt((p0 + i) % size, d).hz });
   });
+  Object.keys(S.log).forEach(d => Object.keys(rxOf(d)).forEach(h => { for (let i = 0; i < rxOf(d)[h]; i++) out.push({ d, hz: +h }); }));
   return out;
 }
 function hzSeen() {
@@ -961,42 +975,67 @@ function dayView() {
     <p class="foot">Tes données restent sur ce téléphone, dans ce navigateur.</p>`;
 }
 
+/* « hizb 9 et 10 », « 2e moitié du hizb 9, hizb 10 et 1re moitié du hizb 11 » */
+function halvesTxt(list) {
+  const g = []; list.forEach(h => { const l = g[g.length - 1]; if (l && l.hz === h.hz) l.n.push(h.half); else g.push({ hz: h.hz, n: [h.half] }); });
+  const parts = g.map(x => x.n.length === 2 ? `hizb ${x.hz}` : `${x.n[0] === 1 ? '1re' : '2e'} moitié du hizb ${x.hz}`);
+  if (parts.every(p => p.startsWith('hizb '))) { const hs = g.map(x => x.hz); return 'hizb ' + (hs.length > 1 ? `${hs.slice(0, -1).join(', ')} et ${hs[hs.length - 1]}` : hs[0]); }
+  return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} et ${parts[parts.length - 1]}` : parts[0];
+}
 function revCard(k, future) {
   const c = C(), size = poolHz(k) * 2, target = revTarget(k), cnt = revCount(k), p = revPtr(k), paused = inPause(k, 'rev');
-  const done = cnt >= target, lag = !cnt && !future && !paused ? carried(k) : 0;
-  let st = paused || future ? '' : done ? 'full' : cnt ? 'ok' : 'low';
+  const rx = rxOf(k), xh = rxHalves(k), tot = cnt + xh, done = tot >= target, lag = !tot && !future && !paused ? carried(k) : 0;
+  let st = paused || future ? '' : done ? 'full' : tot ? 'ok' : 'low';
   let tag;
   if (paused) tag = '<span class="tag">En pause</span>';
   else if (done) { const sk = streakRev(); tag = `<span class="tag good">${sk >= 2 ? `Série de ${sk} jours` : 'Validé'}</span>`; }
-  else if (cnt) tag = '<span class="tag warn">En cours</span>';
+  else if (tot) tag = '<span class="tag warn">En cours</span>';
   else if (lag) tag = `<span class="tag red">Reporté depuis ${lag} jour${lag > 1 ? 's' : ''}</span>`;
   else if (!future) tag = `<span class="tag red">${k < todayKey() ? 'Non fait' : 'À valider'}</span>`;
   else tag = '<span class="tag">Prévu</span>';
-  let main, foot = '', qr = '';
+  let main = '', foot = '', qr = '', fulls = [];
   if (!size) { main = `<div class="hz-now"><small>Aucun hizb complet appris pour l'instant. La révision commence dès ton premier hizb terminé.</small></div>`; st = ''; }
-  else if (p == null) main = `<div class="hz-now"><small>${cnt ? `${hizbFr(cnt)} révisé ce jour-là` : 'Pas de révision enregistrée ce jour-là'}</small></div>`;
+  else if (p == null) main = `<div class="hz-now"><small>${tot ? `${hizbFr(tot)} révisé ce jour-là` : 'Pas de révision enregistrée ce jour-là'}</small></div>`;
   else {
-    /* demi-hizb du jour : déjà faits puis à faire */
-    const bp = k < C().rev.anchor.day, s0 = bp ? p - cnt : p, at = i => halfAt((((s0 + i) % size) + size) % size, k);
-    const dayH = []; for (let i = 0; i < Math.min(Math.max(cnt, target), size); i++) dayH.push(at(i));
-    const hzs = [...new Set(dayH.map(h => h.hz))], hzList = hzs.length > 1 ? `${hzs.slice(0, -1).join(', ')} et ${hzs[hzs.length - 1]}` : hzs[0];
-    const doneHz = [...new Set(dayH.slice(0, cnt).map(h => h.hz))];
-    if (done) main = cnt === 1 ? `<div class="hz-now">${arHalf(dayH[0])}<small>Validé : ${frHalf(dayH[0])}</small></div>`
-      : `<div class="hz-now"><span class="ar" lang="ar">حزب ${doneHz.join(' و ')}</span><small>Validé · ${hizbFr(cnt)} aujourd'hui</small></div>`;
-    else { const next = at(cnt); main = `<div class="hz-now">${arHalf(next)}<small>${target > 1 ? `Aujourd'hui : hizb ${hzList}` : frHalf(next)}${lag ? ' · reporté, rien n\'est sauté' : ''}</small></div>`; }
+    /* demi-hizb de la rotation ce jour-là : ce qui reste après le renforcement, ou ce qui a été fait */
+    const need = Math.min(Math.max(cnt, target - xh), size), bp = k < C().rev.anchor.day, s0 = bp ? p - cnt : p, at = i => halfAt((((s0 + i) % size) + size) % size, k);
+    const dayH = []; for (let i = 0; i < need; i++) dayH.push(at(i));
+    const hzs = [...new Set(dayH.map(h => h.hz))], fait = dayH.slice(0, cnt), reste = dayH.slice(cnt);
+    if (dayH.length) {
+      const big = dayH.length === 1 ? arHalf(dayH[0]) : `<span class="ar" lang="ar">حزب ${hzs.join(' و ')}</span>`;
+      const small = done ? `Validé · ${hizbFr(tot)} aujourd'hui` : cnt ? `Fait : ${halvesTxt(fait)} · reste : ${halvesTxt(reste)}` : dayH.length === 1 ? frHalf(dayH[0]) : `${hizbFr(dayH.length)} aujourd'hui${dayH[0].half === 2 || dayH[dayH.length - 1].half === 1 ? ' · ' + halvesTxt(dayH) : ''}`;
+      main = `<div class="hz-now">${big}<small>${small}${lag ? ' · reporté, rien n\'est sauté' : ''}</small></div>`;
+    }
+    fulls = [...new Set(fait.filter(h => h.half === 2).map(h => h.hz))];
+  }
+  if (Object.keys(rx).length) main += `<div class="rx"><span>Renforcement</span><div class="plist">${Object.keys(rx).map(h => `<span class="pitem"><span class="ar" lang="ar">حزب ${h}</span><em>${rx[h] === 1 ? '½' : 'entier'}</em></span>`).join('')}</div></div>`;
+  if (size && p != null) {
     if (future) foot = '<p class="meta">À réviser ce jour-là si tout est validé avant.</p>';
-    else foot = `<div class="bar"><i style="width:${Math.min(cnt / target, 1) * 100}%"></i></div>
-      <div class="goal-foot"><p class="meta"><b>${frQ(cnt / 2)}</b> / ${frQ(target / 2)} hizb</p><div class="ctrl">
+    else foot = `<div class="bar"><i style="width:${Math.min(tot / target, 1) * 100}%"></i></div>
+      <div class="goal-foot"><p class="meta"><b>${frQ(tot / 2)}</b> / ${frQ(target / 2)} hizb</p><div class="ctrl">
         <button type="button" data-act="rv-undo" aria-label="Retirer un demi-hizb" ${cnt ? '' : 'disabled'}>−</button>
         <button type="button" class="inc" data-act="rv-ok" aria-label="Ajouter un demi-hizb">+½</button>
-        <button type="button" class="check" data-act="rv-all" aria-pressed="${done}" aria-label="${done ? 'Remettre à zéro' : 'Tout valider'}">${ICON_CHECK}</button></div></div>`;
-    /* note : seulement quand un hizb entier est révisé (sa 2e moitié validée aujourd'hui) */
-    const fulls = [...new Set(dayH.slice(0, cnt).filter(h => h.half === 2).map(h => h.hz))];
+        <button type="button" class="check" data-act="rv-all" aria-pressed="${done}" aria-label="${done ? 'Remettre à zéro' : 'Tout valider'}">${ICON_CHECK}</button></div></div>
+      <button type="button" class="link rx-link" data-act="rx-open">Réviser d'autres hizb</button>`;
+    /* note : chaque hizb entier révisé ce jour-là (rotation et renforcement) */
+    Object.keys(rx).forEach(h => { if (rx[h] === 2 && !fulls.includes(+h)) fulls.push(+h); });
     if (fulls.length && !future) qr = `<div class="qr"><span>Ta note</span>${fulls.map(h => {
       const ev = hzEvals(h).find(x => x.d === k && x.src === 'rev'), edit = (V.noteEdit || {})[k + ':' + h];
       return `<div class="qn"><span>Hizb ${h}</span>${ev && !edit ? `<button type="button" class="qn-done" data-act="note-edit" data-hz="${h}"><b class="${lvl(ev.s)}-t">${ev.s}/10</b><small>changer</small></button>` : `<div class="rate xs">${Array.from({ length: 10 }, (_, i) => i + 1).map(n => `<button type="button" class="${ev && ev.s === n ? 'on ' + lvl(n) : ''}" data-act="rate" data-hz="${h}" data-src="rev" data-s="${n}" aria-label="Hizb ${h}, note ${n} sur 10" aria-pressed="${!!ev && ev.s === n}">${n}</button>`).join('')}</div>`}</div>`; }).join('')}</div>`;
   }
   return `<article class="goal ${st}" style="--cat:var(--c-rev)"><div class="goal-top"><span class="chip">Révision perso</span><small class="nat">par cœur</small>${tag}</div>${main}${foot}${qr}</article>`;
+}
+
+/* fiche : réviser d'autres hizb ce jour-là */
+function rxSheet(s) {
+  const pool = poolList(s.d), weak = pool.filter(h => { const sc = hzScore(h); return sc != null && sc < 6.5; }).sort((a, b) => hzScore(a) - hzScore(b));
+  const chip = h => `<button type="button" data-act="rx-tog" data-hz="${h}" aria-pressed="${!!s.sel[h]}" aria-label="Hizb ${h}">${h}</button>`;
+  const sel = Object.keys(s.sel).map(Number);
+  return `<div class="sh-head"><div><h2>Réviser d'autres hizb</h2><p class="hint">Ils comptent dans ta révision du jour. Ta rotation ne bouge pas : elle reprend là où elle en est.</p></div></div>
+    ${weak.length ? `<div class="field"><span>À renforcer (d'après tes notes)</span><div class="rx-weak">${weak.map(h => `<button type="button" class="rx-w" data-act="rx-tog" data-hz="${h}" aria-pressed="${!!s.sel[h]}"><span class="ar" lang="ar">حزب ${h}</span><em class="${lvl(hzScore(h))}-t">${fr(hzScore(h))}</em></button>`).join('')}</div></div>` : ''}
+    <div class="field"><span>Tes hizb appris</span><div class="kgrid">${order60(C().dir).filter(h => pool.includes(h)).map(chip).join('')}</div></div>
+    ${sel.length ? `<div class="field"><span>Ta sélection</span>${sel.map(h => `<div class="rx-row"><span class="ar" lang="ar">حزب ${h}</span><div class="opts">${[[1, '½ hizb'], [2, 'Entier']].map(([v, l]) => `<button type="button" class="opt" data-act="rx-q" data-hz="${h}" data-v="${v}" aria-pressed="${s.sel[h] === v}">${l}</button>`).join('')}</div></div>`).join('')}</div>` : ''}
+    <div class="acts"><button type="button" class="btn primary" data-act="rx-save">Enregistrer</button><button type="button" class="btn" data-act="close">Annuler</button></div>`;
 }
 
 function tahDayCard(k, future) {
@@ -1099,11 +1138,11 @@ function weekView() {
   const rows = [], lines = [];
   if (c.rev.on) {
     const ds = days.filter(d => d <= t && d >= c.created && !inPause(d, 'rev') && poolHz(d) > 0);
-    const full = ds.filter(d => revCount(d) >= revTarget(d)).length, sum = days.reduce((a, d) => a + revCount(d), 0);
+    const full = ds.filter(d => revDone(d) >= revTarget(d)).length, sum = days.reduce((a, d) => a + revDone(d), 0);
     lines.push(`<p>Révision : ${full} jour${full > 1 ? 's' : ''} sur ${ds.length} · ${hizbFr(sum)}</p>`);
     rows.push(`<div class="grow" style="--cat:var(--c-rev)"><div class="gname"><span>Révision perso</span><small>${esc(hizbFr(revTarget(t)))} / jour</small></div>${days.map(d => {
-      const st = d > t ? 'future' : inPause(d, 'rev') ? 'pause' : d < c.created || !poolHz(d) || (isTahDay(d) && tahOf(d) !== -1 && !revCount(d)) ? 'na' : revCount(d) >= revTarget(d) ? 'full' : revCount(d) ? 'ok' : 'low';
-      return `<button type="button" class="cell ${st}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="Révision, ${esc(fmtLong.format(parseKey(d)))}">${st === 'full' ? '✓' : revCount(d) || (st === 'na' || st === 'pause' ? '·' : '')}</button>`; }).join('')}</div>`);
+      const st = d > t ? 'future' : inPause(d, 'rev') ? 'pause' : d < c.created || !poolHz(d) || (isTahDay(d) && tahOf(d) !== -1 && !revDone(d)) ? 'na' : revDone(d) >= revTarget(d) ? 'full' : revDone(d) ? 'ok' : 'low';
+      return `<button type="button" class="cell ${st}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="Révision, ${esc(fmtLong.format(parseKey(d)))}">${st === 'full' ? '✓' : revDone(d) || (st === 'na' || st === 'pause' ? '·' : '')}</button>`; }).join('')}</div>`);
   }
   if (c.pass.on) {
     const n = days.filter(passOf).length;
@@ -1143,7 +1182,7 @@ function monthView() {
     const s = d > t ? 'future' : (dayStatus(d) || '');
     return `<button type="button" class="mc ${s}${d === t ? ' today' : ''}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="${esc(cap(fmtLong.format(parseKey(d))))}">${parseKey(d).getDate()}</button>`; }).join('')}</div>`;
   const stats = [];
-  if (c.rev.on) { const sum = days.reduce((a, d) => a + revCount(d), 0); stats.push(`<div class="stat" style="--cat:var(--c-rev)"><span>Révision perso</span><b>${hizbFr(sum).replace(' hizb', '')}</b><small>hizb révisés ce mois</small></div>`); }
+  if (c.rev.on) { const sum = days.reduce((a, d) => a + revDone(d), 0); stats.push(`<div class="stat" style="--cat:var(--c-rev)"><span>Révision perso</span><b>${hizbFr(sum).replace(' hizb', '')}</b><small>hizb révisés ce mois</small></div>`); }
   if (c.pass.on) { const n = days.filter(passOf).length; stats.push(`<div class="stat" style="--cat:var(--c-prof)"><span>Passages</span><b>${n}${c.pass.mode === 'month' ? `<small> / ${c.pass.perMonth}</small>` : ''}</b><small>${c.pass.mode === 'month' ? (n >= c.pass.perMonth ? 'objectif du mois atteint' : 'minimum du mois') : 'avec le cheikh'}</small></div>`); }
   const hif = days.reduce((a, d) => a + ((S.log[d] && S.log[d].pass && S.log[d].pass.h) || 0), 0);
   stats.push(`<div class="stat" style="--cat:var(--gold)"><span>${isK1() ? 'Hifz' : 'Khatma repassée'}</span><b>${fr(hif / 8)}</b><small>hizb ${isK1() ? 'appris' : 'repassés'} ce mois</small></div>`);
@@ -1508,7 +1547,7 @@ function closeSheet() { saveHzNote(); V.sheet = null; $('#back').hidden = true; 
 function renderSheet() {
   const s = V.sheet; if (!s) return;
   const el = $('#sheet');
-  const html = s.kind === 'pass' ? passSheet(s) : s.kind === 'move' ? moveSheet(s) : s.kind === 'hz' ? hzSheet(s) : s.kind === 'tah' ? tahSheet(s) : s.kind === 'settings' ? settingsSheet(s) : s.kind === 'backup' ? backupSheet(s) : s.kind === 'pause' ? pauseSheet(s) : s.kind === 'rules' ? rulesSheet() : s.kind === 'known' ? knownSheet(s) : s.kind === 'vknown' ? vmKnownSheet(s) : '';
+  const html = s.kind === 'pass' ? passSheet(s) : s.kind === 'move' ? moveSheet(s) : s.kind === 'hz' ? hzSheet(s) : s.kind === 'tah' ? tahSheet(s) : s.kind === 'settings' ? settingsSheet(s) : s.kind === 'backup' ? backupSheet(s) : s.kind === 'pause' ? pauseSheet(s) : s.kind === 'rules' ? rulesSheet() : s.kind === 'known' ? knownSheet(s) : s.kind === 'vknown' ? vmKnownSheet(s) : s.kind === 'rx' ? rxSheet(s) : '';
   el.innerHTML = `<div class="grab"></div>${html}`;
 }
 
@@ -1950,7 +1989,11 @@ document.addEventListener('click', e => {
     /* revision */
     case 'rv-ok': if (poolHz(k)) { withCelebrate(k, () => setLog(k, { rev: revCount(k) + 1 })); render(); toast('Demi-hizb validé. بارك الله فيك'); } break;
     case 'rv-undo': if (revCount(k)) { setLog(k, { rev: revCount(k) - 1 }); render(); } break;
-    case 'rv-all': if (poolHz(k)) { const tg = revTarget(k), cur = revCount(k); withCelebrate(k, () => setLog(k, { rev: cur >= tg ? 0 : tg })); render(); if (cur < tg) toast('Révision validée. بارك الله فيك'); } break;
+    case 'rv-all': if (poolHz(k)) { const tg = revTarget(k), cur = revDone(k), nr = Math.max(revCount(k), tg - rxHalves(k)); withCelebrate(k, () => setLog(k, { rev: cur >= tg ? 0 : nr })); render(); if (cur < tg) toast('Révision validée. بارك الله فيك'); } break;
+    case 'rx-open': openSheet({ kind: 'rx', d: k, sel: Object.assign({}, rxOf(k)) }); break;
+    case 'rx-tog': { const h = +b.dataset.hz; if (s.sel[h]) delete s.sel[h]; else s.sel[h] = 2; renderSheet(); break; }
+    case 'rx-q': s.sel[+b.dataset.hz] = +b.dataset.v; renderSheet(); break;
+    case 'rx-save': { const d = s.d, sel = Object.assign({}, s.sel); withCelebrate(d, () => setLog(d, { rx: Object.keys(sel).length ? sel : null })); closeSheet(); render(); if (Object.keys(sel).length) toast('Renforcement ajouté. بارك الله فيك'); break; }
     case 'note-edit': V.noteEdit = Object.assign({}, V.noteEdit, { [k + ':' + b.dataset.hz]: true }); render(); break;
     case 'rate': {
       const day = b.dataset.today ? t : k;
