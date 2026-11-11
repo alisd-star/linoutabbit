@@ -249,6 +249,11 @@ h2 { margin: 0; font-family: var(--f-display); font-weight: 650; font-size: 18px
 .rate { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 4px; }
 .rate button { height: 40px; min-width: 0; padding: 0; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 14.5px; font-variant-numeric: tabular-nums; color: var(--fg); }
 .rate.sm button { height: 34px; border-radius: 9px; font-size: 13.5px; }
+.qn { display: grid; grid-template-columns: 62px 1fr; align-items: center; gap: 6px; }
+.qn > span { font-size: 13px; font-weight: 600; color: var(--fg); }
+.rate.xs { gap: 3px; } .rate.xs button { height: 30px; border-radius: 8px; font-size: 12.5px; }
+.qn-done { justify-self: start; display: flex; gap: 8px; align-items: baseline; background: none; border: 0; padding: 4px 0; font: inherit; color: var(--fg); cursor: pointer; }
+.qn-done small { color: var(--muted); text-decoration: underline; }
 .rate button.on.l1 { background: var(--danger); border-color: var(--danger); color: var(--surface); }
 .rate button.on.l2 { background: var(--warn); border-color: var(--warn); color: var(--surface); }
 .rate button.on.l3, .rate button.on.l4 { background: var(--good); border-color: var(--good); color: var(--on-good); }
@@ -986,11 +991,10 @@ function revCard(k, future) {
         <button type="button" class="inc" data-act="rv-ok" aria-label="Ajouter un demi-hizb">+½</button>
         <button type="button" class="check" data-act="rv-all" aria-pressed="${done}" aria-label="${done ? 'Remettre à zéro' : 'Tout valider'}">${ICON_CHECK}</button></div></div>`;
     /* note : seulement quand un hizb entier est révisé (sa 2e moitié validée aujourd'hui) */
-    const full = dayH.slice(0, cnt).filter(h => h.half === 2).pop();
-    if (full && !future) {
-      const ev = hzEvals(full.hz).find(x => x.d === k && x.src === 'rev');
-      qr = `<div class="qr"><span>Ta note pour le <b>hizb ${full.hz}</b>${ev ? ` · <b class="${lvl(ev.s)}-t">${ev.s}/10</b>` : ' :'}</span>${rateRow(`data-act="rate" data-hz="${full.hz}" data-src="rev"`, ev && ev.s, true)}</div>`;
-    }
+    const fulls = [...new Set(dayH.slice(0, cnt).filter(h => h.half === 2).map(h => h.hz))];
+    if (fulls.length && !future) qr = `<div class="qr"><span>Ta note</span>${fulls.map(h => {
+      const ev = hzEvals(h).find(x => x.d === k && x.src === 'rev'), edit = (V.noteEdit || {})[k + ':' + h];
+      return `<div class="qn"><span>Hizb ${h}</span>${ev && !edit ? `<button type="button" class="qn-done" data-act="note-edit" data-hz="${h}"><b class="${lvl(ev.s)}-t">${ev.s}/10</b><small>changer</small></button>` : `<div class="rate xs">${Array.from({ length: 10 }, (_, i) => i + 1).map(n => `<button type="button" class="${ev && ev.s === n ? 'on ' + lvl(n) : ''}" data-act="rate" data-hz="${h}" data-src="rev" data-s="${n}" aria-label="Hizb ${h}, note ${n} sur 10" aria-pressed="${!!ev && ev.s === n}">${n}</button>`).join('')}</div>`}</div>`; }).join('')}</div>`;
   }
   return `<article class="goal ${st}" style="--cat:var(--c-rev)"><div class="goal-top"><span class="chip">Révision perso</span><small class="nat">par cœur</small>${tag}</div>${main}${foot}${qr}</article>`;
 }
@@ -1300,7 +1304,7 @@ function vmSetKind(s, v) {
   s.pk = s.N && s.Rv ? 'both' : s.N ? 'new' : s.Rv ? 'rev' : null;
 }
 function vmEnd(p) { const R = RW(); if (!p || !p.start || !p.es) return null; const v = parseInt(p.ev, 10); if (!(v >= 1 && v <= R.counts[p.es - 1])) return null; const g = gidOf(R, p.es, v); return g >= p.start ? g : null; }
-function vmPrev(p, kind) { const R = RW(), e = vmEnd(p); return e ? `<span class="ar" lang="ar">${vmRangeAr(R, p.start, e)}</span><span>${esc(vmInfo(R, p.start, e))}${kind === 'new' ? ' · pas de note pour le nouveau' : ''}</span>` : '<span>Indique le verset où tu t\'es arrêté.</span>'; }
+function vmPrev(p, kind) { const R = RW(), e = vmEnd(p); return e ? `<span class="ar" lang="ar">${vmRangeAr(R, p.start, e)}</span><span>${esc(vmInfo(R, p.start, e))}</span>` : '<span>Indique le verset où tu t\'es arrêté.</span>'; }
 const vmReady = s => !!s.pk && (!s.N || vmEnd(s.N)) && (!s.Rv || s.Rv.hz || vmEnd(s.Rv));
 /* révision avec le cheikh par hizb (cases à cocher), commune aux deux fiches */
 function revHzHtml(s) {
@@ -1932,9 +1936,11 @@ document.addEventListener('click', e => {
     case 'rv-ok': if (poolHz(k)) { withCelebrate(k, () => setLog(k, { rev: revCount(k) + 1 })); render(); toast('Demi-hizb validé. بارك الله فيك'); } break;
     case 'rv-undo': if (revCount(k)) { setLog(k, { rev: revCount(k) - 1 }); render(); } break;
     case 'rv-all': if (poolHz(k)) { const tg = revTarget(k), cur = revCount(k); withCelebrate(k, () => setLog(k, { rev: cur >= tg ? 0 : tg })); render(); if (cur < tg) toast('Révision validée. بارك الله فيك'); } break;
+    case 'note-edit': V.noteEdit = Object.assign({}, V.noteEdit, { [k + ':' + b.dataset.hz]: true }); render(); break;
     case 'rate': {
       const day = b.dataset.today ? t : k;
       rateHizb(+b.dataset.hz, +b.dataset.s, b.dataset.src, day, true);
+      if (V.noteEdit) delete V.noteEdit[day + ':' + b.dataset.hz];
       if (s && s.kind === 'hz') { saveHzNote(); renderSheet(); } render(); break;
     }
     /* wird */
