@@ -1955,26 +1955,34 @@ function applyOnb() {
    Les étapes dont l'élément n'est pas à l'écran (objectif non utilisé) sont sautées. */
 const TOUR_V = 1;
 function tourSteps() {
-  return [
-    ['.top-row h1', 'Ta journée', 'Le jour affiché, avec la date de l\'hégire. Touche les flèches ou un jour de la semaine pour en changer.'],
-    ['.rings > .ring', 'Ton cercle du jour', 'Il se remplit au fur et à mesure que tu valides tes objectifs. Vert : journée réussie.'],
-    ['.tah-chip', AR('تعاهدوا'), 'Les jours qui restent avant la prochaine récitation complète de ce que tu as appris. Touche-le pour te fixer un objectif.'],
-    ['.strip', 'Ta semaine', 'Touche un jour pour le revoir ou rattraper un oubli. Vert : réussi, orange : commencé, rouge : en dessous du minimum.'],
-    ['article.goal[style*="c-rev"]', 'Révision perso', '+½ à chaque demi-hizb récité, ✓ pour tout valider d\'un coup. « Réviser d\'autres hizb » pour renforcer ceux qui sont fragiles.'],
-    ['article.goal[style*="c-prof"]', 'Passage avec le cheikh', 'Après ton passage, touche Nouveau ou Révision, puis indique où tu t\'es arrêté.'],
-    ['article.goal[style*="c-wird"]', 'Wird', 'Ta lecture du jour dans le mushaf. Elle compte pour valider ta journée.'],
-    ['.seg', 'Semaine, Mois, Hizb', 'Ton suivi dans le temps, et tes notes hizb par hizb pour voir ce qui est solide et ce qui est à revoir.'],
-    ['.brand [data-act="settings"]', 'Réglages', 'Modifier tes réponses, faire une pause, et surtout ta sauvegarde, pour ne jamais perdre ton suivi.']
-  ].filter(x => document.querySelector(x[0]));
+  const weak = poolList().some(h => hzScore(h) != null && hzScore(h) < 6.5);
+  const st = [
+    { sel: '.top-row h1', t: 'Ta journée', x: 'Le jour affiché, avec la date de l\'hégire. Touche les flèches ou un jour de la semaine pour en changer.' },
+    { sel: '.rings > .ring', t: 'Ton cercle du jour', x: 'Il se remplit au fur et à mesure que tu valides tes objectifs. Vert : journée réussie.' },
+    { sel: '.tah-chip', t: AR('تعاهدوا'), x: 'Les jours qui restent avant la prochaine récitation complète de ce que tu as appris. Touche-le pour te fixer un objectif.' },
+    { sel: '.strip', t: 'Ta semaine', x: 'Touche un jour pour le revoir ou rattraper un oubli. Vert : réussi, orange : commencé, rouge : en dessous du minimum.' },
+    { sel: 'article.goal[style*="c-rev"]', t: 'Révision perso', x: '+½ à chaque demi-hizb récité, ✓ pour tout valider d\'un coup. « Réviser d\'autres hizb » pour renforcer ceux qui sont fragiles.' },
+    { sel: 'article.goal[style*="c-prof"]', t: 'Passage avec le cheikh', x: 'Après ton passage, touche Nouveau ou Révision, puis indique où tu t\'es arrêté.' },
+    { sel: 'article.goal[style*="c-wird"]', t: 'Wird', x: 'Ta lecture du jour dans le mushaf. Elle compte pour valider ta journée.' }
+  ].filter(x => document.querySelector(x.sel));
+  /* les onglets : l'appli bascule elle-même dessus */
+  st.push({ tab: 'semaine', sel: 'main .grid', t: 'Onglet Semaine', x: 'Ton score de la semaine et une ligne par objectif. Chaque case est un jour : ✓ réussi, un chiffre si c\'est commencé, rouge si c\'est manqué. Touche une case pour ouvrir le jour.' });
+  st.push({ tab: 'mois', sel: 'main .cal', t: 'Onglet Mois', x: 'Ton mois d\'un coup d\'œil : la couleur de chaque jour, et en dessous le total du mois (hizb révisés, passages, hifz).' });
+  st.push({ tab: 'hizb', sel: 'main .hzgrid', t: 'Onglet Hizb', x: `Chaque case est un hizb, colorée selon tes notes : rouge à revoir, orange fragile, vert solide. Une flèche montre si la note monte ou baisse.${weak ? ' En haut, les hizb à renforcer en priorité.' : ''} Touche un hizb pour voir ses notes, ses points à revoir et ajouter une remarque.` });
+  st.push({ tab: 'jour', sel: '.brand [data-act="settings"]', t: 'Réglages', x: 'Modifier tes réponses, faire une pause, et surtout ta sauvegarde, pour ne jamais perdre ton suivi.' });
+  return st;
 }
 function tourStart() { V.tour = { i: 0, steps: tourSteps() }; if (!V.tour.steps.length) { V.tour = null; return; } tourShow(); }
 function tourEnd() {
   V.tour = null; const el = document.getElementById('tour'); if (el) el.remove();
+  if (V.tab !== 'jour') { V.tab = 'jour'; render(); window.scrollTo(0, 0); }
   S.meta = Object.assign({}, S.meta, { tourSeen: TOUR_V }); save();
 }
 function tourShow() {
   const T = V.tour; if (!T) return;
-  const [sel, title, txt] = T.steps[T.i], target = document.querySelector(sel);
+  const step = T.steps[T.i], sel = step.sel, title = step.t, txt = step.x;
+  if (step.tab && V.tab !== step.tab) { V.tab = step.tab; render(); }
+  const target = document.querySelector(sel);
   if (!target) { if (T.i < T.steps.length - 1) { T.i++; tourShow(); } else tourEnd(); return; }
   let el = document.getElementById('tour');
   if (!el) { el = document.createElement('div'); el.id = 'tour'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); document.body.appendChild(el); }
@@ -1986,7 +1994,7 @@ function tourShow() {
 }
 function tourPlace() {
   const T = V.tour, el = document.getElementById('tour'); if (!T || !el) return;
-  const target = document.querySelector(T.steps[T.i][0]); if (!target) return;
+  const target = document.querySelector(T.steps[T.i].sel); if (!target) return;
   const r = target.getBoundingClientRect(), vh = window.innerHeight, pad = 6;
   const top = Math.max(8, r.top - pad), bot = Math.min(vh - 8, r.bottom + pad);
   const hole = el.querySelector('.t-hole'); Object.assign(hole.style, { top: top + 'px', left: Math.max(6, r.left - pad) + 'px', width: Math.min(window.innerWidth - 12, r.width + pad * 2) + 'px', height: Math.max(0, bot - top) + 'px' });
