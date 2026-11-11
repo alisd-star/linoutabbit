@@ -1230,7 +1230,7 @@ function nextIn(L, g) { for (const r of L) { if (r[1] >= g) return Math.max(r[0]
 function covH(R, L, h) { const A = hzA(R, h), B = hzB(R, h); let m = 0; L.forEach(r => { const x = Math.max(A, posOf(R, r[0])), y = Math.min(B, posOf(R, r[1] + 1)); if (y > x) m += y - x; }); return Math.min(1, m / (B - A)); }
 /* ce qui est fait dans la progression (appris en 1re khatma) jusqu'au jour d (exclu) */
 function vmProg(d) {
-  return memo('VP' + (d || ''), () => { const v = C().vm, add = []; Object.keys(S.log).forEach(k => { const p = S.log[k].pass; if (p && p.vn && (!d || k < d)) add.push(p.vn); }); return rNorm((v.base || []).concat(add)); });
+  return memo('VP' + (d || ''), () => { const v = C().vm, add = []; Object.keys(S.log).forEach(k => { const p = S.log[k].pass; if (p && p.vn && (!d || k < d)) add.push(...rgs(p.vn)); }); return rNorm((v.base || []).concat(add)); });
 }
 const vmLearned = d => isK1() ? vmProg(d) : [[1, RW().total]];
 function vmCov(d) { return memo('VC' + (d || ''), () => { const R = RW(), L = vmLearned(d); return Array.from({ length: 60 }, (_, i) => covH(R, L, i + 1)); }); }
@@ -1276,6 +1276,11 @@ const sName = s => 'سورة ' + SNAME[s - 1];
 function vmRangeAr(R, a, b) { const [s1, a1] = saOf(R, a), [s2, a2] = saOf(R, b); return s1 === s2 ? `${sName(s1)} · من الآية ${a1} إلى ${a2}` : `من ${SNAME[s1 - 1]} ${a1} إلى ${SNAME[s2 - 1]} ${a2}`; }
 const vmStartAr = (R, g) => { const [s, a] = saOf(R, g); return `${sName(s)} · الآية ${a}`; };
 function vmHizbs(R, a, b) { const out = []; for (let h = 1; h <= 60; h++) { const c = covH(R, [[a, b]], h); if (c > 0.005) out.push({ h, c }); } return out; }
+/* passage en plusieurs morceaux (fin dans une sourate d'avant) : liste de plages dans l'ordre récité */
+const rgs = x => x ? (Array.isArray(x[0]) ? x : [x]) : [];
+const packR = L => L.length === 1 ? L[0] : L;
+function vmHizbsL(R, L) { const out = []; for (let h = 1; h <= 60; h++) { const c = covH(R, L, h); if (c > 0.005) out.push({ h, c }); } return out; }
+function vmInfoL(R, L) { const pg = L.map(r => { const p1 = pageOf(R, r[0]) + 1, p2 = pageOf(R, r[1]) + 1; return p1 === p2 ? String(p1) : `${p1} → ${p2}`; }), hs = vmHizbsL(R, L); return `${pg.length === 1 && !pg[0].includes('→') ? 'Page ' : 'Pages '}${pg.join(' puis ')} · ${hs.map(x => `hizb ${x.h}${x.c >= FULL ? '' : ' (en partie)'}`).join(', ')}`; }
 function vmInfo(R, a, b) { const p1 = pageOf(R, a) + 1, p2 = pageOf(R, b) + 1, hs = vmHizbs(R, a, b); return `${p1 === p2 ? 'Page ' + p1 : `Pages ${p1} → ${p2}`} · ${hs.map(x => `hizb ${x.h}${x.c >= FULL ? '' : ' (en partie)'}`).join(', ')}`; }
 const suraOpts = (sel, from) => Array.from({ length: 114 }, (_, i) => i + 1).filter(s => !from || s >= from).map(s => `<option value="${s}" ${s === sel ? 'selected' : ''}>${s} · ${SNAME[s - 1]}</option>`).join('');
 
@@ -1289,7 +1294,7 @@ function vmPartInit(kind) {
 }
 function vmOpenState(d, lg) {
   const R = RW(), st = { vm: true, N: null, Rv: null };
-  const mk = r => { const [s2, a2] = saOf(R, r[1]); return { start: r[0], es: s2, ev: String(a2) }; };
+  const mk = r => { const L = rgs(r), [s2, a2] = saOf(R, L[L.length - 1][1]); return { start: L[0][0], es: s2, ev: String(a2) }; };
   if (lg && lg.vn) st.N = mk(lg.vn);
   if (lg && lg.vr) st.Rv = mk(lg.vr);
   else if (lg && lg.rn && vmRevHz()) st.Rv = { hz: true };
@@ -1303,8 +1308,18 @@ function vmSetKind(s, v) {
   else s.Rv = s.Rv ? null : vmPartInit('rev');
   s.pk = s.N && s.Rv ? 'both' : s.N ? 'new' : s.Rv ? 'rev' : null;
 }
-function vmEnd(p) { const R = RW(); if (!p || !p.start || !p.es) return null; const v = parseInt(p.ev, 10); if (!(v >= 1 && v <= R.counts[p.es - 1])) return null; const g = gidOf(R, p.es, v); return g >= p.start ? g : null; }
-function vmPrev(p, kind) { const R = RW(), e = vmEnd(p); return e ? `<span class="ar" lang="ar">${vmRangeAr(R, p.start, e)}</span><span>${esc(vmInfo(R, p.start, e))}</span>` : '<span>Indique le verset où tu t\'es arrêté.</span>'; }
+/* chemin récité : jusqu'à une sourate d'après (d'un seul tenant), ou vers une sourate d'avant :
+   la sourate de départ jusqu'à sa fin, puis chaque sourate d'avant depuis le verset 1 */
+function vmPath(p) {
+  const R = RW(); if (!p || !p.start || !p.es) return null; const v = parseInt(p.ev, 10); if (!(v >= 1 && v <= R.counts[p.es - 1])) return null;
+  const g = gidOf(R, p.es, v), ss = saOf(R, p.start)[0];
+  if (p.es >= ss) return g >= p.start ? [[p.start, g]] : null;
+  const out = [[p.start, suraEnd(R, ss)]];
+  for (let x = ss - 1; x > p.es; x--) out.push([gidOf(R, x, 1), suraEnd(R, x)]);
+  out.push([gidOf(R, p.es, 1), g]); return out;
+}
+function vmEnd(p) { const L = vmPath(p); return L ? L[L.length - 1][1] : null; }
+function vmPrev(p, kind) { const R = RW(), L = vmPath(p); return L ? `<span class="ar" lang="ar">${vmRangeAr(R, L[0][0], L[L.length - 1][1])}</span><span>${esc(vmInfoL(R, L))}</span>` : '<span>Indique le verset où tu t\'es arrêté.</span>'; }
 const vmReady = s => !!s.pk && (!s.N || vmEnd(s.N)) && (!s.Rv || s.Rv.hz || vmEnd(s.Rv));
 /* révision avec le cheikh par hizb (cases à cocher), commune aux deux fiches */
 function revHzHtml(s) {
@@ -1329,14 +1344,14 @@ function vmLive(s, x) {
   const sv = $('[data-act="ps-save"]'); if (sv) sv.disabled = !vmReady(s);
 }
 function vmNotes(s, p, kind) {
-  const R = RW(), e = vmEnd(p), hs = kind === 'rev' && e ? vmHizbs(R, p.start, e) : [];
+  const R = RW(), L = vmPath(p), hs = kind === 'rev' && L ? vmHizbsL(R, L) : [];
   return hs.length ? `<div class="field"><span>Ta note et les points à revoir</span>${hs.map(y => `<div class="ggroup"><div class="ggroup-h"><span class="ar" lang="ar">حزب ${y.h}</span><small>${y.c >= FULL ? 'en entier' : 'en partie · facultatif'}</small></div>${rateRow(`data-act="ps-rate" data-hz="${y.h}"`, s.rates[y.h], true)}<input class="input" id="ps-err-${y.h}" data-hz="${y.h}" type="text" maxlength="120" placeholder="Erreur relevée, passage à revoir… (facultatif)" value="${esc(s.errs[y.h] || '')}" autocomplete="off"></div>`).join('')}</div>` : '';
 }
 function vmPartTail(s, kind, x, p, list, notes) {
   const R = RW(), [ss, sv] = saOf(R, p.start);
   const start = p.edS ? `<div class="field"><span>Tu as repris à</span><div class="row-sv lbl" aria-hidden="true"><small>Sourate</small><small>Verset</small></div><div class="row-sv"><select class="input" id="vm-ss-${x}">${suraOpts(ss)}</select><input class="input vnum" id="vm-sv-${x}" type="number" inputmode="numeric" min="1" max="${R.counts[ss - 1]}" value="${sv}"></div></div>`
     : list ? '' : `<div class="field"><span>${kind === 'rev' ? 'Tu reprends (rotation)' : 'Tu reprends'}</span><p class="vstart"><span class="ar" lang="ar">${vmStartAr(R, p.start)}</span><button type="button" class="link" data-act="vm-edstart" data-part="${x}">Je n'ai pas repris là</button></p></div>`;
-  const endF = `<div class="field"><span>Tu t'es arrêté à</span><div class="row-sv lbl" aria-hidden="true"><small>Sourate</small><small>Verset</small></div><div class="row-sv"><select class="input" id="vm-es-${x}" aria-label="Sourate">${suraOpts(p.es, ss)}</select><input class="input vnum" id="vm-ev-${x}" type="number" inputmode="numeric" min="1" max="${R.counts[p.es - 1]}" value="${esc(p.ev)}" placeholder="—" aria-label="Verset"></div><button type="button" class="opt fin" data-act="vm-fin" data-part="${x}">Jusqu'à la fin de la sourate</button></div>`;
+  const endF = `<div class="field"><span>Tu t'es arrêté à</span><div class="row-sv lbl" aria-hidden="true"><small>Sourate</small><small>Verset</small></div><div class="row-sv"><select class="input" id="vm-es-${x}" aria-label="Sourate">${suraOpts(p.es)}</select><input class="input vnum" id="vm-ev-${x}" type="number" inputmode="numeric" min="1" max="${R.counts[p.es - 1]}" value="${esc(p.ev)}" placeholder="—" aria-label="Verset"></div><button type="button" class="opt fin" data-act="vm-fin" data-part="${x}">Jusqu'à la fin de la sourate</button></div>`;
   return `${s.pk === 'both' ? `<p class="grp2">${kind === 'new' ? (isK1() ? 'Nouveau' : 'Suite de la khatma') : 'Révision'}</p>` : ''}${list}${start}${endF}<p class="prev" id="vm-prev-${x}">${vmPrev(p, kind)}</p>${notes}`;
 }
 function vmPassSheet(s) {
@@ -1354,9 +1369,9 @@ function vmSavePass() {
   const s = V.sheet, R = RW(), d = s.d, v = C().vm; if (!vmReady(s)) return false;
   const rec = { h: 0, rn: 0, rh: [], at: 1 };
   let eN = null, eR = null;
-  if (s.N) { eN = vmEnd(s.N); const tot = vmHizbs(R, s.N.start, eN).reduce((m, x) => m + x.c, 0); rec.vn = [s.N.start, eN]; rec.h = Math.max(1, Math.round(tot * 8)); }
+  if (s.N) { const LN = vmPath(s.N); eN = LN[LN.length - 1][1]; const tot = vmHizbsL(R, LN).reduce((m, x) => m + x.c, 0); rec.vn = packR(LN); rec.h = Math.max(1, Math.round(tot * 8)); }
   if (s.Rv && s.Rv.hz) { passGroups(s).forEach((g, i) => { if (s.checked[i]) { rec.rn += g.n; if (!rec.rh.includes(g.hz)) rec.rh.push(g.hz); } }); }
-  else if (s.Rv) { eR = vmEnd(s.Rv); const hs = vmHizbs(R, s.Rv.start, eR); rec.vr = [s.Rv.start, eR]; rec.rn = Math.max(1, Math.round(hs.reduce((m, x) => m + x.c, 0) * 2)); rec.rh = hs.map(x => x.h); }
+  else if (s.Rv) { const LR = vmPath(s.Rv); eR = LR[LR.length - 1][1]; const hs = vmHizbsL(R, LR); rec.vr = packR(LR); rec.rn = Math.max(1, Math.round(hs.reduce((m, x) => m + x.c, 0) * 2)); rec.rh = hs.map(x => x.h); }
   withCelebrate(d, () => setLog(d, { pass: rec }));
   if (s.N) {
     const c = s.N.choose; if (c && c.length > 1) v.habit = s.N.start === c[0].g ? 'first' : s.N.start === c[c.length - 1].g ? 'prev' : v.habit;
@@ -1402,7 +1417,7 @@ function vmPrep() {
   return html;
 }
 function vmDoneBody(lg) {
-  const R = RW(), one = (r, lab) => `<div class="hz-now"><span class="ar" lang="ar">${vmRangeAr(R, r[0], r[1])}</span><small>${lab} · ${esc(vmInfo(R, r[0], r[1]))}</small></div>`;
+  const R = RW(), one = (r, lab) => { const L = rgs(r); return `<div class="hz-now"><span class="ar" lang="ar">${vmRangeAr(R, L[0][0], L[L.length - 1][1])}</span><small>${lab} · ${esc(vmInfoL(R, L))}</small></div>`; };
   return (lg.vn ? one(lg.vn, isK1() ? 'Nouveau' : 'Suite') : '') + (lg.vr ? one(lg.vr, 'Révision') : '');
 }
 /* hizb déjà appris (onglet Hizb), en mode versets */
