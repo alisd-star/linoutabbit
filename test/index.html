@@ -517,6 +517,16 @@ textarea.input { height: auto; min-height: 92px; padding: 10px 12px; resize: ver
 .foot { margin: 0; text-align: center; font-size: 12px; color: var(--muted); }
 
 .toast { position: fixed; z-index: 40; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: max-content; max-width: calc(100% - 32px); background: var(--fg); color: var(--bg); padding: 10px 14px; border-radius: 12px; font-size: 14px; box-shadow: var(--shadow); }
+/* visite guidée */
+#tour { position: fixed; inset: 0; z-index: 45; }
+.t-hole { position: fixed; border-radius: 18px; box-shadow: 0 0 0 9999px rgb(6 14 10 / .66); transition: top .25s, left .25s, width .25s, height .25s; pointer-events: none; outline: 2px solid color-mix(in srgb, var(--surface) 70%, transparent); outline-offset: 2px; }
+.t-bub { position: fixed; left: 16px; right: 16px; max-width: 400px; margin: 0 auto; background: var(--surface); color: var(--fg); border-radius: 18px; padding: 16px 16px 14px; box-shadow: 0 18px 50px -12px rgb(0 0 0 / .45); transition: top .25s; }
+.t-bub h3 { font: 650 18px/1.25 var(--f-display); margin: 0 0 6px; }
+.t-bub p { margin: 0 0 14px; font-size: 15px; line-height: 1.5; color: var(--muted); }
+.t-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.t-dots { display: flex; gap: 5px; } .t-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); } .t-dots i.on { background: var(--accent); width: 18px; border-radius: 4px; }
+.t-foot .t-skip { background: none; border: 0; color: var(--muted); font: inherit; font-size: 14.5px; padding: 10px 4px; text-decoration: underline; }
+.t-foot .btn { min-height: 44px; padding: 0 18px; }
 #confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
 @keyframes fade { from { opacity: 0; } }
 @keyframes rise { from { transform: translateY(40px); opacity: .4; } }
@@ -938,6 +948,7 @@ function render() {
     </header>
     <main>${view}</main></div>`;
   fitOne($('.top-row h1'), 17);
+  tourAuto();
 }
 /* une seule ligne : on réduit la police jusqu'à ce que ça tienne */
 function fitOne(el, min) {
@@ -1667,6 +1678,7 @@ function settingsSheet(s) {
       <button type="button" class="set-item" data-act="edit-answers"><div><b>Modifier mes réponses</b><small>Étape, sens, où tu en es, passages, quantités, révision, wird</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="pause"><div><b>${c.pause && c.pause.to >= todayKey() ? 'En pause' : 'Faire une pause'}</b><small>${c.pause && c.pause.to >= todayKey() ? esc(pauseWhatTxt(c.pause)) + ' jusqu\'au ' + esc(fmtDM.format(parseKey(c.pause.to))) : 'Examens, voyage, Ramadan : tout ou une partie'}</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="backup"><div><b>Sauvegarde</b><small>${S.meta.lastBackup ? `Dernière le ${esc(fmtDM.format(parseKey(S.meta.lastBackup)))}` : 'Jamais faite'} · copier ou restaurer</small></div>${ICON_CHEV}</button>
+      <button type="button" class="set-item" data-act="tour"><div><b>Revoir la visite</b><small>Les explications de chaque partie de l'appli</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="rules"><div><b>Les consignes</b><small>Où sont tes données, comment ne pas les perdre</small></div>${ICON_CHEV}</button>
     </div>
     <button type="button" class="btn danger" data-act="wipe">${s.armed ? 'Toucher à nouveau pour tout effacer' : 'Tout effacer et recommencer'}</button>
@@ -1938,6 +1950,65 @@ function applyOnb() {
   render(); toast(mig ? 'C\'est noté, بارك الله فيك' : was ? 'Réponses enregistrées' : 'بسم الله, c\'est parti !');
 }
 
+/* ================= VISITE GUIDÉE =================
+   Une fois (nouvel inscrit après le questionnaire, inscrit actuel à la prochaine ouverture), puis depuis Réglages.
+   Les étapes dont l'élément n'est pas à l'écran (objectif non utilisé) sont sautées. */
+const TOUR_V = 1;
+function tourSteps() {
+  return [
+    ['.top-row h1', 'Ta journée', 'Le jour affiché, avec la date de l\'hégire. Touche les flèches ou un jour de la semaine pour en changer.'],
+    ['.rings > .ring', 'Ton cercle du jour', 'Il se remplit au fur et à mesure que tu valides tes objectifs. Vert : journée réussie.'],
+    ['.tah-chip', AR('تعاهدوا'), 'Les jours qui restent avant la prochaine récitation complète de ce que tu as appris. Touche-le pour te fixer un objectif.'],
+    ['.strip', 'Ta semaine', 'Touche un jour pour le revoir ou rattraper un oubli. Vert : réussi, orange : commencé, rouge : en dessous du minimum.'],
+    ['article.goal[style*="c-rev"]', 'Révision perso', '+½ à chaque demi-hizb récité, ✓ pour tout valider d\'un coup. « Réviser d\'autres hizb » pour renforcer ceux qui sont fragiles.'],
+    ['article.goal[style*="c-prof"]', 'Passage avec le cheikh', 'Après ton passage, touche Nouveau ou Révision, puis indique où tu t\'es arrêté.'],
+    ['article.goal[style*="c-wird"]', 'Wird', 'Ta lecture du jour dans le mushaf. Elle compte pour valider ta journée.'],
+    ['.seg', 'Semaine, Mois, Hizb', 'Ton suivi dans le temps, et tes notes hizb par hizb pour voir ce qui est solide et ce qui est à revoir.'],
+    ['.brand [data-act="settings"]', 'Réglages', 'Modifier tes réponses, faire une pause, et surtout ta sauvegarde, pour ne jamais perdre ton suivi.']
+  ].filter(x => document.querySelector(x[0]));
+}
+function tourStart() { V.tour = { i: 0, steps: tourSteps() }; if (!V.tour.steps.length) { V.tour = null; return; } tourShow(); }
+function tourEnd() {
+  V.tour = null; const el = document.getElementById('tour'); if (el) el.remove();
+  S.meta = Object.assign({}, S.meta, { tourSeen: TOUR_V }); save();
+}
+function tourShow() {
+  const T = V.tour; if (!T) return;
+  const [sel, title, txt] = T.steps[T.i], target = document.querySelector(sel);
+  if (!target) { if (T.i < T.steps.length - 1) { T.i++; tourShow(); } else tourEnd(); return; }
+  let el = document.getElementById('tour');
+  if (!el) { el = document.createElement('div'); el.id = 'tour'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); document.body.appendChild(el); }
+  const last = T.i === T.steps.length - 1;
+  el.innerHTML = `<div class="t-hole"></div><div class="t-bub" aria-live="polite"><h3>${title}</h3><p>${esc(txt)}</p>
+    <div class="t-foot"><button type="button" class="t-skip" data-tour="skip">${last ? '' : 'Passer'}</button><div class="t-dots" aria-label="Étape ${T.i + 1} sur ${T.steps.length}">${T.steps.map((x, i) => `<i class="${i === T.i ? 'on' : ''}"></i>`).join('')}</div><button type="button" class="btn primary" data-tour="next">${last ? 'Terminer' : 'Suivant'}</button></div></div>`;
+  target.scrollIntoView({ block: 'center', behavior: 'auto' });
+  requestAnimationFrame(() => { tourPlace(); const b = el.querySelector('[data-tour="next"]'); if (b) b.focus({ preventScroll: true }); });
+}
+function tourPlace() {
+  const T = V.tour, el = document.getElementById('tour'); if (!T || !el) return;
+  const target = document.querySelector(T.steps[T.i][0]); if (!target) return;
+  const r = target.getBoundingClientRect(), vh = window.innerHeight, pad = 6;
+  const top = Math.max(8, r.top - pad), bot = Math.min(vh - 8, r.bottom + pad);
+  const hole = el.querySelector('.t-hole'); Object.assign(hole.style, { top: top + 'px', left: Math.max(6, r.left - pad) + 'px', width: Math.min(window.innerWidth - 12, r.width + pad * 2) + 'px', height: Math.max(0, bot - top) + 'px' });
+  const bub = el.querySelector('.t-bub'), bh = bub.offsetHeight;
+  bub.style.top = (bot + 12 + bh < vh ? bot + 12 : top - 12 - bh > 0 ? top - 12 - bh : vh - bh - 16) + 'px';
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-tour]'); if (!b || !V.tour) return;
+  e.stopPropagation();
+  if (b.dataset.tour === 'skip') tourEnd();
+  else if (V.tour.i < V.tour.steps.length - 1) { V.tour.i++; tourShow(); } else tourEnd();
+}, true);
+window.addEventListener('resize', () => { if (V.tour) tourPlace(); });
+window.addEventListener('scroll', () => { if (V.tour) tourPlace(); }, { passive: true });
+document.addEventListener('keydown', e => { if (V.tour && e.key === 'Escape') tourEnd(); });
+/* lancement automatique : écran du jour, rien d'ouvert, visite pas encore vue */
+function tourAuto() {
+  if (V.tour || !S.cfg || V.onb || V.sheet || (S.meta && S.meta.tourSeen >= TOUR_V)) return;
+  if (V.tab !== 'jour') return;
+  setTimeout(() => { if (!V.tour && !V.onb && !V.sheet && V.tab === 'jour' && !(S.meta && S.meta.tourSeen >= TOUR_V)) tourStart(); }, 600);
+}
+
 /* ================= EVENTS ================= */
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
@@ -2054,6 +2125,7 @@ document.addEventListener('click', e => {
     }
     /* settings */
     case 'settings': openSheet({ kind: 'settings' }); break;
+    case 'tour': closeSheet(); V.tab = 'jour'; V.sel = todayKey(); render(); tourStart(); break;
     case 'toggle': { const key = b.dataset.k; C()[key].on = !C()[key].on; if (key === 'wird' && C().wird.on) C().wird.from = t; if (key === 'kahf' && C().kahf.on) { C().kahfFrom = C().kahfFrom || weekStart(t); S.meta = Object.assign({}, S.meta, { kahfAsked: true }); } save(); renderSheet(); render(); break; }
     case 'edit-answers': V.sheet = null; $('#back').hidden = true; V.onb = { step: steps().findIndex(x => x[0] === 'recap'), a: answersFromCfg(), edit: true, err: '' }; renderOnb(); window.scrollTo(0, 0); break;
     case 'pause': openSheet({ kind: 'pause' }); break;
