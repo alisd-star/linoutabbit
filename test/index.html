@@ -1231,13 +1231,19 @@ function vmProg(d) {
 const vmLearned = d => isK1() ? vmProg(d) : [[1, RW().total]];
 function vmCov(d) { return memo('VC' + (d || ''), () => { const R = RW(), L = vmLearned(d); return Array.from({ length: 60 }, (_, i) => covH(R, L, i + 1)); }); }
 const FULL = 0.97;
-/* sourates à commencer : le bloc le plus haut qui contient encore du nouveau */
+/* sourates d'un hizb : toutes celles qui y ont au moins un verset (y compris celles à cheval) */
+function hzSuras(R, h) { const [a, b] = hzG(R, h), out = []; for (let x = 1; x <= 114; x++) if (R.cum[x - 1] + 1 <= b && R.cum[x] >= a) out.push(x); return out; }
+const hzOfG = (R, g) => { let h = 1; while (h < 60 && R.hz[h] <= g) h++; return h; };
+/* sourates à commencer : le hizb le plus haut qui contient encore du nouveau.
+   Une sourate se commence toujours au verset 1 ; commencée (début appris), on propose la suite.
+   Si ce hizb n'a plus que des sourates qui débordent du hizb d'avant, on ajoute celles du hizb d'avant. */
 function vmCands(P) {
-  const R = RW();
+  const R = RW(), seen = new Set(), out = [];
+  const cands = h => hzSuras(R, h).filter(x => !seen.has(x)).map(x => { const a = gidOf(R, x, 1), g = nextUnlearned(P, a, suraEnd(R, x)); return g ? { s: x, g: rHas(P, a) ? g : a } : null; }).filter(Boolean);
   for (let h = 60; h >= 1; h--) {
-    const out = [];
-    for (let s = 1; s <= 114; s++) if (R.chunk[s] === h) { const g = nextUnlearned(P, gidOf(R, s, 1), suraEnd(R, s)); if (g) out.push({ s, g }); }
-    if (out.length) return out;
+    let c = cands(h); if (!c.length) continue;
+    while (true) { c.forEach(x => { seen.add(x.s); out.push(x); }); if (h <= 1 || !c.every(x => R.chunk[x.s] < h)) break; h--; c = cands(h); }
+    return out.sort((p, q) => p.s - q.s);
   }
   return [];
 }
@@ -1306,14 +1312,27 @@ function revHzHtml(s) {
 }
 function vmPartHtml(s, kind) {
   if (kind === 'rev' && s.Rv && s.Rv.hz) return `${s.pk === 'both' ? '<p class="grp2">Révision</p>' : ''}${revHzHtml(s)}`;
-  const R = RW(), p = vmPart(s, kind), x = kind === 'new' ? 'n' : 'r', e = vmEnd(p);
+  const R = RW(), p = vmPart(s, kind), x = kind === 'new' ? 'n' : 'r';
   const list = p.choose && !p.edS ? `<div class="field"><span>Tu reprends quelle sourate ?</span><p class="hint">On part toujours du verset 1. Présélection : ton habitude.</p><div class="slist">${p.choose.map(c => { const [cs, ca] = saOf(R, c.g); return `<button type="button" class="srow" data-act="vm-pick" data-part="${x}" data-g="${c.g}" aria-pressed="${c.g === p.start}"><span class="ar" lang="ar">${sName(cs)}</span><small>${cs} · verset ${ca} · page ${pageOf(R, c.g) + 1}</small></button>`; }).join('')}</div></div>` : '';
-  const [ss, sv] = saOf(R, p.start);
+  const notes = `<div id="vm-notes-${x}">${vmNotes(s, p, kind)}</div>`;
+  return vmPartTail(s, kind, x, p, list, notes);
+}
+/* mise à jour sur place pendant la saisie (pas de redessin : le bouton touché reste en place) */
+function vmLive(s, x) {
+  const p = x === 'n' ? s.N : s.Rv, k = x === 'n' ? 'new' : 'rev'; if (!p) return;
+  const pv = $('#vm-prev-' + x); if (pv) pv.innerHTML = vmPrev(p, k);
+  const nt = $('#vm-notes-' + x); if (nt) { const h = vmNotes(s, p, k); if (nt.dataset.h !== h) { nt.innerHTML = h; nt.dataset.h = h; } }
+  const sv = $('[data-act="ps-save"]'); if (sv) sv.disabled = !vmReady(s);
+}
+function vmNotes(s, p, kind) {
+  const R = RW(), e = vmEnd(p), hs = kind === 'rev' && e ? vmHizbs(R, p.start, e) : [];
+  return hs.length ? `<div class="field"><span>Ta note et les points à revoir</span>${hs.map(y => `<div class="ggroup"><div class="ggroup-h"><span class="ar" lang="ar">حزب ${y.h}</span><small>${y.c >= FULL ? 'en entier' : 'en partie · facultatif'}</small></div>${rateRow(`data-act="ps-rate" data-hz="${y.h}"`, s.rates[y.h], true)}<input class="input" id="ps-err-${y.h}" data-hz="${y.h}" type="text" maxlength="120" placeholder="Erreur relevée, passage à revoir… (facultatif)" value="${esc(s.errs[y.h] || '')}" autocomplete="off"></div>`).join('')}</div>` : '';
+}
+function vmPartTail(s, kind, x, p, list, notes) {
+  const R = RW(), [ss, sv] = saOf(R, p.start);
   const start = p.edS ? `<div class="field"><span>Tu as repris à</span><div class="row-sv lbl" aria-hidden="true"><small>Sourate</small><small>Verset</small></div><div class="row-sv"><select class="input" id="vm-ss-${x}">${suraOpts(ss)}</select><input class="input vnum" id="vm-sv-${x}" type="number" inputmode="numeric" min="1" max="${R.counts[ss - 1]}" value="${sv}"></div></div>`
     : list ? '' : `<div class="field"><span>${kind === 'rev' ? 'Tu reprends (rotation)' : 'Tu reprends'}</span><p class="vstart"><span class="ar" lang="ar">${vmStartAr(R, p.start)}</span><button type="button" class="link" data-act="vm-edstart" data-part="${x}">Je n'ai pas repris là</button></p></div>`;
   const endF = `<div class="field"><span>Tu t'es arrêté à</span><div class="row-sv lbl" aria-hidden="true"><small>Sourate</small><small>Verset</small></div><div class="row-sv"><select class="input" id="vm-es-${x}" aria-label="Sourate">${suraOpts(p.es, ss)}</select><input class="input vnum" id="vm-ev-${x}" type="number" inputmode="numeric" min="1" max="${R.counts[p.es - 1]}" value="${esc(p.ev)}" placeholder="—" aria-label="Verset"></div><button type="button" class="opt fin" data-act="vm-fin" data-part="${x}">Jusqu'à la fin de la sourate</button></div>`;
-  const hs = kind === 'rev' && e ? vmHizbs(R, p.start, e) : [];
-  const notes = hs.length ? `<div class="field"><span>Ta note et les points à revoir</span>${hs.map(y => `<div class="ggroup"><div class="ggroup-h"><span class="ar" lang="ar">حزب ${y.h}</span><small>${y.c >= FULL ? 'en entier' : 'en partie · facultatif'}</small></div>${rateRow(`data-act="ps-rate" data-hz="${y.h}"`, s.rates[y.h], true)}<input class="input" id="ps-err-${y.h}" data-hz="${y.h}" type="text" maxlength="120" placeholder="Erreur relevée, passage à revoir… (facultatif)" value="${esc(s.errs[y.h] || '')}" autocomplete="off"></div>`).join('')}</div>` : '';
   return `${s.pk === 'both' ? `<p class="grp2">${kind === 'new' ? (isK1() ? 'Nouveau' : 'Suite de la khatma') : 'Révision'}</p>` : ''}${list}${start}${endF}<p class="prev" id="vm-prev-${x}">${vmPrev(p, kind)}</p>${notes}`;
 }
 function vmPassSheet(s) {
@@ -1401,7 +1420,8 @@ function aBase(a) {
   const out = [];
   if (v > 1) out.push([gidOf(R, s, 1), gidOf(R, s, v) - 1]);
   if (sp[1] < R.total) out.push([sp[1] + 1, R.total]);
-  (a.vchunk || []).forEach(x => { if (x !== s && R.chunk[x] === R.chunk[s]) out.push([gidOf(R, x, 1), suraEnd(R, x)]); });
+  const mates = hzSuras(R, R.chunk[s]);
+  (a.vchunk || []).forEach(x => { if (x !== s && mates.includes(x)) out.push([gidOf(R, x, 1), suraEnd(R, x)]); });
   (a.known || []).forEach(h => out.push(hzG(R, h)));
   return rNorm(out);
 }
@@ -1412,8 +1432,8 @@ function vmOnbPreview(a) {
   return `<span class="ar" lang="ar">${vmStartAr(R, g)}</span><span>Hizb ${(() => { let h = 1; while (h < 60 && R.hz[h] <= g) h++; return h; })()} · page ${pageOf(R, g) + 1}${a.vriw ? '' : ' (choisis ta riwaya)'}</span>${a.stage === 'k1' ? `<span>${fmtLearned(n8)} déjà appris</span>` : ''}`;
 }
 function vmOnbScreen(a, mig) {
-  const R = QR(a.vriw || 'hafs'), s = clampInt(a.vs, 1, 114), ch = R.chunk[s], mates = [];
-  for (let x = 1; x <= 114; x++) if (R.chunk[x] === ch && x !== s) mates.push(x);
+  const R = QR(a.vriw || 'hafs'), s = clampInt(a.vs, 1, 114), ch = R.chunk[s], mates = hzSuras(R, ch).filter(x => x !== s);
+  const span = x => { const h1 = hzOfG(R, gidOf(R, x, 1)), h2 = hzOfG(R, suraEnd(R, x)); return h1 === h2 ? '' : ` <small class="nat">à cheval ${Math.min(h1, h2)}–${Math.max(h1, h2)}</small>`; };
   const cov = aCov(a), ord = order60('desc'), auto = aBase(Object.assign({}, a, { known: [] }));
   const autoCov = Array.from({ length: 60 }, (_, i) => covH(R, auto, i + 1));
   const cells = ord.map(h => autoCov[h - 1] >= FULL ? `<button type="button" class="lk" disabled aria-label="Hizb ${h}, appris">${h}</button>` : autoCov[h - 1] > 0.03 ? `<button type="button" class="cur" disabled aria-label="Hizb ${h}, en cours">${h}</button>` : `<button type="button" data-act="vk-onb" data-hz="${h}" aria-pressed="${(a.known || []).includes(h)}" aria-label="Hizb ${h}">${h}</button>`).join('');
@@ -1422,7 +1442,7 @@ function vmOnbScreen(a, mig) {
     <div class="field"><span>Ta riwaya</span><div class="opts">${optBtn('vriw', 'hafs', 'Hafs', a.vriw)}${optBtn('vriw', 'warsh', 'Warsh', a.vriw)}</div><p class="hint">Elle fixe la numérotation des versets.</p></div>
     ${mig ? `<p class="grp mig-q">Où en es-tu vraiment avec le cheikh ?</p>${a.vmig && a.vmig.h ? `<p class="hint">Ton ancien suivi : hizb ${a.vmig.h}, ${a.vmig.r + 1}<sup>e</sup> ثمن. La position ci-dessous en est une estimation : corrige-la si besoin.</p>` : ''}` : ''}
     <div class="field"><span>${isK1Stage(a) ? 'Tu reprends le nouveau à' : 'Tu reprends la khatma à'}</span><div class="row-sv lbl" aria-hidden="true"><small>Sourate</small><small>Verset</small></div><div class="row-sv"><select class="input" id="onb-vs">${suraOpts(s)}</select><input class="input vnum" id="onb-vv" type="number" inputmode="numeric" min="1" max="${R.counts[s - 1]}" value="${esc(String(a.vv))}"></div><p class="hint">La sourate, puis le verset où tu reprends.${clampInt(a.vv, 1, 999) === 1 ? '' : ' Le début de la sourate compte comme appris.'}</p></div>
-    ${isK1Stage(a) && mates.length ? `<div class="field"><span>Dans le hizb ${ch}, déjà appris aussi</span><div class="opts">${mates.map(x => `<button type="button" class="opt" data-act="vm-mate" data-s="${x}" aria-pressed="${(a.vchunk || []).includes(x)}"><span class="ar">${SNAME[x - 1]}</span></button>`).join('')}</div></div>` : ''}
+    ${isK1Stage(a) && mates.length ? `<div class="field"><span>Dans le hizb ${ch}, déjà appris aussi</span><div class="opts">${mates.map(x => `<button type="button" class="opt" data-act="vm-mate" data-s="${x}" aria-pressed="${(a.vchunk || []).includes(x)}"><span class="ar">${SNAME[x - 1]}</span>${span(x)}</button>`).join('')}</div></div>` : ''}
     ${isK1Stage(a) ? `<p class="grp">D'autres hizb déjà appris ?</p><p>Tout ce qui vient après dans le mushaf compte déjà comme appris. Coche ici les hizb appris ailleurs, en entier.</p><div class="kgrid">${cells}</div>` : ''}
     <p class="prev" id="onb-prev">${vmOnbPreview(a)}</p>
     ${mig && needRev(a) ? rdirBlock(a) : ''}`;
@@ -1440,7 +1460,7 @@ function vmAnswersFill(a) {
   if (c.vm && c.vm.riw) {
     const R = RW(), n = vmNext(), g = n.g || n.pre || R.total, [s, v] = saOf(R, g), P = vmProg(), ch = R.chunk[s];
     a.vriw = c.vm.riw; a.vs = s; a.vv = v; a.vchunk = []; a.known = [];
-    for (let x = 1; x <= 114; x++) if (R.chunk[x] === ch && x !== s && !nextUnlearned(P, gidOf(R, x, 1), suraEnd(R, x))) a.vchunk.push(x);
+    hzSuras(R, ch).forEach(x => { if (x !== s && !nextUnlearned(P, gidOf(R, x, 1), suraEnd(R, x))) a.vchunk.push(x); });
     const auto = aBase(Object.assign({}, a, { known: [] }));
     for (let h = 1; h <= 60; h++) if (covH(R, P, h) >= FULL && covH(R, auto, h) < FULL) a.known.push(h);
     a.vrev = c.vm.rev || null;
@@ -1459,7 +1479,7 @@ function vmMigApply(a) {
   if (m.h) { const g = verseAt(R, m.h, m.r / 8), [s, v] = saOf(R, g); a.vs = s; a.vv = v; }
   const ch = R.chunk[a.vs]; a.vchunk = [];
   const L = rNorm(m.pool.map(h => hzG(R, h)));
-  for (let x = 1; x <= 114; x++) if (R.chunk[x] === ch && x !== a.vs && !nextUnlearned(L, gidOf(R, x, 1), suraEnd(R, x))) a.vchunk.push(x);
+  hzSuras(R, ch).forEach(x => { if (x !== a.vs && !nextUnlearned(L, gidOf(R, x, 1), suraEnd(R, x))) a.vchunk.push(x); });
   if (m.rev) a.vrev = verseAt(R, m.rev.hz, (m.rev.half - 1) / 2);
 }
 
@@ -2059,11 +2079,11 @@ function onInput(e) {
   if (V.onb) {
     const a = V.onb.a;
     if (el.id === 'onb-vs') { a.vs = +el.value; a.vv = 1; a.vchunk = []; a.vEdited = true; renderOnb(); }
-    else if (el.id === 'onb-vv') { a.vv = el.value; a.vEdited = true; const p = $('#onb-prev'); if (p) p.innerHTML = vmOnbPreview(a); if (e.type === 'change') renderOnb(); }
+    else if (el.id === 'onb-vv') { a.vv = el.value; a.vEdited = true; const p = $('#onb-prev'); if (p) p.innerHTML = vmOnbPreview(a); }
     else if (el.id === 'onb-n') { a.n = el.value; const p = $('#onb-prev'); if (p) p.innerHTML = onbPreview(a); }
     else if (el.id === 'onb-cur') { a.cur = el.value; if (a.cur === 'done') a.t = '0'; renderOnb(); }
     else if (el.id === 'onb-t') { a.t = el.value; const p = $('#onb-prev'); if (p) p.innerHTML = onbPreview(a); }
-    else if (el.id === 'onb-revTour') { a.revTour = clampInt(el.value, 1, 365); const h = $('#tour-hint'); if (h) h.textContent = tourHint(a, aPool(a)); if (e.type === 'change') { el.value = a.revTour; renderOnb(); } }
+    else if (el.id === 'onb-revTour') { a.revTour = clampInt(el.value, 1, 365); const h = $('#tour-hint'); if (h) h.textContent = tourHint(a, aPool(a)); if (e.type === 'change') el.value = a.revTour; }
     else if (el.id === 'onb-rh') a.rh = el.value;
     else if (el.id === 'onb-prh') a.prh = el.value;
     else if (el.id === 'onb-tahN') { a.tahN = clampInt(el.value, 1, 60); const tn = tahNext(), pv = $('#tah-onb-prev'); if (pv && tn) pv.innerHTML = tahOnbPreview(a, tn.n); }
@@ -2072,9 +2092,9 @@ function onInput(e) {
   if (s && s.kind === 'pass' && s.vm && el.id && el.id.startsWith('vm-')) {
     const R = RW(), m = el.id.match(/^vm-(es|ev|ss|sv)-(n|r)$/); if (!m) return;
     const x = m[2], p = x === 'n' ? s.N : s.Rv; if (!p) return;
-    if (m[1] === 'ev') { p.ev = el.value; const pv = $('#vm-prev-' + x); if (pv) pv.innerHTML = vmPrev(p, x === 'n' ? 'new' : 'rev'); const sv = $('[data-act="ps-save"]'); if (sv) sv.disabled = !vmReady(s); if (e.type === 'change' && x === 'r') renderSheet(); }
+    if (m[1] === 'ev') { p.ev = el.value; const pv = $('#vm-prev-' + x); if (pv) pv.innerHTML = vmPrev(p, x === 'n' ? 'new' : 'rev'); const sv = $('[data-act="ps-save"]'); if (sv) sv.disabled = !vmReady(s); vmLive(s, x); }
     else if (m[1] === 'es') { p.es = +el.value; const mx = R.counts[p.es - 1]; if (+p.ev > mx) p.ev = String(mx); if (e.type === 'change') renderSheet(); }
-    else { const ss = +($('#vm-ss-' + x).value), sv = clampInt($('#vm-sv-' + x).value || 1, 1, R.counts[ss - 1]); p.start = gidOf(R, ss, sv); p.choose = null; if (p.es < ss) p.es = ss; if (e.type === 'change') renderSheet(); }
+    else { const ss = +($('#vm-ss-' + x).value), sv = clampInt($('#vm-sv-' + x).value || 1, 1, R.counts[ss - 1]); p.start = gidOf(R, ss, sv); p.choose = null; if (p.es < ss) p.es = ss; if (m[1] === 'ss' && e.type === 'change') renderSheet(); else vmLive(s, x); }
     return;
   }
   if (s && s.kind === 'pass' && el.id && el.id.startsWith('ps-err-')) s.errs[el.dataset.hz] = el.value;
