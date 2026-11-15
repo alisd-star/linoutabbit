@@ -160,6 +160,7 @@ h1 { margin: 0; font-family: var(--f-display); font-weight: 800; font-size: 26px
 .wbar.good .seg-b i.on { background: var(--good); } .wbar.good > small b, .q-good { color: var(--good); }
 .wbar.red .seg-b i { background: color-mix(in srgb, var(--danger) 25%, transparent); } .wbar.red .seg-b i.on { background: var(--danger); } .wbar.red > small b, .q-red { color: var(--danger); }
 .q-hint { margin: -2px 0 8px; }
+.mv-hint { text-align: center; margin: 6px auto 0; max-width: 340px; } .mv-hint a { color: var(--accent); font-weight: 600; }
 .st-what { margin: 6px 0 4px; padding-left: 18px; font-size: 14px; line-height: 1.5; color: var(--fg); } .st-what li { margin: 2px 0; }
 .st-d summary { cursor: pointer; font-size: 13.5px; color: var(--accent); margin-top: 8px; }
 .strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
@@ -1596,7 +1597,7 @@ function closeSheet() { saveHzNote(); V.sheet = null; $('#back').hidden = true; 
 function renderSheet() {
   const s = V.sheet; if (!s) return;
   const el = $('#sheet');
-  const html = s.kind === 'pass' ? passSheet(s) : s.kind === 'move' ? moveSheet(s) : s.kind === 'hz' ? hzSheet(s) : s.kind === 'tah' ? tahSheet(s) : s.kind === 'settings' ? settingsSheet(s) : s.kind === 'stats' ? statsSheet() : s.kind === 'backup' ? backupSheet(s) : s.kind === 'pause' ? pauseSheet(s) : s.kind === 'rules' ? rulesSheet() : s.kind === 'known' ? knownSheet(s) : s.kind === 'vknown' ? vmKnownSheet(s) : s.kind === 'rx' ? rxSheet(s) : '';
+  const html = s.kind === 'pass' ? passSheet(s) : s.kind === 'move' ? moveSheet(s) : s.kind === 'hz' ? hzSheet(s) : s.kind === 'tah' ? tahSheet(s) : s.kind === 'settings' ? settingsSheet(s) : s.kind === 'stats' ? statsSheet() : s.kind === 'transfer' ? transferSheet() : s.kind === 'backup' ? backupSheet(s) : s.kind === 'pause' ? pauseSheet(s) : s.kind === 'rules' ? rulesSheet() : s.kind === 'known' ? knownSheet(s) : s.kind === 'vknown' ? vmKnownSheet(s) : s.kind === 'rx' ? rxSheet(s) : '';
   el.innerHTML = `<div class="grab"></div>${html}`;
 }
 
@@ -1958,7 +1959,7 @@ function renderOnb() {
   else body = `<h2>Avant de commencer</h2>${rulesList()}`;
   const last = key === 'consignes' || (o.edit && key === 'recap');
   $('#root').innerHTML = `<div class="onb">
-    ${o.step === 0 && !o.edit ? `<div class="onb-hero"><img src="${ICON}" alt="">${wordmark(true)}<p class="hero-q"><span class="ar" lang="ar">﴿ لِنُثَبِّتَ بِهِ فُؤَادَكَ ﴾</span><br><span class="hero-ref">— Al-Furqān, 32 —</span> « Pour raffermir ton cœur »</p><p>Quelques questions pour adapter l'appli à toi.</p><button type="button" class="link onb-restore" data-act="bk-start">Tu as déjà utilisé l'appli ? J'ai déjà une sauvegarde</button></div>` : ''}
+    ${o.step === 0 && !o.edit ? `<div class="onb-hero"><img src="${ICON}" alt="">${wordmark(true)}<p class="hero-q"><span class="ar" lang="ar">﴿ لِنُثَبِّتَ بِهِ فُؤَادَكَ ﴾</span><br><span class="hero-ref">— Al-Furqān, 32 —</span> « Pour raffermir ton cœur »</p><p>Quelques questions pour adapter l'appli à toi.</p><button type="button" class="link onb-restore" data-act="bk-start">Tu as déjà utilisé l'appli ? J'ai déjà une sauvegarde</button>${isNewHome() ? `<p class="hint mv-hint">Tu utilisais l'appli à l'ancienne adresse ? <a href="${OLD_URL}">Ouvre-la une fois</a> : ton suivi sera transféré ici.</p>` : ''}</div>` : ''}
     ${o.mig ? '' : `<div><div class="steps">${STEPS.map((s, i) => `<i class="${i <= o.step ? 'on' : ''}"></i>`).join('')}</div><div class="steps-l" style="margin-top:6px">${STEPS.map((s, i) => i === o.step ? `<b>${s[1]}</b>` : `<span>${s[1]}</span>`).join('<span>·</span>')}</div></div>`}
     <div class="onb-card">${body}${o.err ? `<p class="err">${esc(o.err)}</p>` : ''}</div>
     <div class="onb-nav">${o.mig ? '<button type="button" class="btn primary" data-act="onb-next">Valider</button>' : `${o.step > 0 ? '<button type="button" class="btn" data-act="onb-back">Retour</button>' : o.edit ? '<button type="button" class="btn" data-act="onb-cancel">Annuler</button>' : ''}<button type="button" class="btn primary" data-act="onb-next">${last ? (o.edit ? 'Enregistrer' : 'C\'est parti, بسم الله') : key === 'recap' ? 'Tout est bon' : 'Suivant'}</button>`}</div>
@@ -2002,6 +2003,24 @@ function applyOnb() {
   if (a.stats && a.stats !== old.stats) stSet(a.stats); else if (statsOn()) stSend('profil', '');
   const was = V.onb.edit, mig = V.onb.mig; V.onb = null; V.sel = t;
   render(); toast(mig ? 'C\'est noté, بارك الله فيك' : was ? 'Réponses enregistrées' : 'بسم الله, c\'est parti !');
+}
+
+/* ================= DÉMÉNAGEMENT (ancienne adresse → nouvelle) =================
+   L'ancienne adresse ouvre la nouvelle avec #transfert=CODE (même format que la sauvegarde). */
+const OLD_URL = location.pathname.includes('/test/') ? 'https://alisd-star.github.io/linoutabbit/passage-test.html' : 'https://alisd-star.github.io/linoutabbit/';
+const isNewHome = () => location.hostname === 'linoutabbit.github.io';
+function transferIn() {
+  const m = location.hash.match(/^#transfert=(.+)$/); if (!m) return;
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  let d = null; try { d = decodeBackup(decodeURIComponent(m[1])); } catch (e) {}
+  if (!d) { V.transferMsg = 'Le transfert n\'a pas marché : colle ton code de sauvegarde.'; return; }
+  if (S.cfg && Object.keys(S.log || {}).length) { V.transferData = d; V.openTransfer = true; return; }
+  S = Object.assign(blank(), d); S.meta = Object.assign({}, S.meta, { transferred: todayKey() }); save(); V.onb = null; V.sel = todayKey();
+  V.transferMsg = 'Ton suivi a été transféré. بارك الله فيك';
+}
+function transferSheet() {
+  return `<div class="sh-head"><div><h2>Ton suivi de l'ancienne appli</h2><p class="hint">Tu as déjà un suivi ici. Lequel garder ?</p></div></div>
+    <div class="acts"><button type="button" class="btn primary" data-act="tr-take">Prendre celui de l'ancienne appli</button><button type="button" class="btn" data-act="tr-keep">Garder celui d'ici</button></div>`;
 }
 
 /* ================= STATISTIQUES ANONYMES (avec accord) =================
@@ -2065,9 +2084,9 @@ function tourSteps() {
     { sel: 'article.goal[style*="c-wird"]', t: 'Wird', x: 'Ta lecture du jour dans le mushaf. Elle compte pour valider ta journée.' }
   ].filter(x => document.querySelector(x.sel));
   /* les onglets : l'appli bascule elle-même dessus */
-  st.push({ tab: 'semaine', sel: 'main .grid', t: 'Onglet Semaine', x: 'Ton score de la semaine et une ligne par objectif. Chaque case est un jour : ✓ réussi, un chiffre si c\'est commencé, rouge si c\'est manqué. Touche une case pour ouvrir le jour.' });
-  st.push({ tab: 'mois', sel: 'main .cal', t: 'Onglet Mois', x: 'Ton mois d\'un coup d\'œil : la couleur de chaque jour, et en dessous le total du mois (hizb révisés, passages, hifz).' });
-  st.push({ tab: 'hizb', sel: 'main .hzgrid', t: 'Onglet Hizb', x: `Chaque case est un hizb, colorée selon tes notes : rouge à revoir, orange fragile, vert solide. Une flèche montre si la note monte ou baisse.${weak ? ' En haut, les hizb à renforcer en priorité.' : ''} Touche un hizb pour voir ses notes, ses points à revoir et ajouter une remarque.` });
+  st.push({ tab: 'semaine', sel: 'main .grid', btn: 'semaine', t: 'Onglet Semaine', x: 'Touche « Semaine » en haut pour voir ton score de la semaine et une ligne par objectif. Chaque case est un jour : ✓ réussi, un chiffre si c\'est commencé, rouge si c\'est manqué. Touche une case pour ouvrir le jour.' });
+  st.push({ tab: 'mois', sel: 'main .cal', btn: 'mois', t: 'Onglet Mois', x: 'Touche « Mois » pour voir ton mois d\'un coup d\'œil : la couleur de chaque jour, et en dessous le total du mois (hizb révisés, passages, hifz).' });
+  st.push({ tab: 'hizb', sel: 'main .hzgrid', btn: 'hizb', t: 'Onglet Hizb', x: `Touche « Hizb » pour voir tes hizb. Chaque case est un hizb, colorée selon tes notes : rouge à revoir, orange fragile, vert solide. Une flèche montre si la note monte ou baisse.${weak ? ' En haut, les hizb à renforcer en priorité.' : ''} Touche un hizb pour voir ses notes, ses points à revoir et ajouter une remarque.` });
   st.push({ tab: 'jour', sel: '.brand [data-act="settings"]', t: 'Réglages', x: 'Modifier tes réponses, faire une pause, et surtout ta sauvegarde, pour ne jamais perdre ton suivi.' });
   return st;
 }
@@ -2088,13 +2107,18 @@ function tourShow() {
   const last = T.i === T.steps.length - 1;
   el.innerHTML = `<div class="t-hole"></div><div class="t-bub" aria-live="polite"><h3>${title}</h3><p>${esc(txt)}</p>
     <div class="t-foot"><button type="button" class="t-skip" data-tour="skip">${last ? '' : 'Passer'}</button><div class="t-dots" aria-label="Étape ${T.i + 1} sur ${T.steps.length}">${T.steps.map((x, i) => `<i class="${i === T.i ? 'on' : ''}"></i>`).join('')}</div><button type="button" class="btn primary" data-tour="next">${last ? 'Terminer' : 'Suivant'}</button></div></div>`;
-  target.scrollIntoView({ block: 'center', behavior: 'auto' });
+  if (step.btn) { const bt = document.querySelector(`.seg [data-tab="${step.btn}"]`); if (bt) window.scrollTo(0, Math.max(0, window.scrollY + bt.getBoundingClientRect().top - 12)); }
+  else target.scrollIntoView({ block: 'center', behavior: 'auto' });
   requestAnimationFrame(() => { tourPlace(); const b = el.querySelector('[data-tour="next"]'); if (b) b.focus({ preventScroll: true }); });
 }
 function tourPlace() {
   const T = V.tour, el = document.getElementById('tour'); if (!T || !el) return;
-  const target = document.querySelector(T.steps[T.i].sel); if (!target) return;
-  const r = target.getBoundingClientRect(), vh = window.innerHeight, pad = 6;
+  const stp = T.steps[T.i], target = document.querySelector(stp.sel); if (!target) return;
+  const vh = window.innerHeight, pad = 6;
+  let r = target.getBoundingClientRect();
+  /* onglet : on éclaire le bouton de l'onglet et le début de son contenu */
+  const bt = stp.btn && document.querySelector(`.seg [data-tab="${stp.btn}"]`);
+  if (bt) { const a = bt.getBoundingClientRect(), b = r, top = Math.min(a.top, b.top); r = { top, left: Math.min(a.left, b.left), right: Math.max(a.right, b.right), bottom: Math.min(Math.max(a.bottom, b.bottom), top + vh * 0.5) }; r.width = r.right - r.left; r.height = r.bottom - r.top; }
   const top = Math.max(8, r.top - pad), bot = Math.min(vh - 8, r.bottom + pad);
   const hole = el.querySelector('.t-hole'); Object.assign(hole.style, { top: top + 'px', left: Math.max(6, r.left - pad) + 'px', width: Math.min(window.innerWidth - 12, r.width + pad * 2) + 'px', height: Math.max(0, bot - top) + 'px' });
   const bub = el.querySelector('.t-bub'), bh = bub.offsetHeight;
@@ -2277,6 +2301,8 @@ document.addEventListener('click', e => {
     case 'had-close': V.hadOpen = null; render(); break;
     case 'st-set': stSet(b.dataset.v); toast(b.dataset.v === 'yes' ? 'Merci, بارك الله فيك' : 'C\'est noté, rien ne sera envoyé'); if (s && s.kind === 'stats') renderSheet(); render(); break;
     case 'st-info': openSheet({ kind: 'stats' }); break;
+    case 'tr-take': S = Object.assign(blank(), V.transferData); S.meta = Object.assign({}, S.meta, { transferred: todayKey() }); save(); V.transferData = null; V.onb = null; V.sel = todayKey(); closeSheet(); render(); toast('Ton suivi a été transféré. بارك الله فيك'); break;
+    case 'tr-keep': V.transferData = null; closeSheet(); render(); break;
     case 'kahf-set': {
       const v = b.dataset.v; S.meta = Object.assign({}, S.meta, { kahfAsked: true });
       if (v !== 'no') { C().kahf = { on: true, mode: v }; C().kahfFrom = C().kahfFrom || weekStart(t); toast('Al-Kahf ajoutée chaque vendredi'); } else toast('Tu pourras l\'activer dans les réglages');
@@ -2358,7 +2384,10 @@ document.addEventListener('visibilitychange', () => {
   const t = todayKey(); if (t !== V.lastToday) { if (V.sel === V.lastToday) V.sel = t; V.lastToday = t; if (!V.sheet) render(); }
 });
 applyLook();
+transferIn();
 render();
+if (V.transferMsg) { toast(V.transferMsg); V.transferMsg = null; }
+if (V.openTransfer) { V.openTransfer = false; openSheet({ kind: 'transfer' }); }
 stDaily();
 })();
 </script>

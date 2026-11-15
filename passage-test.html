@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>لِنُثَبِّتَ · Nouvelle adresse</title>
+<meta name="theme-color" content="#0f5c47">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+  :root { --bg: #eef2ef; --surface: #fff; --fg: #15231c; --muted: #5d6d65; --line: #d6dfda; --accent: #0f5c47; --on: #fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0f1613; --surface: #17201c; --fg: #e8efeb; --muted: #9aaba2; --line: #2a3631; --accent: #4fc08d; --on: #0b1410; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--fg); font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; display: grid; place-items: center; padding: 24px 16px; }
+  main { width: 100%; max-width: 420px; text-align: center; }
+  img { width: 76px; height: 76px; border-radius: 20px; }
+  h1 { font-size: 24px; margin: 14px 0 6px; }
+  .ar { font-family: "Amiri", "Noto Naskh Arabic", serif; font-size: 22px; }
+  p { color: var(--muted); margin: 8px 0; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 18px; margin-top: 18px; text-align: left; }
+  .btn { display: block; width: 100%; min-height: 50px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); font-family: inherit; font-weight: 600; font-size: 16px; margin-top: 10px; cursor: pointer; text-decoration: none; display: grid; place-items: center; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on); }
+  ol { margin: 8px 0 0; padding-left: 20px; color: var(--fg); } li { margin: 6px 0; }
+  .ok { color: var(--accent); font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <img src="icon-180.png" alt="">
+  <h1><span class="ar">لِنُثَبِّتَ</span> déménage</h1>
+  <p>L'appli a une nouvelle adresse : <b id="dest"></b></p>
+  <div class="card" id="box"></div>
+</main>
+<script>
+(function () {
+  var TARGET = 'https://linoutabbit.github.io/test/';
+  document.getElementById('dest').textContent = TARGET.replace('https://', '');
+  var raw = null, d = null;
+  try { raw = localStorage.getItem('lnthbt-v1'); d = raw && JSON.parse(raw); } catch (e) {}
+  var box = document.getElementById('box');
+  if (!d || !d.cfg) {
+    box.innerHTML = '<p>Aucun suivi trouvé ici. Ouvre directement la nouvelle adresse.</p><a class="btn primary" href="' + TARGET + '">Ouvrir la nouvelle appli</a>';
+    return;
+  }
+  var code = 'LNTHBT1:' + btoa(unescape(encodeURIComponent(JSON.stringify(d))));
+  var url = TARGET + '#transfert=' + encodeURIComponent(code);
+  box.innerHTML = '<p class="ok">Ton suivi est prêt à être transféré.</p>' +
+    '<button type="button" class="btn primary" id="go">Transférer mon suivi</button>' +
+    '<ol><li>Touche le bouton : ton suivi est copié et la nouvelle appli s\'ouvre avec.</li>' +
+    '<li>Ajoute la nouvelle adresse à ton écran d\'accueil (Partager → Sur l\'écran d\'accueil), puis supprime l\'ancienne icône.</li>' +
+    '<li>Si la nouvelle icône s\'ouvre vide : « J\'ai déjà une sauvegarde », puis colle. Ton suivi est déjà copié.</li></ol>' +
+    '<button type="button" class="btn" id="copy">Copier seulement mon code de sauvegarde</button>';
+  function copy() { try { if (navigator.clipboard) return navigator.clipboard.writeText(code).catch(function () {}); } catch (e) {} return Promise.resolve(); }
+  document.getElementById('go').onclick = function () { try { localStorage.setItem('lnthbt-moved', new Date().toISOString()); } catch (e) {} copy().then(function () { location.href = url; }); };
+  document.getElementById('copy').onclick = function () { var b = this; copy().then(function () { b.textContent = 'Code copié ✓'; }); };
+})();
+</script>
+</body>
+</html>
