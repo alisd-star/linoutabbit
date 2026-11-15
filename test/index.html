@@ -780,6 +780,9 @@ const activeKeys = () => { const c = C(); return PAUSE_KEYS.filter(k => k === 'p
 const pausedAll = d => pauseOn(d) && activeKeys().every(k => inPause(d, k));
 const isTahDay = d => TAAHADOU.includes(d);
 const tahOf = d => (S.log[d] && S.log[d].tah) || 0;
+/* a répondu « Non » pour تعاهدوا : pas de rond, et le jour J est un jour normal (sauf s'il indique y avoir participé) */
+const tahOut = () => !!(C().tah && C().tah.join === 'no');
+const tahV = d => tahOf(d) || (tahOut() ? -1 : 0);
 function isPassDay(d) {
   const p = C().pass; if (!p.on || p.mode !== 'fixed' || isTahDay(d)) return false;
   const mv = S.moves || [];
@@ -806,7 +809,7 @@ function dayObjs(d) {
   const c = C(), out = [];
   if (pausedAll(d)) return out;
   const before = d < c.created;
-  if (isTahDay(d) && !before) { const v = tahOf(d); if (v !== -1) { out.push({ k: 'tah', val: v === 1 ? 1 : 0, target: 1, min: 1 }); return out; } }
+  if (isTahDay(d) && !before) { const v = tahV(d); if (v !== -1) { out.push({ k: 'tah', val: v === 1 ? 1 : 0, target: 1, min: 1 }); return out; } }
   if (c.rev.on && !inPause(d, 'rev') && poolHz(d) > 0 && (!before || revDone(d))) out.push({ k: 'rev', val: revDone(d), target: revTarget(d), min: 1 });
   if (c.pass.on && !inPause(d, 'pass') && c.pass.mode === 'fixed' && isPassDay(d) && (!before || passOf(d))) out.push({ k: 'pass', val: passOf(d) ? 1 : 0, target: 1, min: 1 });
   if (c.wird.on && !inPause(d, 'wird') && d >= wirdFrom()) out.push({ k: 'wird', val: wirdOf(d), target: c.wird.qty, min: c.wird.unit === 'hizb' ? 0.5 : 1 });
@@ -826,15 +829,15 @@ function weekScore(k) {
   const c = C(), t = todayKey(), days = weekDays(k).filter(d => d <= t && d >= c.created && !pausedAll(d));
   if (!days.length) return null;
   const parts = [];
-  days.filter(isTahDay).forEach(d => { const v = tahOf(d); if (v !== -1) parts.push(v === 1 ? 1 : 0); });
-  if (c.rev.on) { const ds = days.filter(d => !inPause(d, 'rev') && poolHz(d) > 0 && !(isTahDay(d) && tahOf(d) !== -1)); if (ds.length) parts.push(mean(ds.map(d => Math.min(revDone(d) / revTarget(d), 1)))); }
+  days.filter(isTahDay).forEach(d => { const v = tahV(d); if (v !== -1) parts.push(v === 1 ? 1 : 0); });
+  if (c.rev.on) { const ds = days.filter(d => !inPause(d, 'rev') && poolHz(d) > 0 && !(isTahDay(d) && tahV(d) !== -1)); if (ds.length) parts.push(mean(ds.map(d => Math.min(revDone(d) / revTarget(d), 1)))); }
   if (c.pass.on) {
     const open = weekDays(k).filter(d => !inPause(d, 'pass')).length;
     if (c.pass.mode === 'fixed') { const sd = days.filter(d => isPassDay(d) && !inPause(d, 'pass')); if (sd.length) parts.push(Math.min(days.filter(d => passOf(d) && !inPause(d, 'pass')).length / sd.length, 1)); }
     else if (open && c.pass.mode === 'quota') parts.push(Math.min(weekDays(k).filter(passOf).length / Math.max(1, Math.round((c.pass.perWeek || 1) * open / 7)), 1));
     else if (open && c.pass.mode === 'month') parts.push(Math.min(weekDays(k).filter(passOf).length / Math.max(1, Math.round(perWeekOfMonth(k) * open / 7)), 1));
   }
-  if (c.wird.on) { const ds = days.filter(d => !inPause(d, 'wird') && d >= wirdFrom() && !(isTahDay(d) && tahOf(d) !== -1)); if (ds.length) parts.push(mean(ds.map(d => Math.min(wirdOf(d) / c.wird.qty, 1)))); }
+  if (c.wird.on) { const ds = days.filter(d => !inPause(d, 'wird') && d >= wirdFrom() && !(isTahDay(d) && tahV(d) !== -1)); if (ds.length) parts.push(mean(ds.map(d => Math.min(wirdOf(d) / c.wird.qty, 1)))); }
   return parts.length ? mean(parts) : null;
 }
 function streakRev() {
@@ -934,13 +937,13 @@ function render() {
   const sc = dayScore(k), st = dayStatus(k);
   const tn = tahNext();
   let tahHtml = '';
-  if (tn) {
+  if (tn && !tahOut()) {
     const N = tahGoal(tn.next), prog = N ? tahPlan(N, tn.n).prog : null, soon = tn.n > 0 && tn.n <= 14;
     tahHtml = `<button type="button" class="tah-chip${tn.n === 0 ? ' today' : soon ? ' soon' : ''}" data-act="tah-open" aria-label="تعاهدوا ${tn.n === 0 ? "aujourd'hui" : 'dans ' + tn.n + ' jours'}. Ouvrir l'objectif">${ringSvg(prog, 56, 4, soon ? 'var(--warn)' : 'var(--gold)')}<span class="tah-disc">${tn.n === 0 ? ICON_CHECK : `<b>${tn.n}</b>`}<small lang="ar">تعاهدوا</small></span></button>`;
   }
   const days = weekDays(k);
   const strip = days.map((dk, i) => {
-    const s = dayScore(dk), ds = dayStatus(dk), sess = isPassDay(dk) || !!passOf(dk), tdd = isTahDay(dk);
+    const s = dayScore(dk), ds = dayStatus(dk), sess = isPassDay(dk) || !!passOf(dk), tdd = isTahDay(dk) && !(tahOut() && tahOf(dk) !== 1);
     const cls = ['day', dk === k && 'sel', dk === t && 'today', dk > t && 'future', i === 4 && 'fri', ds].filter(Boolean).join(' ');
     return `<button type="button" class="${cls}" data-act="pick" data-day="${dk}" aria-label="${esc(cap(fmtLong.format(parseKey(dk))))}${s != null ? ', ' + pct(s) : ''}${sess ? ', passage avec le cheikh' : ''}" aria-pressed="${dk === k}"><span class="wd">${WD[i]}</span><span class="dn">${ringSvg(s, 36, 3.5, stColor(ds))}<b>${parseKey(dk).getDate()}</b></span><span class="pdot${tdd ? ' tahd' : sess ? '' : ' off'}"></span></button>`;
   }).join('');
@@ -983,7 +986,7 @@ function dayView() {
   const k = V.sel, t = todayKey(), future = k > t, c = C();
   const os = dayObjs(k), doneN = os.filter(o => o.val >= o.target).length;
   const win = dayStatus(k) === 'full' ? `<div class="win" role="status">${ICON_CHECK}<div><strong>Journée réussie</strong><span>Tous tes objectifs ${k === t ? 'du jour' : 'de ce jour'} sont validés. بارك الله فيك</span></div></div>` : '';
-  const cards = [], tday = isTahDay(k) && k >= c.created, tv = tahOf(k);
+  const tOut = isTahDay(k) && tahOut() && !tahOf(k), cards = [], tday = isTahDay(k) && k >= c.created && !tOut, tv = tahOf(k);
   if (tday) cards.push(tahDayCard(k, future));
   if (c.rev.on && !(tday && tv === 1)) cards.push(revCard(k, future));
   if (c.pass.on && !tday) cards.push(passCard(k, future));
@@ -992,7 +995,7 @@ function dayView() {
   const fri = isFri(k) && k >= c.created;
   const ask = fri && k === t && !c.kahf.on && !S.meta.kahfAsked ? kahfAsk() : '';
   return `${fri ? hadithCard(k) : ''}${banners(k)}${win}${ask}<section><div class="sec-head"><h2>Objectifs du jour</h2><span>${os.length ? `${doneN} sur ${os.length} terminés` : ''}</span></div>
-    ${cards.join('') || '<p class="note">Aucun objectif actif. Active-les dans les réglages.</p>'}</section>
+    ${cards.join('') || '<p class="note">Aucun objectif actif. Active-les dans les réglages.</p>'}${tOut && !future && k >= c.created ? `<button type="button" class="link" data-act="tah-did">J'ai participé à ${AR('تعاهدوا')}</button>` : ''}</section>
     <p class="foot">Tes données restent sur ce téléphone, dans ce navigateur.</p>`;
 }
 
@@ -1175,7 +1178,7 @@ function weekView() {
     const full = ds.filter(d => revDone(d) >= revTarget(d)).length, sum = days.reduce((a, d) => a + revDone(d), 0);
     lines.push(`<p>Révision : ${full} jour${full > 1 ? 's' : ''} sur ${ds.length} · ${hizbFr(sum)}</p>`);
     rows.push(`<div class="grow" style="--cat:var(--c-rev)"><div class="gname"><span>Révision perso</span><small>${esc(hizbFr(revTarget(t)))} / jour</small></div>${days.map(d => {
-      const st = d > t ? 'future' : inPause(d, 'rev') ? 'pause' : d < c.created || !poolHz(d) || (isTahDay(d) && tahOf(d) !== -1 && !revDone(d)) ? 'na' : revDone(d) >= revTarget(d) ? 'full' : revDone(d) ? 'ok' : 'low';
+      const st = d > t ? 'future' : inPause(d, 'rev') ? 'pause' : d < c.created || !poolHz(d) || (isTahDay(d) && tahV(d) !== -1 && !revDone(d)) ? 'na' : revDone(d) >= revTarget(d) ? 'full' : revDone(d) ? 'ok' : 'low';
       return `<button type="button" class="cell ${st}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="Révision, ${esc(fmtLong.format(parseKey(d)))}">${st === 'full' ? '✓' : revDone(d) || (st === 'na' || st === 'pause' ? '·' : '')}</button>`; }).join('')}</div>`);
   }
   if (c.pass.on) {
@@ -1194,7 +1197,7 @@ function weekView() {
       const v = wirdOf(d), st = v >= c.wird.qty ? 'full' : d > t ? 'future' : inPause(d, 'wird') ? 'pause' : d < wirdFrom() ? (v ? 'soft' : 'na') : v ? 'ok' : 'low';
       return `<button type="button" class="cell ${st}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="Wird, ${esc(fmtLong.format(parseKey(d)))}">${st === 'full' ? '✓' : v ? frQ(v) : st === 'na' || st === 'pause' ? '·' : ''}</button>`; }).join('')}</div>`);
   }
-  if (days.some(isTahDay)) {
+  if (days.some(isTahDay) && !(tahOut() && tahOf(days.find(isTahDay)) !== 1)) {
     const td = days.find(isTahDay), tv = tahOf(td);
     lines.unshift(`<p>${AR('تعاهدوا')} : ${td > t ? 'à venir' : tv === 1 ? 'fait' : tv === -1 ? 'pas fait' : 'à valider'}</p>`);
     rows.unshift(`<div class="grow" style="--cat:var(--gold)"><div class="gname"><span>تعاهدوا</span><small>récitation complète</small></div>${days.map(d => { const tdd = isTahDay(d), v = tahOf(d); const st = !tdd ? 'na' : d > t ? 'future' : v === 1 ? 'full' : v === -1 ? 'na' : 'low'; return `<button type="button" class="cell ${st}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="تعاهدوا, ${esc(fmtLong.format(parseKey(d)))}">${st === 'full' ? '✓' : tdd && v === -1 ? '–' : !tdd ? '·' : ''}</button>`; }).join('')}</div>`);
