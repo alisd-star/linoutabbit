@@ -663,6 +663,12 @@ const V = { sel: todayKey(), tab: 'jour', onb: null, sheet: null, lastToday: tod
 try { const t = localStorage.getItem(STORE + ':tab'); if (['jour', 'semaine', 'mois', 'hizb'].includes(t)) V.tab = t; } catch (e) {}
 if (S.cfg && S.cfg.pass && S.cfg.pass.mode === 'free') { S.cfg.pass.mode = 'month'; S.cfg.pass.perMonth = S.cfg.pass.perMonth || 4; }
 /* C() complète les réglages ajoutés après coup (anciennes données, sauvegardes restaurées) */
+/* comment la personne appelle celui avec qui elle apprend */
+const COUNTRIES = [['FR', 'France'], ['BE', 'Belgique'], ['CH', 'Suisse'], ['LU', 'Luxembourg'], ['MA', 'Maroc'], ['DZ', 'Algérie'], ['TN', 'Tunisie'], ['SN', 'Sénégal'], ['CI', 'Côte d\'Ivoire'], ['ML', 'Mali'], ['MR', 'Mauritanie'], ['CA', 'Canada'], ['GB', 'Royaume-Uni'], ['DE', 'Allemagne'], ['NL', 'Pays-Bas'], ['ES', 'Espagne'], ['IT', 'Italie'], ['XX', 'Autre']];
+const countryName = v => (COUNTRIES.find(x => x[0] === v) || [0, '—'])[1];
+const TW_OPTS = [['cheikh', 'Cheikh'], ['moallim', 'Mo3allim', 'معلّم'], ['ustadh', 'Ustadh', 'أستاذ'], ['ens', 'Enseignant']];
+const TW_WORD = { cheikh: 'cheikh', moallim: 'mo3allim', ustadh: 'ustadh', ens: 'enseignant' };
+const TT = () => 'ton ' + TW_WORD[(V.onb && V.onb.a && V.onb.a.tw) || (S.cfg && S.cfg.tw) || 'cheikh'];
 const C = () => { const c = S.cfg; if (c && !c.kahf) c.kahf = { on: false, mode: 'bonus' }; return c; };
 const isFri = k => parseKey(k).getDay() === 5;
 const kahfObj = d => { const c = C(); return c.kahf && c.kahf.on && isFri(d) && d >= (c.kahfFrom || c.created); };
@@ -781,7 +787,7 @@ const pausedAll = d => pauseOn(d) && activeKeys().every(k => inPause(d, k));
 const isTahDay = d => TAAHADOU.includes(d);
 const tahOf = d => (S.log[d] && S.log[d].tah) || 0;
 /* a répondu « Non » pour تعاهدوا : pas de rond, et le jour J est un jour normal (sauf s'il indique y avoir participé) */
-const tahOut = () => !!(C().tah && C().tah.join === 'no');
+const tahOut = () => !!(C().civ === 'no' || (C().tah && C().tah.join === 'no'));
 const tahV = d => tahOf(d) || (tahOut() ? -1 : 0);
 function isPassDay(d) {
   const p = C().pass; if (!p.on || p.mode !== 'fixed' || isTahDay(d)) return false;
@@ -945,7 +951,7 @@ function render() {
   const strip = days.map((dk, i) => {
     const s = dayScore(dk), ds = dayStatus(dk), sess = isPassDay(dk) || !!passOf(dk), tdd = isTahDay(dk) && !(tahOut() && tahOf(dk) !== 1);
     const cls = ['day', dk === k && 'sel', dk === t && 'today', dk > t && 'future', i === 4 && 'fri', ds].filter(Boolean).join(' ');
-    return `<button type="button" class="${cls}" data-act="pick" data-day="${dk}" aria-label="${esc(cap(fmtLong.format(parseKey(dk))))}${s != null ? ', ' + pct(s) : ''}${sess ? ', passage avec le cheikh' : ''}" aria-pressed="${dk === k}"><span class="wd">${WD[i]}</span><span class="dn">${ringSvg(s, 36, 3.5, stColor(ds))}<b>${parseKey(dk).getDate()}</b></span><span class="pdot${tdd ? ' tahd' : sess ? '' : ' off'}"></span></button>`;
+    return `<button type="button" class="${cls}" data-act="pick" data-day="${dk}" aria-label="${esc(cap(fmtLong.format(parseKey(dk))))}${s != null ? ', ' + pct(s) : ''}${sess ? ', passage avec ' + TT() : ''}" aria-pressed="${dk === k}"><span class="wd">${WD[i]}</span><span class="dn">${ringSvg(s, 36, 3.5, stColor(ds))}<b>${parseKey(dk).getDate()}</b></span><span class="pdot${tdd ? ' tahd' : sess ? '' : ' off'}"></span></button>`;
   }).join('');
   const view = V.tab === 'jour' ? dayView() : V.tab === 'semaine' ? weekView() : V.tab === 'mois' ? monthView() : hizbView();
   $('#root').innerHTML = `<div class="app">
@@ -1065,9 +1071,9 @@ function rxSheet(s) {
 function tahDayCard(k, future) {
   const v = tahOf(k), h = (S.log[k] && S.log[k].tahH) || 0, N = tahGoal(k);
   let tag, st = '', body;
-  if (future) { tag = '<span class="tag">À venir</span>'; body = `<p class="meta">Ce jour-là, tu récites d'un coup tout ce que tu as appris${N ? ` (objectif : ${N} hizb)` : ''}. Pas de passage habituel avec le cheikh.</p>`; }
+  if (future) { tag = '<span class="tag">À venir</span>'; body = `<p class="meta">Ce jour-là, tu récites d'un coup tout ce que tu as appris${N ? ` (objectif : ${N} hizb)` : ''}. Pas de passage habituel avec ${TT()}.</p>`; }
   else if (v === 1) { tag = '<span class="tag good">Fait, بارك الله فيك</span>'; st = 'full'; body = `<div class="field"><span>Hizb récités</span><div class="stepper"><button type="button" data-act="tah-h" data-d="-1" aria-label="Un de moins">−</button><div class="val">${h}</div><button type="button" data-act="tah-h" data-d="1" aria-label="Un de plus">+</button></div></div><button type="button" class="link" data-act="tah-undo">Annuler</button>`; }
-  else if (v === -1) { tag = '<span class="tag">Pas fait</span>'; body = `<p class="meta">Pas de passage avec le cheikh ce jour-là : tes objectifs habituels comptent à la place.</p><button type="button" class="link" data-act="tah-did">En fait, je l'ai fait</button>`; }
+  else if (v === -1) { tag = '<span class="tag">Pas fait</span>'; body = `<p class="meta">Pas de passage avec ${TT()} ce jour-là : tes objectifs habituels comptent à la place.</p><button type="button" class="link" data-act="tah-did">En fait, je l'ai fait</button>`; }
   else { tag = '<span class="tag red">À valider</span>'; st = 'low'; body = `<p class="meta">Tu as récité tout ce que tu as appris ?${N ? ` Objectif : ${N} hizb.` : ''}</p><div class="acts"><button type="button" class="btn validate" data-act="tah-did">${ICON_CHECK} Je l'ai fait</button><button type="button" class="btn" data-act="tah-not">Je ne l'ai pas fait</button></div>`; }
   return `<article class="goal ${st}" style="--cat:var(--gold)"><div class="goal-top"><span class="chip">Jour de ${AR('تعاهدوا')}</span>${tag}</div><div class="hz-now"><span class="ar" lang="ar">تَعَاهَدُوا</span><small>Récitation complète de ce que tu as appris</small></div>${body}</article>`;
 }
@@ -1083,7 +1089,7 @@ function prepBlock(k, clickable) {
   if (tl) { /* tuiles */ }
   else if (por) html += `<div class="hz-now"><span class="ar" lang="ar">${por.ar}</span><small>${isK1() ? 'À réciter' : 'À repasser'} : ${esc(por.fr)}${p.unit ? '' : ' · quantité au choix'}</small></div>`;
   else html += `<div class="hz-now"><small>${isK1() ? 'Les 60 hizb sont appris. Félicitations !' : 'Khatma repassée en entier. Félicitations !'}</small></div>`;
-  if (!tl && groups.length) html += `<div class="sub"><b>Révision avec le cheikh</b><div class="plist">${groups.map(g => `<span class="pitem"><span class="ar" lang="ar">${groupAr(g)}</span>${hzScore(g.hz) != null ? `<em class="${lvl(hzScore(g.hz))}-t">${fr(hzScore(g.hz))}</em>` : ''}</span>`).join('')}</div></div>`;
+  if (!tl && groups.length) html += `<div class="sub"><b>Révision avec ${TT()}</b><div class="plist">${groups.map(g => `<span class="pitem"><span class="ar" lang="ar">${groupAr(g)}</span>${hzScore(g.hz) != null ? `<em class="${lvl(hzScore(g.hz))}-t">${fr(hzScore(g.hz))}</em>` : ''}</span>`).join('')}</div></div>`;
   if (pts.length) html += `<div class="sub"><b>Points à revoir</b><ul class="pts">${pts.map(x => `<li><span class="ar" lang="ar">حزب ${x.h}</span><span>${esc(x.t)}</span></li>`).join('')}</ul></div>`;
   return html;
 }
@@ -1106,7 +1112,7 @@ function passCard(k, future) {
     const nd = nextPassDay(k > t ? k : t);
     if (!nd) return '';
     const n = daysBetween(k > t ? k : t, nd);
-    return `<article class="goal rest" style="--cat:var(--c-prof)"><div class="goal-top"><span class="chip">Passage avec le cheikh</span><span class="tag">Prochain : ${n === 0 ? "aujourd'hui" : n === 1 ? 'demain' : DOW_LONG[parseKey(nd).getDay()]}</span></div>
+    return `<article class="goal rest" style="--cat:var(--c-prof)"><div class="goal-top"><span class="chip">Passage avec ${TT()}</span><span class="tag">Prochain : ${n === 0 ? "aujourd'hui" : n === 1 ? 'demain' : DOW_LONG[parseKey(nd).getDay()]}</span></div>
       <h3>À préparer</h3>${prepBlock(nd, false)}${!future ? `<button type="button" class="link" data-act="pass-open">J'ai eu un passage aujourd'hui quand même</button>` : ''}</article>`;
   }
   const wk = weekDays(k).filter(passOf).length;
@@ -1119,18 +1125,18 @@ function passCard(k, future) {
   let body;
   if (lg && vmOn() && (lg.vn || lg.vr)) {
     const items = (lg.rh || []).map(h => { const ev = hzEvals(h).find(x => x.d === k && x.src === 'cheikh'); return `<span class="pitem"><span class="ar" lang="ar">حزب ${h}</span>${ev ? `<em class="${lvl(ev.s)}-t">${ev.s}/10</em>` : ''}</span>`; }).join('');
-    body = `${vmDoneBody(lg)}${items ? `<div class="sub"><b>${lg.vr ? 'Hizb notés' : 'Révisé avec le cheikh'}</b><div class="plist">${items}</div></div>` : ''}<div class="acts"><button type="button" class="btn" data-act="pass-open">Modifier le passage</button></div>`;
+    body = `${vmDoneBody(lg)}${items ? `<div class="sub"><b>${lg.vr ? 'Hizb notés' : 'Révisé avec ' + TT()}</b><div class="plist">${items}</div></div>` : ''}<div class="acts"><button type="button" class="btn" data-act="pass-open">Modifier le passage</button></div>`;
   } else if (lg) {
     const por = lg.h ? portion(prog8(k), lg.h) : null;
     const items = (lg.rh || []).map(h => { const ev = hzEvals(h).find(x => x.d === k && x.src === 'cheikh'); return `<span class="pitem"><span class="ar" lang="ar">حزب ${h}</span>${ev ? `<em class="${lvl(ev.s)}-t">${ev.s}/10</em>` : ''}</span>`; }).join('');
     body = `${por ? `<div class="hz-now"><span class="ar" lang="ar">${por.ar}</span><small>${isK1() ? 'Récité' : 'Repassé'} : ${UNITS.find(x => x[0] === lg.h) ? UNITS.find(x => x[0] === lg.h)[2] : lg.h + '/8 de hizb'}</small></div>` : '<div class="hz-now"><small>Pas de nouvelle partie récitée ce jour-là.</small></div>'}
-      ${items ? `<div class="sub"><b>Révisé avec le cheikh</b><div class="plist">${items}</div></div>` : ''}
+      ${items ? `<div class="sub"><b>Révisé avec ${TT()}</b><div class="plist">${items}</div></div>` : ''}
       <div class="acts"><button type="button" class="btn" data-act="pass-open">Modifier le passage</button></div>`;
   } else {
-    body = `<h3>${future ? 'À préparer' : 'Au programme'}</h3>${future ? '' : '<p class="hint tl-h">Touche ce que tu as fait avec le cheikh.</p>'}${prepBlock(k, !future)}${future || passTiles(k, null, false) ? '' : `<div class="acts"><button type="button" class="btn validate" data-act="pass-open">${ICON_CHECK} J'ai eu mon passage</button></div>`}
+    body = `<h3>${future ? 'À préparer' : 'Au programme'}</h3>${future ? '' : '<p class="hint tl-h">Touche ce que tu as fait avec ' + TT() + '.</p>'}${prepBlock(k, !future)}${future || passTiles(k, null, false) ? '' : `<div class="acts"><button type="button" class="btn validate" data-act="pass-open">${ICON_CHECK} J'ai eu mon passage</button></div>`}
       ${mode === 'fixed' && k >= t ? `<button type="button" class="link" data-act="move-open">Décaler ce passage cette semaine</button>` : ''}`;
   }
-  return `<article class="goal ${st}" style="--cat:var(--c-prof)"><div class="goal-top"><span class="chip">Passage avec le cheikh</span>${tag}</div>${quotaHint}${body}</article>`;
+  return `<article class="goal ${st}" style="--cat:var(--c-prof)"><div class="goal-top"><span class="chip">Passage avec ${TT()}</span>${tag}</div>${quotaHint}${body}</article>`;
 }
 
 function wirdCard(k, future) {
@@ -1220,7 +1226,7 @@ function monthView() {
     return `<button type="button" class="mc ${s}${d === t ? ' today' : ''}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="${esc(cap(fmtLong.format(parseKey(d))))}">${parseKey(d).getDate()}</button>`; }).join('')}</div>`;
   const stats = [];
   if (c.rev.on) { const sum = days.reduce((a, d) => a + revDone(d), 0); stats.push(`<div class="stat" style="--cat:var(--c-rev)"><span>Révision perso</span><b>${hizbFr(sum).replace(' hizb', '')}</b><small>hizb révisés ce mois</small></div>`); }
-  if (c.pass.on) { const n = days.filter(passOf).length; stats.push(`<div class="stat" style="--cat:var(--c-prof)"><span>Passages</span><b>${n}${c.pass.mode === 'month' ? `<small> / ${c.pass.perMonth}</small>` : ''}</b><small>${c.pass.mode === 'month' ? (n >= c.pass.perMonth ? 'objectif du mois atteint' : 'minimum du mois') : 'avec le cheikh'}</small></div>`); }
+  if (c.pass.on) { const n = days.filter(passOf).length; stats.push(`<div class="stat" style="--cat:var(--c-prof)"><span>Passages</span><b>${n}${c.pass.mode === 'month' ? `<small> / ${c.pass.perMonth}</small>` : ''}</b><small>${c.pass.mode === 'month' ? (n >= c.pass.perMonth ? 'objectif du mois atteint' : 'minimum du mois') : 'avec ' + TT()}</small></div>`); }
   const hif = days.reduce((a, d) => a + ((S.log[d] && S.log[d].pass && S.log[d].pass.h) || 0), 0);
   stats.push(`<div class="stat" style="--cat:var(--gold)"><span>${isK1() ? 'Hifz' : 'Khatma repassée'}</span><b>${fr(hif / 8)}</b><small>hizb ${isK1() ? 'appris' : 'repassés'} ce mois</small></div>`);
   if (c.wird.on) { const n = days.filter(d => S.log[d] && S.log[d].w).length; stats.push(`<div class="stat" style="--cat:var(--c-wird)"><span>Wird</span><b>${n}</b><small>jours de lecture</small></div>`); }
@@ -1397,10 +1403,10 @@ function vmPath(p) {
 function vmEnd(p) { const L = vmPath(p); return L ? L[L.length - 1][1] : null; }
 function vmPrev(p, kind) { const R = RW(), L = vmPath(p); return L ? `<span class="ar" lang="ar">${vmRangeAr(R, L[0][0], L[L.length - 1][1])}</span><span>${esc(vmInfoL(R, L))}</span>` : '<span>Indique le verset où tu t\'es arrêté.</span>'; }
 const vmReady = s => !!s.pk && (!s.N || vmEnd(s.N)) && (!s.Rv || s.Rv.hz || vmEnd(s.Rv));
-/* révision avec le cheikh par hizb (cases à cocher), commune aux deux fiches */
+/* révision avec ${TT()} par hizb (cases à cocher), commune aux deux fiches */
 function revHzHtml(s) {
   const groups = passGroups(s), hzs = [...new Set(groups.filter((g, i) => s.checked[i]).map(g => g.hz))];
-  return `<div class="field"><span>Révision avec le cheikh</span>
+  return `<div class="field"><span>Révision avec ${TT()}</span>
       ${groups.length ? groups.map((g, i) => `<div class="ggroup${s.checked[i] ? '' : ' off'}"><div class="ggroup-h"><button type="button" class="tick" data-act="ps-tick" data-i="${i}" aria-pressed="${!!s.checked[i]}" aria-label="Révisé : hizb ${g.hz}">${ICON_CHECK}</button><span class="ar" lang="ar">${groupAr(g)}</span></div></div>`).join('') : '<p class="hint">Pas de révision prévue à ce passage.</p>'}
       <button type="button" class="link" data-act="ps-more">+ Un hizb de plus</button></div>
     ${hzs.length ? `<div class="field"><span>Ta note et les points à revoir</span>${hzs.map(h => `<div class="ggroup"><div class="ggroup-h"><span class="ar" lang="ar">حزب ${h}</span></div>${rateRow(`data-act="ps-rate" data-hz="${h}"`, s.rates[h], true)}<input class="input" id="ps-err-${h}" data-hz="${h}" type="text" maxlength="120" placeholder="Erreur relevée, passage à revoir… (facultatif)" value="${esc(s.errs[h] || '')}" autocomplete="off"></div>`).join('')}</div>` : ''}`;
@@ -1436,7 +1442,7 @@ function vmPassSheet(s) {
   if (s.N) body += vmPartHtml(s, 'new');
   if (s.Rv) body += vmPartHtml(s, 'rev');
   return `<div class="sh-head"><div><h2>Ton passage</h2><p class="hint">${esc(cap(fmtLong.format(parseKey(s.d))))}</p></div><span class="sh-ar" lang="ar">لِنُثَبِّتَ</span></div>
-    <div class="field"><span>Aujourd'hui avec le cheikh</span>${passTiles(s.d, s, true)}<p class="hint">${s.pk ? 'L\'un, l\'autre ou les deux.' : 'Touche ce que tu as fait : la suite s\'affiche ensuite.'}</p></div>
+    <div class="field"><span>Aujourd'hui avec ${TT()}</span>${passTiles(s.d, s, true)}<p class="hint">${s.pk ? 'L\'un, l\'autre ou les deux.' : 'Touche ce que tu as fait : la suite s\'affiche ensuite.'}</p></div>
     ${body}
     <div class="acts"><button type="button" class="btn primary" data-act="ps-save" ${vmReady(s) ? '' : 'disabled'}>Enregistrer</button><button type="button" class="btn" data-act="close">Annuler</button></div>
     ${lg ? `<button type="button" class="btn danger" data-act="ps-del">Supprimer ce passage</button>` : ''}`;
@@ -1488,8 +1494,8 @@ function vmPrep() {
   let html = n.done ? `<div class="hz-now"><small>${k1 ? 'Tout est appris. Félicitations !' : 'Khatma repassée en entier.'}</small></div>`
     : n.choose ? `<div class="hz-now"><small>${k1 ? 'Nouveau' : 'Suite'} : une nouvelle sourate à choisir (${n.choose.map(c => SNAME[saOf(R, c.g)[0] - 1]).slice(0, 3).join(', ')}${n.choose.length > 3 ? '…' : ''})</small></div>`
     : `<div class="hz-now"><span class="ar" lang="ar">${vmStartAr(R, n.g)}</span><small>${k1 ? 'Nouveau' : 'Suite'} : tu reprends ici · page ${pageOf(R, n.g) + 1}</small></div>`;
-  if (vmRevHz()) { const gs = suggestGroups(todayKey(), Math.max(1, C().pass.revN || 1)); if (gs.length) html += `<div class="sub"><b>Révision avec le cheikh</b><div class="plist">${gs.map(g => `<span class="pitem"><span class="ar" lang="ar">${groupAr(g)}</span></span>`).join('')}</div></div>`; }
-  else if (rs) html += `<div class="sub"><b>Révision avec le cheikh</b><div class="plist"><span class="pitem"><span class="ar" lang="ar">${vmStartAr(R, rs)}</span></span></div></div>`;
+  if (vmRevHz()) { const gs = suggestGroups(todayKey(), Math.max(1, C().pass.revN || 1)); if (gs.length) html += `<div class="sub"><b>Révision avec ${TT()}</b><div class="plist">${gs.map(g => `<span class="pitem"><span class="ar" lang="ar">${groupAr(g)}</span></span>`).join('')}</div></div>`; }
+  else if (rs) html += `<div class="sub"><b>Révision avec ${TT()}</b><div class="plist"><span class="pitem"><span class="ar" lang="ar">${vmStartAr(R, rs)}</span></span></div></div>`;
   return html;
 }
 function vmDoneBody(lg) {
@@ -1533,9 +1539,9 @@ function vmOnbScreen(a, mig) {
   const autoCov = Array.from({ length: 60 }, (_, i) => covH(R, auto, i + 1));
   const cells = ord.map(h => autoCov[h - 1] >= FULL ? `<button type="button" class="lk" disabled aria-label="Hizb ${h}, appris">${h}</button>` : autoCov[h - 1] > 0.03 ? `<button type="button" class="cur" disabled aria-label="Hizb ${h}, en cours">${h}</button>` : `<button type="button" data-act="vk-onb" data-hz="${h}" aria-pressed="${(a.known || []).includes(h)}" aria-label="Hizb ${h}">${h}</button>`).join('');
   return `<h2>${mig ? 'Nouveau : ta position par sourate et verset' : 'Où tu en es ?'}</h2>
-    <p>${mig ? 'Comme tu avances du hizb 60 vers le 1, l\'appli suit maintenant ta position comme avec le cheikh : sourate et verset. On a estimé ta position d\'après l\'ancien suivi par hizb : corrige la sourate et le verset si ce n\'est pas exactement là. Ton historique est gardé.' : 'Tu avances du hizb 60 vers le 1 : on suit ta position par sourate et verset, comme avec le cheikh.'}</p>
+    <p>${mig ? 'Comme tu avances du hizb 60 vers le 1, l\'appli suit maintenant ta position comme avec ' + TT() + ' : sourate et verset. On a estimé ta position d\'après l\'ancien suivi par hizb : corrige la sourate et le verset si ce n\'est pas exactement là. Ton historique est gardé.' : 'Tu avances du hizb 60 vers le 1 : on suit ta position par sourate et verset, comme avec ' + TT() + '.'}</p>
     <div class="field"><span>Ta riwaya</span><div class="opts">${optBtn('vriw', 'hafs', 'Hafs', a.vriw)}${optBtn('vriw', 'warsh', 'Warsh', a.vriw)}</div><p class="hint">Elle fixe la numérotation des versets.</p></div>
-    ${mig ? `<p class="grp mig-q">Où en es-tu vraiment avec le cheikh ?</p>${a.vmig && a.vmig.h ? `<p class="hint">Ton ancien suivi : hizb ${a.vmig.h}, ${a.vmig.r + 1}<sup>e</sup> ثمن. La position ci-dessous en est une estimation : corrige-la si besoin.</p>` : ''}` : ''}
+    ${mig ? `<p class="grp mig-q">Où en es-tu vraiment avec ${TT()} ?</p>${a.vmig && a.vmig.h ? `<p class="hint">Ton ancien suivi : hizb ${a.vmig.h}, ${a.vmig.r + 1}<sup>e</sup> ثمن. La position ci-dessous en est une estimation : corrige-la si besoin.</p>` : ''}` : ''}
     <div class="field"><span>${isK1Stage(a) ? 'Tu reprends le nouveau à' : 'Tu reprends la khatma à'}</span><div class="row-sv lbl" aria-hidden="true"><small>Sourate</small><small>Verset</small></div><div class="row-sv"><select class="input" id="onb-vs">${suraOpts(s)}</select><input class="input vnum" id="onb-vv" type="number" inputmode="numeric" min="1" max="${R.counts[s - 1]}" value="${esc(String(a.vv))}"></div><p class="hint">La sourate, puis le verset où tu reprends.${clampInt(a.vv, 1, 999) === 1 ? '' : ' Le début de la sourate compte comme appris.'}</p></div>
     ${isK1Stage(a) && mates.length ? `<div class="field"><span>Dans le hizb ${ch}, déjà appris aussi</span><div class="opts">${mates.map(x => `<button type="button" class="opt" data-act="vm-mate" data-s="${x}" aria-pressed="${(a.vchunk || []).includes(x)}"><span class="ar">${SNAME[x - 1]}</span>${span(x)}</button>`).join('')}</div></div>` : ''}
     ${isK1Stage(a) ? `<p class="grp">D'autres hizb déjà appris ?</p><p>Tout ce qui vient après dans le mushaf compte déjà comme appris. Coche ici les hizb appris ailleurs, en entier.</p><div class="kgrid">${cells}</div>` : ''}
@@ -1622,11 +1628,11 @@ function passSheet(s) {
   /* note seulement pour la révision : un ثمن de hifz ne donne pas une vision de tout le hizb */
   const hzs = s.pk === 'new' ? [] : [...new Set(groups.filter((g, i) => s.checked[i]).map(g => g.hz))];
   return `<div class="sh-head"><div><h2>Ton passage</h2><p class="hint">${esc(cap(fmtLong.format(parseKey(s.d))))}</p></div><span class="sh-ar" lang="ar">لِنُثَبِّتَ</span></div>
-    <div class="field"><span>Aujourd'hui avec le cheikh</span>${passTiles(s.d, s, true)}<p class="hint">${s.pk ? 'L\'un, l\'autre ou les deux.' : 'Touche ce que tu as fait : la suite s\'affiche ensuite.'}</p></div>
-    ${s.pk === 'new' || s.pk === 'both' ? `<div class="field"><span>${k1 ? 'Récité (hifz)' : 'Repassé avec le cheikh'}</span>
+    <div class="field"><span>Aujourd'hui avec ${TT()}</span>${passTiles(s.d, s, true)}<p class="hint">${s.pk ? 'L\'un, l\'autre ou les deux.' : 'Touche ce que tu as fait : la suite s\'affiche ensuite.'}</p></div>
+    ${s.pk === 'new' || s.pk === 'both' ? `<div class="field"><span>${k1 ? 'Récité (hifz)' : 'Repassé avec ' + TT()}</span>
       <div class="opts">${UNITS.map(([v, a]) => `<button type="button" class="opt" data-act="ps-amt" data-v="${v}" aria-pressed="${s.amt === v}"><span class="ar">${a}</span></button>`).join('')}</div>
       ${s.amt && por ? `<p class="prev"><span class="ar" lang="ar">${por.ar}</span><span>${esc(por.fr)}</span></p>` : ''}</div>` : ''}
-    ${s.pk === 'rev' || s.pk === 'both' ? `<div class="field"><span>Révision avec le cheikh</span>
+    ${s.pk === 'rev' || s.pk === 'both' ? `<div class="field"><span>Révision avec ${TT()}</span>
       ${groups.length ? groups.map((g, i) => `<div class="ggroup${s.checked[i] ? '' : ' off'}"><div class="ggroup-h"><button type="button" class="tick" data-act="ps-tick" data-i="${i}" aria-pressed="${!!s.checked[i]}" aria-label="Révisé : hizb ${g.hz}">${ICON_CHECK}</button><span class="ar" lang="ar">${groupAr(g)}</span></div></div>`).join('') : '<p class="hint">Pas de révision prévue à ce passage.</p>'}
       <button type="button" class="link" data-act="ps-more">+ Un hizb de plus</button></div>` : ''}
     ${hzs.length ? `<div class="field"><span>Ta note et les points à revoir</span>${hzs.map(h => `<div class="ggroup"><div class="ggroup-h"><span class="ar" lang="ar">حزب ${h}</span></div>${rateRow(`data-act="ps-rate" data-hz="${h}"`, s.rates[h], true)}<input class="input" id="ps-err-${h}" data-hz="${h}" type="text" maxlength="120" placeholder="Erreur relevée, passage à revoir… (facultatif)" value="${esc(s.errs[h] || '')}" autocomplete="off"></div>`).join('')}</div>` : ''}
@@ -1666,7 +1672,7 @@ function hzSheet(s) {
     <fieldset class="field"><legend>Ta note aujourd'hui</legend>${rateRow(`data-act="rate" data-hz="${h}" data-src="manuel" data-today="1"`, mine && mine.s, false)}</fieldset>
     <div class="field"><span>Points à revoir</span>${(rec.pts || []).length ? `<ul class="hist">${rec.pts.map((x, i) => `<li><span>${esc(x.t)} · ${esc(fmtDM.format(parseKey(x.d)))}</span><button type="button" data-act="pt-del" data-i="${i}" aria-label="Retirer">×</button></li>`).join('')}</ul>` : ''}
       <div class="row2" style="grid-template-columns:minmax(0,1fr) auto"><input class="input" id="pt-in" type="text" maxlength="120" placeholder="Ex. page 34, confusion avec un autre passage" autocomplete="off"><button type="button" class="btn" data-act="pt-add">Ajouter</button></div></div>
-    <label class="field"><span>Remarques</span><textarea class="input" id="hz-note" maxlength="1000" placeholder="Ce qui bloque, ce que le cheikh a dit…">${esc(rec.note || '')}</textarea></label>
+    <label class="field"><span>Remarques</span><textarea class="input" id="hz-note" maxlength="1000" placeholder="Ce qui bloque, ce que ${TT()} a dit…">${esc(rec.note || '')}</textarea></label>
     ${ev.length ? `<div class="field"><span>Historique des notes</span><ul class="hist">${ev.slice().reverse().map(x => `<li><b class="${lvl(x.s)}-t">${x.s}/10</b><span>${esc(cap(fmtDay.format(parseKey(x.d))))} · ${SRC_TXT[x.src] || 'note'}</span><button type="button" data-act="ev-del" data-d="${x.d}" data-src="${esc(x.src)}" aria-label="Supprimer cette note">×</button></li>`).join('')}</ul></div>` : ''}
     <div class="acts"><button type="button" class="btn primary" data-act="close">Fermer</button></div>`;
 }
@@ -1694,7 +1700,7 @@ function settingsSheet(s) {
   return `<div class="sh-head"><div><h2>Réglages</h2><p class="hint">${esc(STAGES[c.stage])} · sens ${c.dir === 'desc' ? '60 → 1' : '1 → 60'}</p></div><img src="${ICON}" alt="" width="44" height="44" style="border-radius:11px"></div>
     <div class="field"><span>Mes objectifs</span><div>
       ${sw('rev', c.rev.on, 'Révision perso', 'Par cœur, seul, en rotation')}
-      ${sw('pass', c.pass.on, 'Passages avec le cheikh', c.pass.mode === 'fixed' ? 'Jours fixes' : c.pass.mode === 'quota' ? `${c.pass.perWeek} par semaine` : `${c.pass.perMonth} minimum par mois`)}
+      ${sw('pass', c.pass.on, 'Passages avec ' + TT(), c.pass.mode === 'fixed' ? 'Jours fixes' : c.pass.mode === 'quota' ? `${c.pass.perWeek} par semaine` : `${c.pass.perMonth} minimum par mois`)}
       ${sw('wird', c.wird.on, 'Wird', 'Lecture du mushaf, chaque jour')}
       ${sw('kahf', c.kahf.on, 'Sourate Al-Kahf', 'Chaque vendredi')}
       ${c.kahf.on ? `<div class="opts" style="margin:4px 0 8px">${[['obj', 'Objectif du jour'], ['bonus', 'Bonus, sans rouge']].map(([v, l]) => `<button type="button" class="opt" data-act="kahf-mode" data-v="${v}" aria-pressed="${c.kahf.mode === v}">${l}</button>`).join('')}</div>` : ''}
@@ -1733,7 +1739,7 @@ function backupSheet(s) {
     <div class="field"><span>Restaurer une sauvegarde</span><textarea class="input code" id="bk-in" rows="3" placeholder="Ton code de sauvegarde…"></textarea>${s.err ? `<p class="err">${esc(s.err)}</p>` : ''}<div class="bk-row"><button type="button" class="btn soft" data-act="bk-paste">Coller mon code</button><button type="button" class="btn ${s.armed ? 'armed' : ''}" data-act="bk-restore">${s.armed ? 'Toucher à nouveau pour remplacer' : 'Restaurer'}</button></div></div>
     <div class="acts"><button type="button" class="btn" data-act="close">Fermer</button></div>`;
 }
-const PAUSE_LBL = { pass: 'Hifz avec le cheikh', rev: 'Révision perso', wird: 'Wird', kahf: 'Al-Kahf' };
+const PAUSE_LBL = { get pass() { return 'Hifz avec ' + TT(); }, rev: 'Révision perso', wird: 'Wird', kahf: 'Al-Kahf' };
 const pauseWhatTxt = p => { const w = (p.what || activeKeys()).filter(k => activeKeys().includes(k)); return w.length === activeKeys().length ? 'Tout' : w.map(k => PAUSE_LBL[k]).join(', '); };
 function pauseSheet(s) {
   const c = C(), t = todayKey(), on = c.pause && c.pause.to >= t, keys = activeKeys();
@@ -1797,20 +1803,20 @@ function saveKnown() {
 }
 
 /* ================= ONBOARDING ================= */
-const STEPS_ALL = [['buts', 'Objectifs'], ['etape', 'Étape'], ['sens', 'Sens'], ['ou', 'Où tu en es'], ['passages', 'Passages'], ['quantites', 'Quantités'], ['revision', 'Révision et wird'], ['tah', 'تعاهدوا'], ['recap', 'Récap'], ['consignes', 'Consignes']];
+const STEPS_ALL = [['buts', 'Objectifs'], ['etape', 'Étape'], ['sens', 'Sens'], ['ou', 'Où tu en es'], ['passages', 'Passages'], ['quantites', 'Quantités'], ['revision', 'Révision et wird'], ['toi', 'Toi'], ['tah', 'تعاهدوا'], ['recap', 'Récap'], ['consignes', 'Consignes']];
 const G = (a, x) => !a.goals || a.goals.includes(x);
 const needLearn = a => G(a, 'cn') || G(a, 'cr') || G(a, 'rev');
 const needCheikh = a => G(a, 'cn') || G(a, 'cr');
 const steps = () => STEPS_ALL.filter(x => {
   const a = V.onb && V.onb.a;
-  if (x[0] === 'tah') return !!tahNext();
+  if (x[0] === 'tah') return !!tahNext() && (a ? a.civ === 'yes' : !(S.cfg && S.cfg.civ === 'no'));
   if (!a) return true;
   if (['etape', 'sens', 'ou'].includes(x[0])) return needLearn(a);
   if (x[0] === 'passages') return needCheikh(a);
   if (x[0] === 'quantites') return needCheikh(a) && (!aVM(a) || (G(a, 'cr') && aRdir(a) === 'asc'));
   return true;
 });
-const GOALS = [['cn', 'Apprentissage avec un cheikh', 'Le nouveau que tu récites au cheikh'], ['cr', 'Révision avec un cheikh', 'Ce que tu repasses devant le cheikh'], ['rev', 'Révision perso', '<u>Réciter par cœur</u>, seul, ce que tu as déjà appris, pour le garder'], ['wird', 'Wird', '<u>Lire</u> le Coran dans le mushaf, chaque jour, en plus de ce que tu apprends ou révises']];
+const GOALS = [['cn', 'Apprentissage avec un enseignant', 'Le nouveau que tu récites à ton cheikh, mo3allim, ustadh…'], ['cr', 'Révision avec un enseignant', 'Ce que tu repasses devant lui'], ['rev', 'Révision perso', '<u>Réciter par cœur</u>, seul, ce que tu as déjà appris, pour le garder'], ['wird', 'Wird', '<u>Lire</u> le Coran dans le mushaf, chaque jour, en plus de ce que tu apprends ou révises']];
 const defTahN = a => a.stage === 'k1' ? Math.max(1, Math.floor(aL8(a) / 8)) : 60;
 function tahOnbPreview(a, n) {
   const N = a.tahN, L = aL8(a), remain = Math.max(0, N * 8 - L), out = [];
@@ -1819,12 +1825,12 @@ function tahOnbPreview(a, n) {
   return out.map(l => `<span>${l}</span>`).join('');
 }
 function defaultAnswers() {
-  return { goals: [], vriw: '', vs: 114, vv: 1, vchunk: [], vrev: null, stage: 'k1', dir: '', rdir: 'asc', n: '0', t: '0', known: [], cur: '', passMode: 'fixed', days: [], perWeek: 2, perMonth: 4, unit: 1, revN: 2, prh: '', prn: 1, revOn: true, revMode: 'qty', revQty: 1, revTour: 30, rh: '', rn: 1, wirdOn: false, wUnit: 'pages', wQty: 4, wDays: 5, wScope: 'all', kahf: 'off', tahJoin: '', tahN: 0 };
+  return { civ: '', country: 'FR', tw: 'cheikh', goals: [], vriw: '', vs: 114, vv: 1, vchunk: [], vrev: null, stage: 'k1', dir: '', rdir: 'asc', n: '0', t: '0', known: [], cur: '', passMode: 'fixed', days: [], perWeek: 2, perMonth: 4, unit: 1, revN: 2, prh: '', prn: 1, revOn: true, revMode: 'qty', revQty: 1, revTour: 30, rh: '', rn: 1, wirdOn: false, wUnit: 'pages', wQty: 4, wDays: 5, wScope: 'all', kahf: 'off', tahJoin: '', tahN: 0 };
 }
 function answersFromCfg() {
   const c = C(), t = todayKey(), e = prog8(), a = defaultAnswers();
   { const ch = isK1() ? curHifz() : null; a.known = (c.known || []).slice(); a.cur = isK1() ? (ch == null ? 'done' : String(ch)) : ''; }
-  Object.assign(a, { stage: c.stage, dir: c.dir, rdir: c.rdir || c.dir, n: String(Math.floor(e / 8)), t: String(e % 8), passMode: c.pass.mode, days: (c.pass.days || []).slice(), perWeek: c.pass.perWeek || 2, perMonth: c.pass.perMonth || 4, unit: c.pass.unit, revN: c.pass.revN || 0,
+  Object.assign(a, { civ: c.civ || 'yes', country: c.country || 'FR', tw: c.tw || 'cheikh', stage: c.stage, dir: c.dir, rdir: c.rdir || c.dir, n: String(Math.floor(e / 8)), t: String(e % 8), passMode: c.pass.mode, days: (c.pass.days || []).slice(), perWeek: c.pass.perWeek || 2, perMonth: c.pass.perMonth || 4, unit: c.pass.unit, revN: c.pass.revN || 0,
     revOn: c.rev.on, revMode: c.rev.mode, revQty: c.rev.qty || 1, revTour: c.rev.tour || 30, wirdOn: c.wird.on, wUnit: c.wird.unit, wQty: c.wird.qty, wDays: c.wird.days, wScope: c.wird.scope || 'all', kahf: c.kahf && c.kahf.on ? c.kahf.mode : 'off' });
   { const tn = tahNext(), g = tn && c.tah && c.tah.goals ? c.tah.goals[tn.next] : null; a.tahJoin = (c.tah && c.tah.join) || (g ? 'yes' : ''); a.tahN = g || defTahN(a); }
   const size = poolHz(t) * 2;
@@ -1874,7 +1880,7 @@ function recapRows(a) {
     ['revision', 'Révision perso', a.revOn ? (a.revMode === 'tour' ? `Tour en ${a.revTour} jours` : `${hizbFr(a.revQty)} par jour`) + (pool.length ? `, reprise au hizb ${a.rh || pool[0]}` : '') : 'Non'],
     ['revision', 'Wird', a.wirdOn ? `${frQ(a.wQty)} ${a.wUnit === 'hizb' ? 'hizb' : 'pages'} par jour` : 'Non'],
     ['revision', 'Al-Kahf le vendredi', a.kahf === 'obj' ? 'Oui, en objectif' : a.kahf === 'bonus' ? 'Oui, en bonus' : 'Non']
-  ].concat(tahNext() ? [['tah', 'Prochain تعاهدوا', a.tahJoin === 'yes' ? `Oui, objectif ${a.tahN} hizb` : a.tahJoin === 'no' ? 'Non' : a.tahJoin === 'maybe' ? 'Pas encore décidé' : '—']] : []).concat([
+  ].concat([['toi', 'Pays et Dar Coran', `${esc(countryName(a.country))} · Dar Coran du CIV : ${a.civ === 'yes' ? 'oui' : a.civ === 'no' ? 'non' : '—'}`]]).concat(tahNext() && a.civ === 'yes' ? [['tah', 'Prochain تعاهدوا', a.tahJoin === 'yes' ? `Oui, objectif ${a.tahN} hizb` : a.tahJoin === 'no' ? 'Non' : a.tahJoin === 'maybe' ? 'Pas encore décidé' : '—']] : []).concat([
   ]);
 }
 function renderOnb() {
@@ -1885,9 +1891,9 @@ function renderOnb() {
   if (key === 'buts') body = `<h2>Ton programme avec le Coran</h2><p>Coche tout ce que tu fais en ce moment. Tu pourras changer plus tard.</p><div class="defs">${GOALS.map(([v, l, d]) => `<button type="button" class="def" data-act="onb-goal" data-v="${v}" aria-pressed="${a.goals.includes(v)}"><b>${l}</b><small>${d}</small></button>`).join('')}</div>`;
   else if (key === 'etape') body = `<h2>Tu en es à quelle étape ?</h2><p>Ça décide de ce que suivent tes passages et ta carte des hizb.</p><div class="choice">
     ${choiceBtn('stage', 'k1', '1re khatma', 'Tu apprends de nouvelles parties (hifz) et tu révises ce que tu sais.', a.stage)}
-    ${choiceBtn('stage', 'k2', '2e khatma', 'Les 60 hizb sont acquis : tu les repasses avec le cheikh pour consolider.', a.stage)}
+    ${choiceBtn('stage', 'k2', '2e khatma', 'Les 60 hizb sont acquis : tu les repasses avec ' + TT() + ' pour consolider.', a.stage)}
     ${choiceBtn('stage', 'k3', 'Plus de 2 khatmat', 'Même principe : les 60 hizb repassés et révisés.', a.stage)}
-    ${choiceBtn('stage', 'ijaza', 'Ijaza', 'Obtenue ou en préparation avec le cheikh.', a.stage)}</div>`;
+    ${choiceBtn('stage', 'ijaza', 'Ijaza', 'Obtenue ou en préparation avec ' + TT() + '.', a.stage)}</div>`;
   else if (key === 'sens') body = `<h2>Dans quel sens tu avances ?</h2>${needRev(a) ? `<p class="grp">${a.stage === 'k1' ? 'Hifz (le nouveau)' : 'Repassage de la khatma'}</p>` : ''}${dirCards('dir', a.dir)}${needRev(a) ? rdirBlock(a) : ''}`;
   else if (key === 'ou' && aVM(a)) body = vmOnbScreen(a, o.mig);
   else if (key === 'ou' && k1) {
@@ -1897,10 +1903,10 @@ function renderOnb() {
     ${cur != null ? `<p class="grp">D'autres hizb déjà appris ?</p><p>Par exemple, tu as appris du 60 au 30 avant de reprendre depuis le 1 : coche-les. Ils entrent dans ta révision et ta carte, et ton hifz les saute.</p>${knownGrid(a.dir, a.known, cur)}` : ''}
     <p class="prev" id="onb-prev">${onbPreview(a)}</p>`;
   }
-  else if (key === 'ou') body = `<h2>Où tu en es ?</h2><p>Dans cette khatma, combien de hizb tu as déjà repassés avec le cheikh.</p>
+  else if (key === 'ou') body = `<h2>Où tu en es ?</h2><p>Dans cette khatma, combien de hizb tu as déjà repassés avec ${TT()}.</p>
     <div class="row2"><label class="field"><span>Hizb repassés</span><input class="input" id="onb-n" type="number" inputmode="numeric" min="0" max="60" value="${esc(a.n)}"></label><label class="field"><span>+ ${AR('ثمن')} du suivant</span><input class="input" id="onb-t" type="number" inputmode="numeric" min="0" max="7" value="${esc(a.t)}"></label></div>
     <p class="prev" id="onb-prev">${onbPreview(a)}</p>`;
-  else if (key === 'passages') body = `<h2>Tes passages avec le cheikh</h2><div class="choice">
+  else if (key === 'passages') body = `<h2>Tes passages avec ${TT()}</h2><div class="field"><span>Tu l'appelles comment ?</span><div class="opts">${TW_OPTS.map(([v, l, ar]) => optBtn('tw', v, ar ? `${l} <span class="ar" lang="ar">${ar}</span>` : l, a.tw || 'cheikh')).join('')}</div></div><div class="choice">
     ${choiceBtn('passMode', 'fixed', 'Des jours fixes', 'Les mêmes jours chaque semaine. Tes jours changent souvent ? Choisis quand même tes jours habituels : tu pourras décaler un passage pour une semaine.', a.passMode)}
     ${choiceBtn('passMode', 'quota', 'Un nombre par semaine', 'Pas de jours précis, quand tu peux.', a.passMode)}
     ${choiceBtn('passMode', 'month', 'Un nombre minimum par mois', 'Pour des passages irréguliers : tu gardes un objectif sur le mois.', a.passMode)}</div>
@@ -1909,8 +1915,8 @@ function renderOnb() {
     ${a.passMode === 'month' ? `<div class="field"><span>Minimum de passages par mois</span>${stepperHtml('perMonth', a.perMonth)}</div>` : ''}`;
   else if (key === 'quantites') {
     const pool = aPool(a);
-    body = `<h2>À chaque passage avec le cheikh</h2>${aVM(a) ? '' : `<p class="grp">${k1 ? 'Nouveau (hifz)' : 'Khatma à repasser'}</p><div class="field"><span>Combien à chaque passage ?</span><div class="opts">${UNITS.map(([v, ar]) => optBtn('unit', v, `<span class="ar">${ar}</span>`, a.unit)).join('')}${optBtn('unit', 0, 'Ça varie', a.unit)}</div></div>`}
-    <p class="grp">Révision avec le cheikh</p><div class="field"><span>Combien à chaque passage ?</span><div class="opts">${[[0, 'Aucune'], [1, '½ hizb'], [2, '1 hizb'], [4, '2 hizb'], [6, '3 hizb'], [8, '4 hizb'], [10, '5 hizb']].map(([v, l]) => optBtn('revN', v, l, a.revN)).join('')}</div>
+    body = `<h2>À chaque passage avec ${TT()}</h2>${aVM(a) ? '' : `<p class="grp">${k1 ? 'Nouveau (hifz)' : 'Khatma à repasser'}</p><div class="field"><span>Combien à chaque passage ?</span><div class="opts">${UNITS.map(([v, ar]) => optBtn('unit', v, `<span class="ar">${ar}</span>`, a.unit)).join('')}${optBtn('unit', 0, 'Ça varie', a.unit)}</div></div>`}
+    <p class="grp">Révision avec ${TT()}</p><div class="field"><span>Combien à chaque passage ?</span><div class="opts">${[[0, 'Aucune'], [1, '½ hizb'], [2, '1 hizb'], [4, '2 hizb'], [6, '3 hizb'], [8, '4 hizb'], [10, '5 hizb']].map(([v, l]) => optBtn('revN', v, l, a.revN)).join('')}</div>
       <p class="hint">Avant chaque passage, l'appli te montre les prochains hizb de ta rotation à préparer. Après, tu coches ceux vraiment passés et tu les notes.</p></div>
     ${a.revN && pool.length ? `<div class="${a.revN === 1 ? 'row2' : ''}"><label class="field"><span>Tu reprends à partir de quel hizb ?</span>${hzSelect('onb-prh', pool, a.prh)}</label>${a.revN === 1 ? `<div class="field"><span>Moitié</span>${halfOpts('prn', a.prn)}</div>` : ''}</div>` : ''}`;
   } else if (key === 'revision') {
@@ -1926,6 +1932,9 @@ function renderOnb() {
     ${a.wirdOn ? `<div class="field"><span>Compté en</span><div class="opts">${optBtn('wUnit', 'pages', 'Pages', a.wUnit)}${optBtn('wUnit', 'hizb', 'Hizb', a.wUnit)}</div></div>
       <div class="field"><span>Par jour</span>${stepperHtml('wQty', a.wQty, frQ(a.wQty))}</div><p class="hint">Chaque jour. Il compte pour valider ta journée.</p>` : ''}
     <div class="field"><span>Sourate Al-Kahf chaque vendredi ?</span><div class="opts">${optBtn('kahf', 'obj', 'Oui, en objectif', a.kahf)}${optBtn('kahf', 'bonus', 'Oui, en bonus', a.kahf)}${optBtn('kahf', 'off', 'Non', a.kahf)}</div><p class="hint">En objectif, elle compte dans ta journée du vendredi. En bonus, elle s'affiche sans jamais passer en rouge.</p></div>`;
+  } else if (key === 'toi') {
+    body = `<h2>Pour finir</h2><div class="field"><span>Ton pays</span><select class="input" id="onb-country">${COUNTRIES.map(([v, l]) => `<option value="${v}" ${v === a.country ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
+    <div class="field"><span>Tu es inscrit au Dar Coran du CIV ?</span><p class="hint">Centre islamique de Villeneuve-d'Ascq.</p><div class="opts">${optBtn('civ', 'yes', 'Oui', a.civ)}${optBtn('civ', 'no', 'Non', a.civ)}</div></div>`;
   } else if (key === 'tah') {
     const tn = tahNext();
     body = `<h2>Le prochain ${AR('تَعَاهَدُوا')}</h2><p>${esc(cap(fmtLong.format(parseKey(tn.next))))}, dans ${tn.n} jours. Ce jour-là, on récite d'un coup tout ce qu'on a appris.</p>
@@ -1949,6 +1958,7 @@ function onbValidate() {
   if (key === 'ou' && a.stage !== 'k1') { const n = clampInt(a.n, 0, 60), t = clampInt(a.t, 0, 7); if (n === 60 && t > 0) return 'Avec 60 hizb, il n\'y a plus de ثمن en cours.'; }
   if (key === 'passages' && a.passMode === 'fixed' && !a.days.length) return 'Coche au moins un jour de passage.';
   if (key === 'tah' && !a.tahJoin) return 'Choisis une réponse.';
+  if (key === 'toi' && !a.civ) return 'Réponds à la question sur le Dar Coran.';
   return '';
 }
 function applyOnb() {
@@ -1961,6 +1971,7 @@ function applyOnb() {
     rev: { on: a.revOn, mode: a.revMode, qty: a.revQty, tour: a.revTour, anchor: null },
     wird: { on: a.wirdOn, unit: a.wUnit, qty: a.wQty, days: 7, from: a.wirdOn ? (old.wird && old.wird.on && old.wird.from) || t : undefined },
     kahf: { on: a.kahf !== 'off', mode: a.kahf === 'off' ? ((old.kahf && old.kahf.mode) || 'bonus') : a.kahf }, kahfFrom: old.kahfFrom || (a.kahf !== 'off' ? weekStart(t) : undefined),
+    civ: a.civ || old.civ || 'yes', country: a.country || old.country || 'FR', tw: a.tw || old.tw || 'cheikh',
     pause: old.pause || null, tah: { goals: Object.assign({}, (old.tah && old.tah.goals) || {}), join: a.tahJoin || '' }
   };
   { const tn = tahNext(); if (tn) { if (a.tahJoin === 'yes') cfg.tah.goals[tn.next] = clampInt(a.tahN, 1, 60); else delete cfg.tah.goals[tn.next]; } }
@@ -1989,7 +2000,7 @@ function tourSteps() {
     { sel: '.strip', t: 'Ta semaine', x: 'Touche un jour pour le revoir ou rattraper un oubli. Vert : réussi, orange : commencé, rouge : en dessous du minimum.' },
     { sel: '.wbar', t: 'Tes passages de la semaine', x: 'Un trait par passage prévu, qui se remplit à chaque passage. Vert quand l\'objectif de la semaine est atteint, orange le dernier jour s\'il en manque.' },
     { sel: 'article.goal[style*="c-rev"]', t: 'Révision perso', x: '+½ à chaque demi-hizb récité, ✓ pour tout valider d\'un coup. « Réviser d\'autres hizb » pour renforcer ceux qui sont fragiles.' },
-    { sel: 'article.goal[style*="c-prof"]', t: 'Passage avec le cheikh', x: 'Après ton passage, touche Nouveau ou Révision, puis indique où tu t\'es arrêté.' },
+    { sel: 'article.goal[style*="c-prof"]', t: 'Passage avec ' + TT(), x: 'Après ton passage, touche Nouveau ou Révision, puis indique où tu t\'es arrêté.' },
     { sel: 'article.goal[style*="c-wird"]', t: 'Wird', x: 'Ta lecture du jour dans le mushaf. Elle compte pour valider ta journée.' }
   ].filter(x => document.querySelector(x.sel));
   /* les onglets : l'appli bascule elle-même dessus */
@@ -2054,7 +2065,7 @@ document.addEventListener('click', e => {
     case 'onb-set': {
       const a = V.onb.a, key = b.dataset.k; let v = b.dataset.v;
       if (key === 'vriw') { a.vriw = v; V.onb.err = ''; if (a.vmig && !a.vEdited) vmMigApply(a); renderOnb(); break; }
-      if (v === 'true' || v === 'false') v = v === 'true'; else if (/^\d+$/.test(v) && !['stage', 'dir', 'rdir', 'passMode', 'revMode', 'wUnit', 'wScope', 'kahf'].includes(key)) v = +v;
+      if (v === 'true' || v === 'false') v = v === 'true'; else if (/^\d+$/.test(v) && !['stage', 'dir', 'rdir', 'passMode', 'revMode', 'wUnit', 'wScope', 'kahf', 'civ', 'tw'].includes(key)) v = +v;
       a[key] = v;
       if (key === 'stage' && v !== 'k1' && !V.onb.edit) { a.n = '0'; a.t = '0'; }
       if (key === 'wUnit') a.wQty = v === 'hizb' ? 1 : 4;
@@ -2249,6 +2260,7 @@ function onInput(e) {
   const el = e.target, s = V.sheet;
   if (V.onb) {
     const a = V.onb.a;
+    if (el.id === 'onb-country') { a.country = el.value; return; }
     if (el.id === 'onb-vs') { a.vs = +el.value; a.vv = 1; a.vchunk = []; a.vEdited = true; renderOnb(); }
     else if (el.id === 'onb-vv') { a.vv = el.value; a.vEdited = true; const p = $('#onb-prev'); if (p) p.innerHTML = vmOnbPreview(a); }
     else if (el.id === 'onb-n') { a.n = el.value; const p = $('#onb-prev'); if (p) p.innerHTML = onbPreview(a); }
