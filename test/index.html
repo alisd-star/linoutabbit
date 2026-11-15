@@ -150,6 +150,16 @@ h1 { margin: 0; font-family: var(--f-display); font-weight: 800; font-size: 26px
 .pill-btn { height: 34px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 600; color: var(--accent); }
 .nav-btn { width: 34px; height: 34px; flex: none; border-radius: 10px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; }
 .nav-btn svg { width: 16px; height: 16px; }
+.wbar { display: flex; align-items: center; gap: 8px; margin: -10px 4px -4px; }
+.wbar > small { flex: none; width: 124px; white-space: nowrap; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.wbar > small b { color: var(--fg); }
+.wbar .seg-b { flex: 1; display: grid; gap: 3px; }
+.wbar .seg-b i { height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--muted) 18%, transparent); }
+.wbar .seg-b i.on { background: var(--accent); }
+.wbar.warn .seg-b i.on { background: var(--warn); } .wbar.warn > small b, .q-warn { color: var(--warn); }
+.wbar.good .seg-b i.on { background: var(--good); } .wbar.good > small b, .q-good { color: var(--good); }
+.wbar.red .seg-b i { background: color-mix(in srgb, var(--danger) 25%, transparent); } .wbar.red .seg-b i.on { background: var(--danger); } .wbar.red > small b, .q-red { color: var(--danger); }
+.q-hint { margin: -2px 0 8px; }
 .strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .day { border: 1px solid transparent; background: none; border-radius: 14px; padding: 6px 0 7px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .day .wd { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--muted); }
@@ -943,7 +953,7 @@ function render() {
         <div class="rings">${tahHtml}<div class="ring ${st || ''}" aria-label="Progression du jour : ${pct(sc)}">${ringSvg(sc, 56, 6, stColor(st))}<span>${st === 'pause' ? '⏸' : pct(sc)}</span></div></div></div>
       ${isFri(k) ? `<p class="jum-q"><span class="ar" lang="ar" dir="rtl">﴿ يَا أَيُّهَا الَّذِينَ آمَنُوا إِذَا نُودِيَ لِلصَّلَاةِ مِن يَوْمِ الْجُمُعَةِ فَاسْعَوْا إِلَىٰ ذِكْرِ اللَّهِ وَذَرُوا الْبَيْعَ ۚ ذَٰلِكُمْ خَيْرٌ لَّكُمْ إِن كُنتُمْ تَعْلَمُونَ ﴾</span><span class="q-ref">— Al-Jumu'a, 9 —</span></p>` : ''}
       <div class="week-nav"><button type="button" class="nav-btn" data-act="prevWeek" aria-label="Semaine précédente">${ICON_PREV}</button><div class="lbl"><strong>Semaine ${isoWeek(k)}</strong> · ${esc(fmtDM.format(parseKey(days[0])))} – ${esc(fmtDM.format(parseKey(days[6])))}</div>${k !== t ? '<button type="button" class="pill-btn" data-act="today">Aujourd\'hui</button>' : ''}<button type="button" class="nav-btn" data-act="nextWeek" aria-label="Semaine suivante">${ICON_CHEV}</button></div>
-      <div class="strip">${strip}</div>
+      <div class="strip">${strip}</div>${weekBar(k)}
       <div class="seg" role="tablist" aria-label="Vue">${[['jour', 'Jour'], ['semaine', 'Semaine'], ['mois', 'Mois'], ['hizb', 'Hizb']].map(([v, l]) => `<button type="button" role="tab" data-act="tab" data-tab="${v}" aria-selected="${V.tab === v}">${l}</button>`).join('')}</div>
     </header>
     <main>${view}</main></div>`;
@@ -1074,6 +1084,19 @@ function prepBlock(k, clickable) {
   if (pts.length) html += `<div class="sub"><b>Points à revoir</b><ul class="pts">${pts.map(x => `<li><span class="ar" lang="ar">حزب ${x.h}</span><span>${esc(x.t)}</span></li>`).join('')}</ul></div>`;
   return html;
 }
+/* passages « X par semaine » : où en est la semaine du jour k */
+function quotaWeek(k) {
+  const p = C().pass; if (!p.on || p.mode !== 'quota') return null;
+  const days = weekDays(k), t = todayKey(), open = days.filter(d => !inPause(d, 'pass')).length; if (!open) return null;
+  const n = days.filter(passOf).length, goal = Math.max(1, Math.round((p.perWeek || 1) * open / 7)), last = days[days.length - 1];
+  const over = last < t, lastDay = last === t, st = n >= goal ? 'good' : over ? 'red' : lastDay ? 'warn' : '';
+  return { n, goal, st, rest: Math.max(0, goal - n), over, lastDay, future: days[0] > t };
+}
+const quotaTxt = q => q.st === 'good' ? `${q.n}/${q.goal} ✓` : q.st === 'red' ? `${q.n}/${q.goal} · manqué` : q.st === 'warn' ? `${q.n}/${q.goal} · reste ${q.rest}` : `${q.n}/${q.goal}`;
+function weekBar(k) {
+  const q = quotaWeek(k); if (!q || q.future) return '';
+  return `<div class="wbar ${q.st}" role="img" aria-label="Passages cette semaine : ${q.n} sur ${q.goal}"><small>Passages <b>${quotaTxt(q)}</b></small><div class="seg-b" style="grid-template-columns:repeat(${Math.min(q.goal, 7)},1fr)">${Array.from({ length: Math.min(q.goal, 7) }, (_, i) => `<i class="${i < q.n ? 'on' : ''}"></i>`).join('')}</div></div>`;
+}
 function passCard(k, future) {
   const c = C(), p = c.pass, lg = passOf(k), t = todayKey(), mode = p.mode, paused = inPause(k, 'pass');
   if (mode === 'fixed' && !isPassDay(k) && !lg) {
@@ -1084,11 +1107,11 @@ function passCard(k, future) {
       <h3>À préparer</h3>${prepBlock(nd, false)}${!future ? `<button type="button" class="link" data-act="pass-open">J'ai eu un passage aujourd'hui quand même</button>` : ''}</article>`;
   }
   const wk = weekDays(k).filter(passOf).length;
-  let tag, st = '';
+  let tag, st = '', quotaHint = '';
   if (lg) { tag = '<span class="tag good">Passage fait</span>'; st = 'full'; }
   else if (paused) tag = '<span class="tag">En pause</span>';
   else if (mode === 'fixed') { tag = future ? '<span class="tag">Passage prévu</span>' : `<span class="tag red">${k < t ? 'Passage manqué' : 'Passage à faire'}</span>`; st = future ? '' : 'low'; }
-  else if (mode === 'quota') tag = `<span class="tag ${wk >= p.perWeek ? 'good' : ''}">${wk} / ${p.perWeek} cette semaine</span>`;
+  else if (mode === 'quota') { const q = quotaWeek(k) || { n: wk, goal: p.perWeek, st: '' }; tag = `<span class="tag ${q.st}">${q.n} / ${q.goal} ${q.st === 'red' ? '· objectif manqué' : 'cette semaine'}</span>`; st = q.st === 'good' ? 'full' : q.st === 'red' ? 'low' : q.st === 'warn' ? 'ok' : ''; if (q.rest && !q.over && !future) quotaHint = `<p class="meta q-hint">Il reste ${q.rest} passage${q.rest > 1 ? 's' : ''} cette semaine${q.lastDay ? ', dernier jour' : ''}.</p>`; }
   else { const mn = monthDays(k).filter(passOf).length, md = monthDays(k), over = md[md.length - 1] < t; tag = `<span class="tag ${mn >= p.perMonth ? 'good' : over ? 'red' : ''}">${mn} / ${p.perMonth} ce mois</span>`; }
   let body;
   if (lg && vmOn() && (lg.vn || lg.vr)) {
@@ -1104,7 +1127,7 @@ function passCard(k, future) {
     body = `<h3>${future ? 'À préparer' : 'Au programme'}</h3>${future ? '' : '<p class="hint tl-h">Touche ce que tu as fait avec le cheikh.</p>'}${prepBlock(k, !future)}${future || passTiles(k, null, false) ? '' : `<div class="acts"><button type="button" class="btn validate" data-act="pass-open">${ICON_CHECK} J'ai eu mon passage</button></div>`}
       ${mode === 'fixed' && k >= t ? `<button type="button" class="link" data-act="move-open">Décaler ce passage cette semaine</button>` : ''}`;
   }
-  return `<article class="goal ${st}" style="--cat:var(--c-prof)"><div class="goal-top"><span class="chip">Passage avec le cheikh</span>${tag}</div>${body}</article>`;
+  return `<article class="goal ${st}" style="--cat:var(--c-prof)"><div class="goal-top"><span class="chip">Passage avec le cheikh</span>${tag}</div>${quotaHint}${body}</article>`;
 }
 
 function wirdCard(k, future) {
@@ -1158,8 +1181,8 @@ function weekView() {
   if (c.pass.on) {
     const n = days.filter(passOf).length;
     const target = c.pass.mode === 'fixed' ? days.filter(isPassDay).length : c.pass.mode === 'quota' ? c.pass.perWeek : null;
-    lines.push(`<p>Passages : ${n}${target != null ? ` sur ${target}` : ''}${c.pass.mode === 'month' ? ` · ${monthDays(k).filter(passOf).length} / ${c.pass.perMonth} ce mois` : ''}</p>`);
-    rows.push(`<div class="grow" style="--cat:var(--c-prof)"><div class="gname"><span>Passages</span><small>${c.pass.mode === 'fixed' ? esc(DOW_ORDER.filter(x => c.pass.days.includes(x)).map(x => DOW[x]).join(', ')) : c.pass.mode === 'quota' ? `${c.pass.perWeek} / semaine` : `${c.pass.perMonth} min. / mois`}</small></div>${days.map(d => {
+    const qw = quotaWeek(k); if (qw) lines.push(`<p>Passages : <b class="q-${qw.st || 'n'}">${quotaTxt(qw)}</b></p>`); else lines.push(`<p>Passages : ${n}${target != null ? ` sur ${target}` : ''}${c.pass.mode === 'month' ? ` · ${monthDays(k).filter(passOf).length} / ${c.pass.perMonth} ce mois` : ''}</p>`);
+    rows.push(`<div class="grow" style="--cat:var(--c-prof)"><div class="gname"><span>Passages</span><small>${c.pass.mode === 'fixed' ? esc(DOW_ORDER.filter(x => c.pass.days.includes(x)).map(x => DOW[x]).join(', ')) : c.pass.mode === 'quota' ? `${c.pass.perWeek} / semaine${qw && !qw.future ? `<br><b class="q-${qw.st || 'n'}">${quotaTxt(qw)}</b>` : ''}` : `${c.pass.perMonth} min. / mois`}</small></div>${days.map(d => {
       const sched = isPassDay(d), done = !!passOf(d);
       const st = done ? 'full' : d > t ? (sched ? 'future' : 'na') : inPause(d, 'pass') ? 'pause' : sched ? 'low' : 'na';
       return `<button type="button" class="cell ${st}${d === k ? ' sel' : ''}" data-act="goday" data-day="${d}" aria-label="Passage, ${esc(fmtLong.format(parseKey(d)))}">${done ? '✓' : st === 'na' || st === 'pause' ? '·' : ''}</button>`; }).join('')}</div>`);
@@ -1961,6 +1984,7 @@ function tourSteps() {
     { sel: '.rings > .ring', t: 'Ton cercle du jour', x: 'Il se remplit au fur et à mesure que tu valides tes objectifs. Vert : journée réussie.' },
     { sel: '.tah-chip', t: AR('تعاهدوا'), x: 'Les jours qui restent avant la prochaine récitation complète de ce que tu as appris. Touche-le pour te fixer un objectif.' },
     { sel: '.strip', t: 'Ta semaine', x: 'Touche un jour pour le revoir ou rattraper un oubli. Vert : réussi, orange : commencé, rouge : en dessous du minimum.' },
+    { sel: '.wbar', t: 'Tes passages de la semaine', x: 'Un trait par passage prévu, qui se remplit à chaque passage. Vert quand l\'objectif de la semaine est atteint, orange le dernier jour s\'il en manque.' },
     { sel: 'article.goal[style*="c-rev"]', t: 'Révision perso', x: '+½ à chaque demi-hizb récité, ✓ pour tout valider d\'un coup. « Réviser d\'autres hizb » pour renforcer ceux qui sont fragiles.' },
     { sel: 'article.goal[style*="c-prof"]', t: 'Passage avec le cheikh', x: 'Après ton passage, touche Nouveau ou Révision, puis indique où tu t\'es arrêté.' },
     { sel: 'article.goal[style*="c-wird"]', t: 'Wird', x: 'Ta lecture du jour dans le mushaf. Elle compte pour valider ta journée.' }
