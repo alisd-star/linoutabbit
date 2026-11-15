@@ -160,6 +160,8 @@ h1 { margin: 0; font-family: var(--f-display); font-weight: 800; font-size: 26px
 .wbar.good .seg-b i.on { background: var(--good); } .wbar.good > small b, .q-good { color: var(--good); }
 .wbar.red .seg-b i { background: color-mix(in srgb, var(--danger) 25%, transparent); } .wbar.red .seg-b i.on { background: var(--danger); } .wbar.red > small b, .q-red { color: var(--danger); }
 .q-hint { margin: -2px 0 8px; }
+.st-what { margin: 6px 0 4px; padding-left: 18px; font-size: 14px; line-height: 1.5; color: var(--fg); } .st-what li { margin: 2px 0; }
+.st-d summary { cursor: pointer; font-size: 13.5px; color: var(--accent); margin-top: 8px; }
 .strip { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .day { border: 1px solid transparent; background: none; border-radius: 14px; padding: 6px 0 7px; display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .day .wd { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--muted); }
@@ -999,10 +1001,10 @@ function dayView() {
   if (c.wird.on) cards.push(wirdCard(k, future));
   if (kahfObj(k)) cards.push(kahfCard(k, future));
   const fri = isFri(k) && k >= c.created;
-  const ask = fri && k === t && !c.kahf.on && !S.meta.kahfAsked ? kahfAsk() : '';
+  const ask = fri && k === t && !c.kahf.on && !S.meta.kahfAsked ? kahfAsk() : k === t && !c.stats && !S.meta.statsAsked && S.meta.tourSeen ? statsAsk() : '';
   return `${fri ? hadithCard(k) : ''}${banners(k)}${win}${ask}<section><div class="sec-head"><h2>Objectifs du jour</h2><span>${os.length ? `${doneN} sur ${os.length} terminés` : ''}</span></div>
     ${cards.join('') || '<p class="note">Aucun objectif actif. Active-les dans les réglages.</p>'}${tOut && !future && k >= c.created ? `<button type="button" class="link" data-act="tah-did">J'ai participé à ${AR('تعاهدوا')}</button>` : ''}</section>
-    <p class="foot">Tes données restent sur ce téléphone, dans ce navigateur.</p>`;
+    <p class="foot">${statsOn() ? 'Ton suivi reste sur ce téléphone. Seules des statistiques anonymes sont envoyées.' : 'Tes données restent sur ce téléphone, dans ce navigateur.'}</p>`;
 }
 
 /* « hizb 9 et 10 », « 2e moitié du hizb 9, hizb 10 et 1re moitié du hizb 11 » */
@@ -1590,7 +1592,7 @@ function closeSheet() { saveHzNote(); V.sheet = null; $('#back').hidden = true; 
 function renderSheet() {
   const s = V.sheet; if (!s) return;
   const el = $('#sheet');
-  const html = s.kind === 'pass' ? passSheet(s) : s.kind === 'move' ? moveSheet(s) : s.kind === 'hz' ? hzSheet(s) : s.kind === 'tah' ? tahSheet(s) : s.kind === 'settings' ? settingsSheet(s) : s.kind === 'backup' ? backupSheet(s) : s.kind === 'pause' ? pauseSheet(s) : s.kind === 'rules' ? rulesSheet() : s.kind === 'known' ? knownSheet(s) : s.kind === 'vknown' ? vmKnownSheet(s) : s.kind === 'rx' ? rxSheet(s) : '';
+  const html = s.kind === 'pass' ? passSheet(s) : s.kind === 'move' ? moveSheet(s) : s.kind === 'hz' ? hzSheet(s) : s.kind === 'tah' ? tahSheet(s) : s.kind === 'settings' ? settingsSheet(s) : s.kind === 'stats' ? statsSheet() : s.kind === 'backup' ? backupSheet(s) : s.kind === 'pause' ? pauseSheet(s) : s.kind === 'rules' ? rulesSheet() : s.kind === 'known' ? knownSheet(s) : s.kind === 'vknown' ? vmKnownSheet(s) : s.kind === 'rx' ? rxSheet(s) : '';
   el.innerHTML = `<div class="grab"></div>${html}`;
 }
 
@@ -1710,6 +1712,7 @@ function settingsSheet(s) {
       <button type="button" class="set-item" data-act="edit-answers"><div><b>Modifier mes réponses</b><small>Étape, sens, où tu en es, passages, quantités, révision, wird</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="pause"><div><b>${c.pause && c.pause.to >= todayKey() ? 'En pause' : 'Faire une pause'}</b><small>${c.pause && c.pause.to >= todayKey() ? esc(pauseWhatTxt(c.pause)) + ' jusqu\'au ' + esc(fmtDM.format(parseKey(c.pause.to))) : 'Examens, voyage, Ramadan : tout ou une partie'}</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="backup"><div><b>Sauvegarde</b><small>${S.meta.lastBackup ? `Dernière le ${esc(fmtDM.format(parseKey(S.meta.lastBackup)))}` : 'Jamais faite'} · copier ou restaurer</small></div>${ICON_CHEV}</button>
+      <button type="button" class="set-item" data-act="st-info"><div><b>Statistiques anonymes</b><small>${statsOn() ? 'Activées · ce qui est envoyé' : 'Désactivées · rien n\'est envoyé'}</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="tour"><div><b>Revoir la visite</b><small>Les explications de chaque partie de l'appli</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="rules"><div><b>Les consignes</b><small>Où sont tes données, comment ne pas les perdre</small></div>${ICON_CHEV}</button>
     </div>
@@ -1751,7 +1754,7 @@ function pauseSheet(s) {
     <div class="acts"><button type="button" class="btn" data-act="close">Fermer</button></div>`;
 }
 const RULES = [
-  ['Tes données restent sur ce téléphone', 'Dans ce navigateur, nulle part ailleurs. Personne d\'autre ne les voit.'],
+  ['Tes données restent sur ce téléphone', 'Dans ce navigateur, nulle part ailleurs. Personne d\'autre ne voit ton suivi. Si tu l\'acceptes, seules des statistiques anonymes sont envoyées (Réglages → Statistiques anonymes).'],
   ['Ajoute l\'appli à ton écran d\'accueil', 'Plus pratique, et sur iPhone ça évite que tes données s\'effacent si tu ne l\'ouvres pas pendant une semaine.'],
   ['N\'efface pas les données de ton navigateur', 'Sinon ton suivi repart de zéro.'],
   ['Copie ta sauvegarde de temps en temps', 'Réglages → Sauvegarde, puis colle le code dans WhatsApp. Il te permet de tout retrouver si tu changes de téléphone.'],
@@ -1825,12 +1828,12 @@ function tahOnbPreview(a, n) {
   return out.map(l => `<span>${l}</span>`).join('');
 }
 function defaultAnswers() {
-  return { civ: '', country: 'FR', tw: 'cheikh', goals: [], vriw: '', vs: 114, vv: 1, vchunk: [], vrev: null, stage: 'k1', dir: '', rdir: 'asc', n: '0', t: '0', known: [], cur: '', passMode: 'fixed', days: [], perWeek: 2, perMonth: 4, unit: 1, revN: 2, prh: '', prn: 1, revOn: true, revMode: 'qty', revQty: 1, revTour: 30, rh: '', rn: 1, wirdOn: false, wUnit: 'pages', wQty: 4, wDays: 5, wScope: 'all', kahf: 'off', tahJoin: '', tahN: 0 };
+  return { stats: '', civ: '', country: 'FR', tw: 'cheikh', goals: [], vriw: '', vs: 114, vv: 1, vchunk: [], vrev: null, stage: 'k1', dir: '', rdir: 'asc', n: '0', t: '0', known: [], cur: '', passMode: 'fixed', days: [], perWeek: 2, perMonth: 4, unit: 1, revN: 2, prh: '', prn: 1, revOn: true, revMode: 'qty', revQty: 1, revTour: 30, rh: '', rn: 1, wirdOn: false, wUnit: 'pages', wQty: 4, wDays: 5, wScope: 'all', kahf: 'off', tahJoin: '', tahN: 0 };
 }
 function answersFromCfg() {
   const c = C(), t = todayKey(), e = prog8(), a = defaultAnswers();
   { const ch = isK1() ? curHifz() : null; a.known = (c.known || []).slice(); a.cur = isK1() ? (ch == null ? 'done' : String(ch)) : ''; }
-  Object.assign(a, { civ: c.civ || 'yes', country: c.country || 'FR', tw: c.tw || 'cheikh', stage: c.stage, dir: c.dir, rdir: c.rdir || c.dir, n: String(Math.floor(e / 8)), t: String(e % 8), passMode: c.pass.mode, days: (c.pass.days || []).slice(), perWeek: c.pass.perWeek || 2, perMonth: c.pass.perMonth || 4, unit: c.pass.unit, revN: c.pass.revN || 0,
+  Object.assign(a, { stats: c.stats || '', civ: c.civ || 'yes', country: c.country || 'FR', tw: c.tw || 'cheikh', stage: c.stage, dir: c.dir, rdir: c.rdir || c.dir, n: String(Math.floor(e / 8)), t: String(e % 8), passMode: c.pass.mode, days: (c.pass.days || []).slice(), perWeek: c.pass.perWeek || 2, perMonth: c.pass.perMonth || 4, unit: c.pass.unit, revN: c.pass.revN || 0,
     revOn: c.rev.on, revMode: c.rev.mode, revQty: c.rev.qty || 1, revTour: c.rev.tour || 30, wirdOn: c.wird.on, wUnit: c.wird.unit, wQty: c.wird.qty, wDays: c.wird.days, wScope: c.wird.scope || 'all', kahf: c.kahf && c.kahf.on ? c.kahf.mode : 'off' });
   { const tn = tahNext(), g = tn && c.tah && c.tah.goals ? c.tah.goals[tn.next] : null; a.tahJoin = (c.tah && c.tah.join) || (g ? 'yes' : ''); a.tahN = g || defTahN(a); }
   const size = poolHz(t) * 2;
@@ -1880,7 +1883,7 @@ function recapRows(a) {
     ['revision', 'Révision perso', a.revOn ? (a.revMode === 'tour' ? `Tour en ${a.revTour} jours` : `${hizbFr(a.revQty)} par jour`) + (pool.length ? `, reprise au hizb ${a.rh || pool[0]}` : '') : 'Non'],
     ['revision', 'Wird', a.wirdOn ? `${frQ(a.wQty)} ${a.wUnit === 'hizb' ? 'hizb' : 'pages'} par jour` : 'Non'],
     ['revision', 'Al-Kahf le vendredi', a.kahf === 'obj' ? 'Oui, en objectif' : a.kahf === 'bonus' ? 'Oui, en bonus' : 'Non']
-  ].concat([['toi', 'Pays et Dar Coran', `${esc(countryName(a.country))} · Dar Coran du CIV : ${a.civ === 'yes' ? 'oui' : a.civ === 'no' ? 'non' : '—'}`]]).concat(tahNext() && a.civ === 'yes' ? [['tah', 'Prochain تعاهدوا', a.tahJoin === 'yes' ? `Oui, objectif ${a.tahN} hizb` : a.tahJoin === 'no' ? 'Non' : a.tahJoin === 'maybe' ? 'Pas encore décidé' : '—']] : []).concat([
+  ].concat([['toi', 'Pays et Dar Coran', `${esc(countryName(a.country))} · Dar Coran du CIV : ${a.civ === 'yes' ? 'oui' : a.civ === 'no' ? 'non' : '—'} · statistiques : ${a.stats === 'yes' ? 'oui' : a.stats === 'no' ? 'non' : '—'}`]]).concat(tahNext() && a.civ === 'yes' ? [['tah', 'Prochain تعاهدوا', a.tahJoin === 'yes' ? `Oui, objectif ${a.tahN} hizb` : a.tahJoin === 'no' ? 'Non' : a.tahJoin === 'maybe' ? 'Pas encore décidé' : '—']] : []).concat([
   ]);
 }
 function renderOnb() {
@@ -1934,7 +1937,8 @@ function renderOnb() {
     <div class="field"><span>Sourate Al-Kahf chaque vendredi ?</span><div class="opts">${optBtn('kahf', 'obj', 'Oui, en objectif', a.kahf)}${optBtn('kahf', 'bonus', 'Oui, en bonus', a.kahf)}${optBtn('kahf', 'off', 'Non', a.kahf)}</div><p class="hint">En objectif, elle compte dans ta journée du vendredi. En bonus, elle s'affiche sans jamais passer en rouge.</p></div>`;
   } else if (key === 'toi') {
     body = `<h2>Pour finir</h2><div class="field"><span>Ton pays</span><select class="input" id="onb-country">${COUNTRIES.map(([v, l]) => `<option value="${v}" ${v === a.country ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
-    <div class="field"><span>Tu es inscrit au Dar Coran du CIV ?</span><p class="hint">Centre islamique de Villeneuve-d'Ascq.</p><div class="opts">${optBtn('civ', 'yes', 'Oui', a.civ)}${optBtn('civ', 'no', 'Non', a.civ)}</div></div>`;
+    <div class="field"><span>Tu es inscrit au Dar Coran du CIV ?</span><p class="hint">Centre islamique de Villeneuve-d'Ascq.</p><div class="opts">${optBtn('civ', 'yes', 'Oui', a.civ)}${optBtn('civ', 'no', 'Non', a.civ)}</div></div>
+    <div class="field"><span>Aider à améliorer l'appli ?</span><p class="hint">Partager des statistiques anonymes. Ton suivi, lui, reste sur ton téléphone.</p><div class="opts">${optBtn('stats', 'yes', 'Oui', a.stats)}${optBtn('stats', 'no', 'Non merci', a.stats)}</div><details class="st-d"><summary>Ce qui est envoyé</summary>${ST_WHAT}</details></div>`;
   } else if (key === 'tah') {
     const tn = tahNext();
     body = `<h2>Le prochain ${AR('تَعَاهَدُوا')}</h2><p>${esc(cap(fmtLong.format(parseKey(tn.next))))}, dans ${tn.n} jours. Ce jour-là, on récite d'un coup tout ce qu'on a appris.</p>
@@ -1959,6 +1963,7 @@ function onbValidate() {
   if (key === 'passages' && a.passMode === 'fixed' && !a.days.length) return 'Coche au moins un jour de passage.';
   if (key === 'tah' && !a.tahJoin) return 'Choisis une réponse.';
   if (key === 'toi' && !a.civ) return 'Réponds à la question sur le Dar Coran.';
+  if (key === 'toi' && !a.stats) return 'Dis-nous si tu acceptes les statistiques anonymes.';
   return '';
 }
 function applyOnb() {
@@ -1982,10 +1987,56 @@ function applyOnb() {
   cfg.rev.anchor = anchorFor(a.rh || pool[0], a.rn, t, revCount(t));
   cfg.pass.anchor = anchorFor(a.prh || pool[0], a.prn, t, prCount(t));
   S.meta = Object.assign({}, S.meta, { rulesSeen: true });
+  S.cfg.stats = old.stats;
   save();
+  if (a.stats && a.stats !== old.stats) stSet(a.stats); else if (statsOn()) stSend('profil', '');
   const was = V.onb.edit, mig = V.onb.mig; V.onb = null; V.sel = t;
   render(); toast(mig ? 'C\'est noté, بارك الله فيك' : was ? 'Réponses enregistrées' : 'بسم الله, c\'est parti !');
 }
+
+/* ================= STATISTIQUES ANONYMES (avec accord) =================
+   Rien n'est envoyé sans un « Oui » explicite (questionnaire, bandeau ou Réglages). Envoi vers un Google Forms :
+   un identifiant tiré au hasard, la version, le pays, la réponse Dar Coran, un résumé des réponses au questionnaire,
+   et au plus une fois par jour un résumé d'activité (jours ouverts, objectifs validés). Jamais de nom, de hizb précis ni de notes. */
+const ST_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSf_h0peNWP3gClSU-cVGRl-RTfeNMNuumggWCRoMGGkAUSnCg/formResponse';
+const ST_F = { id: 756834206, type: 414945839, version: 509973222, pays: 181111970, civ: 2096245128, profil: 675067284, activite: 329273590 };
+const APP_V = '2026.11' + (STORE === 'lnthbt-v1' ? '' : '-test');
+const statsOn = () => !!(S.cfg && S.cfg.stats === 'yes');
+function stProfil() {
+  const c = C(), g = [c.pass.on && (!c.pass.kinds || c.pass.kinds.includes('new')) && 'cn', c.pass.on && (!c.pass.kinds || c.pass.kinds.includes('rev')) && 'cr', c.rev.on && 'rev', c.wird.on && 'wird'].filter(Boolean);
+  return [`obj=${g.join('+') || '-'}`, `etape=${c.stage}`, `sens=${c.dir}`, `rev_sens=${revDir()}`, c.vm && c.vm.riw ? `riwaya=${c.vm.riw}` : '', c.pass.on ? `passages=${c.pass.mode}` : '', `ens=${c.tw || 'cheikh'}`, c.rev.on ? `rev=${c.rev.mode}:${c.rev.qty || c.rev.tour}` : '', c.wird.on ? `wird=${c.wird.qty}${c.wird.unit === 'hizb' ? 'h' : 'p'}` : '', `kahf=${c.kahf.on ? c.kahf.mode : 'non'}`, `appris=${Math.floor(learned8() / 8)}`].filter(Boolean).join(';');
+}
+function stActivite() {
+  const t = todayKey(), y = addDays(t, -1), opens = (S.meta.opens || []).filter(d => d > addDays(t, -7)).length;
+  const os = dayObjs(y), done = os.filter(o => o.val >= o.target).length, ds = dayStatus(y);
+  let n = 0, d = y; while (n < 365 && dayStatus(d) === 'full') { n++; d = addDays(d, -1); }
+  return `hier=${ds || 'aucun'};objectifs=${done}/${os.length};ouvert_7j=${opens};serie=${n}`;
+}
+function stSend(type, extra) {
+  if (!statsOn() || !navigator.onLine) return Promise.resolve(false);
+  const body = new URLSearchParams(), put = (k, v) => body.append('entry.' + ST_F[k], v == null ? '' : String(v));
+  put('id', S.meta.sid); put('type', type); put('version', APP_V); put('pays', C().country || 'FR'); put('civ', C().civ || 'yes'); put('profil', stProfil()); put('activite', extra || '');
+  return fetch(ST_URL, { method: 'POST', mode: 'no-cors', body }).then(() => true, () => false);
+}
+/* à l'ouverture : note le jour, et envoie le résumé de la veille une fois par jour */
+function stDaily() {
+  if (!S.cfg) return; const t = todayKey(); S.meta = S.meta || {};
+  const op = (S.meta.opens || []).filter(d => d > addDays(t, -30)); if (!op.includes(t)) { op.push(t); S.meta.opens = op; save(); }
+  if (!statsOn() || S.meta.stLast === t) return;
+  stSend('jour', stActivite()).then(ok => { if (ok) { S.meta.stLast = t; save(); } });
+}
+function stSet(v) {
+  const was = statsOn(); C().stats = v; S.meta = Object.assign({}, S.meta, { statsAsked: true });
+  if (v === 'yes' && !was) { S.meta.sid = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); save(); stSend('accord', ''); stDaily(); }
+  else { if (v !== 'yes') { delete S.meta.sid; delete S.meta.stLast; } save(); }
+}
+const ST_WHAT = `<ul class="st-what"><li>un identifiant tiré au hasard (pas ton nom, pas ton téléphone)</li><li>ton pays et ta réponse pour le Dar Coran</li><li>tes choix du questionnaire (objectifs, sens, nombre de hizb appris…)</li><li>au plus une fois par jour : si tu as ouvert l'appli, et combien d'objectifs tu as validés la veille</li></ul><p class="hint">Jamais tes hizb précis, tes notes ni tes remarques. Tu peux arrêter quand tu veux dans Réglages.</p>`;
+function statsAsk() {
+  return `<div class="banner kask"><div><b>Aider à améliorer l'appli ?</b>Partager des statistiques anonymes pour savoir si l'appli sert et comment l'améliorer. <button type="button" class="link" data-act="st-info">Ce qui est envoyé</button></div>
+    <div class="kask-acts"><button type="button" class="btn primary" data-act="st-set" data-v="yes">Oui, j'accepte</button><button type="button" class="link" data-act="st-set" data-v="no">Non merci</button></div></div>`;
+}
+function statsSheet() { return `<div class="sh-head"><div><h2>Statistiques anonymes</h2><p class="hint">${statsOn() ? 'Activées. Merci !' : 'Désactivées : rien n\'est envoyé.'}</p></div></div><div class="field"><span>Ce qui est envoyé, seulement si tu acceptes</span>${ST_WHAT}</div>
+  <div class="acts">${statsOn() ? '<button type="button" class="btn" data-act="st-set" data-v="no">Arrêter l\'envoi</button>' : '<button type="button" class="btn primary" data-act="st-set" data-v="yes">J\'accepte</button>'}<button type="button" class="btn" data-act="close">Fermer</button></div>`; }
 
 /* ================= VISITE GUIDÉE =================
    Une fois (nouvel inscrit après le questionnaire, inscrit actuel à la prochaine ouverture), puis depuis Réglages.
@@ -2065,7 +2116,7 @@ document.addEventListener('click', e => {
     case 'onb-set': {
       const a = V.onb.a, key = b.dataset.k; let v = b.dataset.v;
       if (key === 'vriw') { a.vriw = v; V.onb.err = ''; if (a.vmig && !a.vEdited) vmMigApply(a); renderOnb(); break; }
-      if (v === 'true' || v === 'false') v = v === 'true'; else if (/^\d+$/.test(v) && !['stage', 'dir', 'rdir', 'passMode', 'revMode', 'wUnit', 'wScope', 'kahf', 'civ', 'tw'].includes(key)) v = +v;
+      if (v === 'true' || v === 'false') v = v === 'true'; else if (/^\d+$/.test(v) && !['stage', 'dir', 'rdir', 'passMode', 'revMode', 'wUnit', 'wScope', 'kahf', 'civ', 'tw', 'stats'].includes(key)) v = +v;
       a[key] = v;
       if (key === 'stage' && v !== 'k1' && !V.onb.edit) { a.n = '0'; a.t = '0'; }
       if (key === 'wUnit') a.wQty = v === 'hizb' ? 1 : 4;
@@ -2214,6 +2265,8 @@ document.addEventListener('click', e => {
     case 'had-read': S.meta = Object.assign({}, S.meta, { hadRead: V.sel }); V.hadOpen = null; save(); render(); break;
     case 'had-open': V.hadOpen = V.sel; render(); break;
     case 'had-close': V.hadOpen = null; render(); break;
+    case 'st-set': stSet(b.dataset.v); toast(b.dataset.v === 'yes' ? 'Merci, بارك الله فيك' : 'C\'est noté, rien ne sera envoyé'); if (s && s.kind === 'stats') renderSheet(); render(); break;
+    case 'st-info': openSheet({ kind: 'stats' }); break;
     case 'kahf-set': {
       const v = b.dataset.v; S.meta = Object.assign({}, S.meta, { kahfAsked: true });
       if (v !== 'no') { C().kahf = { on: true, mode: v }; C().kahfFrom = C().kahfFrom || weekStart(t); toast('Al-Kahf ajoutée chaque vendredi'); } else toast('Tu pourras l\'activer dans les réglages');
@@ -2296,6 +2349,7 @@ document.addEventListener('visibilitychange', () => {
 });
 applyLook();
 render();
+stDaily();
 })();
 </script>
 
