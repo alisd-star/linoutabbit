@@ -698,7 +698,6 @@ try {
 function save() { try { localStorage.setItem(STORE, JSON.stringify(S)); storeOk = true; } catch (e) { storeOk = false; } }
 const V = { sel: todayKey(), tab: 'jour', onb: null, sheet: null, lastToday: todayKey(), hzAll: false };
 try { const t = localStorage.getItem(STORE + ':tab'); if (['jour', 'semaine', 'mois', 'hizb'].includes(t)) V.tab = t; } catch (e) {}
-if (S.cfg && S.cfg.pass && S.cfg.pass.mode === 'free') { S.cfg.pass.mode = 'month'; S.cfg.pass.perMonth = S.cfg.pass.perMonth || 4; }
 /* C() complète les réglages ajoutés après coup (anciennes données, sauvegardes restaurées) */
 /* comment la personne appelle celui avec qui elle apprend */
 const COUNTRIES = [['FR', 'France'], ['BE', 'Belgique'], ['CH', 'Suisse'], ['LU', 'Luxembourg'], ['MA', 'Maroc'], ['DZ', 'Algérie'], ['TN', 'Tunisie'], ['SN', 'Sénégal'], ['CI', 'Côte d\'Ivoire'], ['ML', 'Mali'], ['MR', 'Mauritanie'], ['CA', 'Canada'], ['GB', 'Royaume-Uni'], ['DE', 'Allemagne'], ['NL', 'Pays-Bas'], ['ES', 'Espagne'], ['IT', 'Italie'], ['XX', 'Autre']];
@@ -710,8 +709,16 @@ const C = () => { const c = S.cfg; if (c && !c.kahf) c.kahf = { on: false, mode:
 const isFri = k => parseKey(k).getDay() === 5;
 const kahfObj = d => { const c = C(); return c.kahf && c.kahf.on && isFri(d) && d >= (c.kahfFrom || c.created); };
 const backStart = d => { const m = d.slice(0, 8) + '01', w = weekStart(d); return w < m ? w : m; };
-if (S.cfg && !S.cfg.v2) { S.cfg.pivot = S.cfg.pivot || S.cfg.created; S.cfg.created = backStart(S.cfg.created); S.cfg.v2 = true; save(); }
-if (S.cfg && S.cfg.wird && S.cfg.wird.on && !S.cfg.wird.from) { S.cfg.wird.from = todayKey(); save(); }
+/* mise à jour des anciennes données : au chargement, et tout de suite après une restauration ou un transfert
+   (sinon le wird compterait depuis le début du suivi jusqu'à la prochaine ouverture, avec des jours rouges) */
+function migrate() {
+  const c = S.cfg; if (!c) return false; let ch = false;
+  if (c.pass && c.pass.mode === 'free') { c.pass.mode = 'month'; c.pass.perMonth = c.pass.perMonth || 4; ch = true; }
+  if (!c.v2) { c.pivot = c.pivot || c.created; c.created = backStart(c.created); c.v2 = true; ch = true; }
+  if (c.wird && c.wird.on && !c.wird.from) { c.wird.from = todayKey(); ch = true; }
+  return ch;
+}
+if (migrate()) save();
 const wirdFrom = () => C().wird.from || C().created;
 const wirdOf = d => (S.log[d] && S.log[d].w) || 0;
 const perWeekOfMonth = k => (C().pass.perMonth || 4) * 7 / monthDays(k).length;
@@ -2237,7 +2244,7 @@ function transferIn() {
   let d = null; try { d = decodeBackup(decodeURIComponent(m[1])); } catch (e) {}
   if (!d) { V.transferMsg = 'Le transfert n\'a pas marché : colle ton code de sauvegarde.'; return; }
   if (S.cfg && Object.keys(S.log || {}).length) { V.transferData = d; V.openTransfer = true; return; }
-  S = Object.assign(blank(), d); S.meta = Object.assign({}, S.meta, { transferred: todayKey() }); save(); V.onb = null; V.sel = todayKey();
+  S = Object.assign(blank(), d); migrate(); S.meta = Object.assign({}, S.meta, { transferred: todayKey() }); save(); V.onb = null; V.sel = todayKey();
   V.transferMsg = 'Ton suivi a été transféré. بارك الله فيك';
 }
 function transferSheet() {
@@ -2518,7 +2525,7 @@ document.addEventListener('click', e => {
       const d = decodeBackup(raw);
       if (!d) { s.err = 'Ce code n\'est pas reconnu : il est sans doute incomplet. Recopie tout le message de sauvegarde.'; s.armed = false; renderSheet(); $('#bk-in').value = raw; break; }
       if (!s.armed && S.cfg) { s.armed = true; s.err = ''; s.code = raw; renderSheet(); $('#bk-in').value = raw; break; }
-      S = Object.assign(blank(), d); save(); V.onb = null; V.sel = t; closeSheet(); window.scrollTo(0, 0); toast('Sauvegarde restaurée'); break;
+      S = Object.assign(blank(), d); migrate(); save(); V.onb = null; V.sel = t; closeSheet(); window.scrollTo(0, 0); toast('Sauvegarde restaurée'); break;
     }
     case 'rules': openSheet({ kind: 'rules' }); break;
     case 'had-read': S.meta = Object.assign({}, S.meta, { hadRead: V.sel }); V.hadOpen = null; save(); render(); break;
@@ -2526,7 +2533,7 @@ document.addEventListener('click', e => {
     case 'had-close': V.hadOpen = null; render(); break;
     case 'st-set': stSet(b.dataset.v); toast(b.dataset.v === 'yes' ? 'Merci, بارك الله فيك' : 'C\'est noté, rien ne sera envoyé'); if (s && s.kind === 'stats') renderSheet(); render(); break;
     case 'st-info': openSheet({ kind: 'stats' }); break;
-    case 'tr-take': S = Object.assign(blank(), V.transferData); S.meta = Object.assign({}, S.meta, { transferred: todayKey() }); save(); V.transferData = null; V.onb = null; V.sel = todayKey(); closeSheet(); render(); toast('Ton suivi a été transféré. بارك الله فيك'); break;
+    case 'tr-take': S = Object.assign(blank(), V.transferData); migrate(); S.meta = Object.assign({}, S.meta, { transferred: todayKey() }); save(); V.transferData = null; V.onb = null; V.sel = todayKey(); closeSheet(); render(); toast('Ton suivi a été transféré. بارك الله فيك'); break;
     case 'lang': if (V.onb && steps()[V.onb.step][0] === 'langue') { if (b.dataset.v === LANG) { V.onb.step++; renderOnb(); window.scrollTo(0, 0); } else { try { sessionStorage.setItem('lnthbt-onb-go', '1'); } catch (e) {} setLang(b.dataset.v); } } else setLang(b.dataset.v); break;
     case 'rm-open': openSheet({ kind: 'remind', hm: '21:00' }); break;
     case 'rm-later': S.meta = Object.assign({}, S.meta, { remindAsked: todayKey() }); save(); render(); break;
