@@ -630,7 +630,9 @@ const ICON = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHL
 const $ = s => document.querySelector(s);
 const TAAHADOU = ['2026-11-01', '2027-01-31', '2027-06-20'];
 /* langue de l'interface (fr par défaut, ar en option) : lue avant tout le reste */
-let LANG = 'fr'; try { if (localStorage.getItem('lnthbt-lang') === 'ar') LANG = 'ar'; } catch (e) {}
+/* fonctions encore réservées à la version test : build.py les coupe en prod (FEAT_PROD) */
+const FEAT = { ar: true, remind: true };
+let LANG = 'fr'; try { if (FEAT.ar && localStorage.getItem('lnthbt-lang') === 'ar') LANG = 'ar'; } catch (e) {}
 const LOC = LANG === 'ar' ? 'ar-u-nu-latn' : 'fr-FR';
 const WD = LANG === 'ar' ? ['ن', 'ث', 'ر', 'خ', 'ج', 'س', 'ح'] : ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const DOW = LANG === 'ar' ? ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'] : ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
@@ -1043,7 +1045,7 @@ function dayView() {
   if (c.wird.on) cards.push(wirdCard(k, future));
   if (kahfObj(k)) cards.push(kahfCard(k, future));
   const fri = isFri(k) && k >= c.created;
-  const ask = fri && k === t && !c.kahf.on && !S.meta.kahfAsked ? kahfAsk() : k === t && !c.stats && !S.meta.statsAsked && S.meta.tourSeen ? statsAsk() : k === t && !S.meta.remindAsked && S.meta.tourSeen && remindPlan().length ? remindAsk() : '';
+  const ask = fri && k === t && !c.kahf.on && !S.meta.kahfAsked ? kahfAsk() : k === t && !c.stats && !S.meta.statsAsked && S.meta.tourSeen ? statsAsk() : k === t && FEAT.remind && !S.meta.remindAsked && S.meta.tourSeen && remindPlan().length ? remindAsk() : '';
   return `${fri ? hadithCard(k) : ''}${banners(k)}${win}${ask}<section><div class="sec-head"><h2>Objectifs du jour</h2><span>${os.length ? `${doneN} sur ${os.length} terminés` : ''}</span></div>
     ${cards.join('') || '<p class="note">Aucun objectif actif. Active-les dans les réglages.</p>'}${tOut && !future && k >= c.created ? `<button type="button" class="link" data-act="tah-did">J'ai participé à ${AR('تعاهدوا')}</button>` : ''}</section>
     <p class="foot">${statsOn() ? 'Ton suivi reste sur ce téléphone. Seules des statistiques anonymes sont envoyées.' : 'Tes données restent sur ce téléphone, dans ce navigateur.'}</p>`;
@@ -1823,8 +1825,8 @@ function settingsSheet(s) {
       <button type="button" class="set-item" data-act="edit-answers"><div><b>Modifier mes réponses</b><small>Étape, sens, où tu en es, passages, quantités, révision, wird</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="pause"><div><b>${c.pause && c.pause.to >= todayKey() ? 'En pause' : 'Faire une pause'}</b><small>${c.pause && c.pause.to >= todayKey() ? esc(pauseWhatTxt(c.pause)) + ' jusqu\'au ' + esc(fmtDM.format(parseKey(c.pause.to))) : 'Examens, voyage, Ramadan : tout ou une partie'}</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="backup"><div><b>Sauvegarde</b><small>${S.meta.lastBackup ? `Dernière le ${esc(fmtDM.format(parseKey(S.meta.lastBackup)))}` : 'Jamais faite'} · copier ou restaurer</small></div>${ICON_CHEV}</button>
-      <div class="set-item lang-item"><div><b>Langue</b><small>Français ou العربية</small></div>${langSwitch()}</div>
-      <button type="button" class="set-item" data-act="rm-open"><div><b>Rappels</b><small>${S.meta.remindSet ? 'Ajoutés à ton calendrier · en ajouter' : 'Dans le calendrier de ton téléphone'}</small></div>${ICON_CHEV}</button>
+      ${FEAT.ar ? `<div class="set-item lang-item"><div><b>Langue</b><small>Français ou العربية</small></div>${langSwitch()}</div>` : ''}
+      ${FEAT.remind ? `<button type="button" class="set-item" data-act="rm-open"><div><b>Rappels</b><small>${S.meta.remindSet ? 'Ajoutés à ton calendrier · en ajouter' : 'Dans le calendrier de ton téléphone'}</small></div>${ICON_CHEV}</button>` : ''}
       <button type="button" class="set-item" data-act="st-info"><div><b>Statistiques anonymes</b><small>${statsOn() ? 'Activées · ce qui est envoyé' : 'Désactivées · rien n\'est envoyé'}</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="tour"><div><b>Revoir la visite</b><small>Les explications de chaque partie de l'appli</small></div>${ICON_CHEV}</button>
       <button type="button" class="set-item" data-act="rules"><div><b>Les consignes</b><small>Où sont tes données, comment ne pas les perdre</small></div>${ICON_CHEV}</button>
@@ -1925,7 +1927,7 @@ const needLearn = a => G(a, 'cn') || G(a, 'cr') || G(a, 'rev');
 const needCheikh = a => G(a, 'cn') || G(a, 'cr');
 const steps = () => STEPS_ALL.filter(x => {
   const a = V.onb && V.onb.a;
-  if (x[0] === 'langue') return !S.cfg;
+  if (x[0] === 'langue') return FEAT.ar && !S.cfg;
   if (x[0] === 'tah') return !!tahNext() && (a ? a.civ === 'yes' && needLearn(a) : !(S.cfg && (S.cfg.civ === 'no' || !(S.cfg.pass.on || S.cfg.rev.on))));
   if (!a) return true;
   if (x[0] === 'ou') return needLearn(a) && (!noHifz(a) || aVM(a) || a.stage === 'k1');
@@ -2439,7 +2441,7 @@ document.addEventListener('click', e => {
     case 'w-inc': case 'w-dec': case 'w-full': {
       const w = C().wird, v = (S.log[k] && S.log[k].w) || 0, step = w.unit === 'hizb' ? 0.5 : 1;
       const nv = act === 'w-full' ? (v >= w.qty ? 0 : w.qty) : Math.max(0, v + (act === 'w-inc' ? step : -step));
-      setLog(k, { w: nv }); render(); break;
+      withCelebrate(k, () => setLog(k, { w: nv })); render(); break;
     }
     /* passage */
     case 'pass-open': openPass(k, b.dataset.v); break;
@@ -2551,7 +2553,7 @@ document.addEventListener('click', e => {
       save(); if (s) renderSheet(); render(); break;
     }
     case 'kahf-mode': C().kahf.mode = b.dataset.v; save(); renderSheet(); render(); break;
-    case 'kahf-done': { const k = V.sel; setLog(k, { kahf: S.log[k] && S.log[k].kahf ? 0 : 1 }); render(); break; }
+    case 'kahf-done': { const k = V.sel; withCelebrate(k, () => setLog(k, { kahf: S.log[k] && S.log[k].kahf ? 0 : 1 })); render(); break; }
     case 'vm-pick': { const p = b.dataset.part === 'n' ? s.N : s.Rv; p.start = +b.dataset.g; p.es = saOf(RW(), p.start)[0]; p.ev = ''; renderSheet(); break; }
     case 'vm-edstart': { const p = b.dataset.part === 'n' ? s.N : s.Rv; p.edS = true; renderSheet(); break; }
     case 'vm-rmode': { const p = s.Rv; if (!p || !p.start) break; if (b.dataset.v === 'hz' || !p.ev) revHzEnd(RW(), p); p.mode = b.dataset.v; renderSheet(); break; }
